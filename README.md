@@ -2,29 +2,27 @@
 
 > **DISCLAIMER:** This is a pre-alpha release and currently under heavy testing and scrutiny. Until the first stable version (v1.0.0) is released, we advise not to use this in production.
 
-**Full-Stack Scaffolding platform for various typescript eco-systems. Other systems coming soon.**
+**Full-stack scaffolding for TypeScript ecosystems.** Additional runtimes and stacks may follow.
 
-FivFold provides pre-built Kits (frontend components + optional backend scaffolding) that you add to your project. Kits are open-code, not black-box: you own the code. Think of it as shadcn/ui but not only for front-end, but the entire system. Built on [shadcn/ui](https://ui.shadcn.com) and [Tailwind CSS v4](https://tailwindcss.com).
+FivFold adds **Kits** to your project via CLI: composable features (UI and optional backend scaffolding) as source you own—not a black-box dependency. Built on [shadcn/ui](https://ui.shadcn.com) and [Tailwind CSS v4](https://tailwindcss.com).
 
 ## What is FivFold
 
-**Kits** are pre-built features you add via CLI:
+- **UI CLI** (`@fivfold/ui`): initialize and add Kits to React / Next.js (and compatible) apps.
+- **API CLI** (`@fivfold/api`): scaffold backend modules aligned with your stack (framework, database, ORM) using the same manifest-driven model.
 
-- **Frontend Kits**: React/Next.js/Vite components, Tailwind v4, shadcn/ui
-- **Backend Kits**: Entities, DTOs, services, controllers for Express, NestJS, with TypeORM and Prisma for now. More coming soon.
+Use `list` on each CLI to see what Kits are available for that channel. Kits evolve over time; manifests in `ui/manifests/` and `api/manifests/` are the source of truth.
 
-You get source code in your project—no runtime dependencies, no lock-in. Customize everything.
+## Monorepo overview
 
-## Monorepo Overview
-
-This repository is a pnpm workspace with four packages:
+pnpm workspace with four packages:
 
 ```mermaid
 flowchart TB
     subgraph packages [Packages]
-        core[@fivfold/core]
-        ui[@fivfold/ui]
-        api[@fivfold/api]
+        core["@fivfold/core"]
+        ui["@fivfold/ui"]
+        api["@fivfold/api"]
         site[fivfold-site]
     end
     core --> ui
@@ -39,90 +37,76 @@ flowchart TB
 | [**@fivfold/api**](./api/README.md) | Backend scaffolding CLI: init, add, list |
 | [**fivfold-site**](./site/README.md) | Next.js docs site |
 
-## Quick Start
+## Quick start
 
 **Prerequisites:** Node.js 20+, [pnpm](https://pnpm.io)
 
 ```bash
-# Clone and install
 pnpm install
-
-# Build all packages
 pnpm run build
-
-# Run the docs site
 pnpm run dev:site
 ```
 
-## Commands Reference
-
-**Monorepo (from root):**
+## Commands (root)
 
 | Command | Description |
 |---------|-------------|
 | `pnpm install` | Install all workspace dependencies |
 | `pnpm run build` | Build all packages |
-| `pnpm run build:core` | Build core only |
-| `pnpm run build:ui` | Build UI CLI only |
-| `pnpm run build:api` | Build API CLI only |
-| `pnpm run dev:site` | Run docs site in dev mode |
-| `pnpm run build:site` | Build docs site |
+| `pnpm run build:core` / `build:ui` / `build:api` | Build one package |
+| `pnpm run dev:site` | Docs site (dev) |
+| `pnpm run build:site` | Docs site (production build) |
+| `pnpm release` | Interactive version bump for published packages (see [scripts/release.mjs](./scripts/release.mjs)) |
 
-**UI CLI** (in a React/Next.js project):
+**UI CLI** (in a consumer project):
 
 | Command | Description |
 |---------|-------------|
-| `npx @fivfold/ui init` | Initialize FivFold in project |
+| `npx @fivfold/ui init` | Initialize FivFold |
 | `npx @fivfold/ui add <kit>` | Add a Kit |
-| `npx @fivfold/ui list` | List available Kits |
-| `npx @fivfold/ui agents` | Show agent instructions |
-| `npx @fivfold/ui setup` | Setup (e.g., shadcn) |
+| `npx @fivfold/ui list` | List Kits available from this CLI |
+| `npx @fivfold/ui agents` | Agent-oriented instructions |
+| `npx @fivfold/ui setup` | e.g. shadcn alignment |
 
-**API CLI** (in a Node.js backend project):
+**API CLI** (in a consumer project):
 
 | Command | Description |
 |---------|-------------|
-| `npx @fivfold/api init` | Initialize FivFold in project |
+| `npx @fivfold/api init` | Initialize FivFold |
 | `npx @fivfold/api add <kit>` | Add a backend Kit |
-| `npx @fivfold/api list` | List available Kits |
+| `npx @fivfold/api list` | List Kits available from this CLI |
 
-## Project Structure
+## Project structure
 
 ```
 fivfold/
-├── core/           # @fivfold/core — shared engine
-│   └── src/        # vfs, strategy, manifest, template, ast, detection, prompt, workspace
-├── ui/             # @fivfold/ui — frontend CLI
-│   ├── src/        # CLI entry, commands
-│   ├── manifests/  # *.kit.json
-│   └── templates/  # Kit templates (auth, email, kanban, themes)
-├── api/            # @fivfold/api — backend CLI
-│   ├── src/        # CLI entry, commands, strategies
-│   ├── manifests/  # *.kit.json
-│   └── templates/  # Kit templates (kanban, email)
-├── site/           # fivfold-site — docs site
-│   └── app/        # Next.js App Router (docs, getting-started, kits, api)
-├── AGENTS.md       # AI agent rules
-├── OVERVIEW.md     # Quick reference
+├── core/src/       # VFS, strategy, manifest, template, AST, detection, prompts, workspace
+├── ui/             # UI CLI — src/, manifests/, templates/
+├── api/            # API CLI — src/, manifests/, templates/
+├── site/           # Docs site (Next.js App Router)
+├── AGENTS.md       # AI / contributor architectural rules
+├── CONTRIBUTING.md # How to contribute
 └── package.json
 ```
 
+## Manifests
+
+Kits are defined by declarative manifests (`*.kit.json`) under `ui/manifests/` and `api/manifests/`. They declare templates, dependencies, and AST targets; the CLIs orchestrate generation without hardcoding every stack combination.
+
 ## Configuration
 
-- **File:** `fivfold.json` at project root
-- **Shared by:** ui and api CLIs
-- **Purpose:** Stores project config (output paths, stack choices)
+- **File:** `fivfold.json` at the **consumer** project root (created by `init`).
+- **Shared by:** UI and API CLIs (paths, stack choices, etc.).
 
-## For AI Agents
+## For contributors and agents
 
-- **[AGENTS.md](./AGENTS.md)** — Architectural rules and constraints
-- **[OVERVIEW.md](./OVERVIEW.md)** — Project structure and commands
+- **[AGENTS.md](./AGENTS.md)** — Architecture, constraints, and documentation conventions.
+- **[CONTRIBUTING.md](./CONTRIBUTING.md)** — Setup, workflow, package-specific notes.
 
-## Development
+## Development notes
 
-1. **Build order:** `core` must be built before `ui` and `api` (they depend on it)
-2. **Watch mode:** Run `pnpm run dev` in core/ui/api for live rebuilds
-3. **Docs site:** Uses `@fivfold/ui` via `file:../ui` for demos; ensure ui is built
+1. Build **core** before **ui** / **api** (workspace dependency).
+2. The docs site depends on `@fivfold/ui` for demos; build `ui` when working on site features.
 
 ## License
 

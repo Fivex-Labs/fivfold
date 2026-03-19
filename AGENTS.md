@@ -91,15 +91,7 @@ The FivFold monorepo has four packages:
 
 **Workspace dependencies:** `ui` and `api` depend on `core` via `workspace:*`. `site` depends on `ui` (devDependency) for demos.
 
-**Available Kits:**
-
-| Kit | UI (`@fivfold/ui`) | API (`@fivfold/api`) |
-|-----|-------------------|---------------------|
-| Auth | Yes (Firebase, Cognito, Auth0, JWT clients) | Planned |
-| Email | Yes | Yes |
-| Kanban | Yes | Yes |
-| Push | No | Yes |
-| Chat | Yes | Yes |
+**Discovering Kits:** Do not treat any static doc table as authoritative. Use each CLI’s `list` command and inspect `ui/manifests/*.kit.json` and `api/manifests/*.kit.json` for what is shipped in this revision.
 
 **Where to make changes:**
 
@@ -112,9 +104,9 @@ The FivFold monorepo has four packages:
 
 ## 8. Documentation Conventions
 
-- **Getting Started docs** (`site/app/docs/getting-started/`): Keep language generic. Do not mention specific kit names, ORMs, or frameworks unless illustrating an example.
-- **Kit-specific docs** (`site/app/docs/kits/`): Auth, Email, Kanban, Push, Chat pages may be detailed and stack-specific.
-- **API docs** (`site/app/docs/api/`): Setup, Express, NestJS — framework-specific content is appropriate.
+- **Getting Started docs** (`site/app/docs/getting-started/`): Keep language generic. Do not name specific Kits, ORMs, or frameworks except in short examples.
+- **Kit docs** (`site/app/docs/kits/`): Per-Kit pages may be detailed and stack-specific where needed.
+- **API docs** (`site/app/docs/api/`): Framework-specific content (e.g. Express vs NestJS) is appropriate.
 
 ## 9. Supported Databases, ORMs & Services
 
@@ -147,7 +139,7 @@ When the ORM is auto-selected, skip the ORM prompt entirely and inform the user 
 
 ### Realtime (Kit-specific)
 
-Kits that require real-time communication (e.g., Chat) use **Socket.IO exclusively**. It is auto-selected with no prompt. There is no user-facing realtime provider choice.
+Kits that require real-time communication use **Socket.IO exclusively**. It is auto-selected with no prompt. There is no user-facing realtime provider choice.
 
 | Provider | Transport | Notes |
 |----------|-----------|-------|
@@ -183,7 +175,7 @@ When generating or modifying code, agents MUST follow the established layout:
 
 - **Backend layout:** Domain (ports) → Infrastructure (adapters) → Delivery (controllers/routes). Never mix ORM-specific code in the framework layer.
 - **ORM conditionals:** Use Handlebars `{{#if (eq orm "typeorm")}}` / `{{#if (eq orm "mongoose")}}` etc. in framework templates; ORM dependencies belong exclusively in the `orm` manifest layer.
-- **File structure:** Kits in `ui/kits/<name>/`, API modules in the configured output path; entities, DTOs, services, controllers follow Hexagonal layout.
+- **File structure:** UI Kit templates under `ui/templates/` (and manifests in `ui/manifests/`); API output under the user’s configured path; entities, DTOs, services, controllers follow Hexagonal layout.
 - **Manifest-driven:** All kit/module definitions come from manifests; no hardcoded stack permutations.
 
 ## 11. Skills Registry Maintenance (MANDATORY)

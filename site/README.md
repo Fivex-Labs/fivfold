@@ -2,11 +2,11 @@
 
 > **DISCLAIMER:** This is a pre-alpha release and currently under heavy testing and scrutiny. Until the first stable version (v1.0.0) is released, we advise not to use this in production.
 
-Next.js docs site for FivFold. Showcases Kits, demos, and documentation.
+Next.js docs and marketing site for FivFold.
 
 ## What is Site
 
-The FivFold documentation and marketing site. Built with Next.js App Router, React 19, Tailwind v4, and shadcn/ui. Includes live demos of Kits, overall documentation and more.
+Documentation and landing experience. Built with Next.js App Router, React 19, Tailwind v4, and shadcn/ui. Includes Kit demos wired to `@fivfold/ui` where applicable.
 
 ## Tech Stack
 
@@ -33,11 +33,7 @@ site/
 │   │   │   ├── installation/
 │   │   │   ├── cli/
 │   │   │   └── how-it-works/
-│   │   ├── kits/
-│   │   │   ├── overview/
-│   │   │   ├── auth/
-│   │   │   ├── email/
-│   │   │   └── kanban/
+│   │   ├── kits/           # Per-Kit doc routes (+ overview index)
 │   │   └── api/
 │   │       ├── setup/
 │   │       ├── express/
@@ -53,10 +49,10 @@ site/
 | Path | Contents |
 |------|----------|
 | `app/docs/getting-started/` | Introduction, Background, Installation, CLI, How it works |
-| `app/docs/kits/` | Overview, Auth, Email, Kanban |
-| `app/docs/api/` | Setup, Express, NestJS |
+| `app/docs/kits/` | Kit-specific documentation routes |
+| `app/docs/api/` | Backend / API-related docs |
 | `app/docs/components/` | DocPage, DocCard, CodeBlock, StackConfigurator, etc. |
-| `components/ui/kits/` | Auth, Kanban, Email Kit components (from @fivfold/ui) |
+| `components/ui/kits/` | Demo Kit components (from `@fivfold/ui`) |
 
 ## Components
 
@@ -78,9 +74,6 @@ pnpm run lint    # ESLint
 
 ## Local @fivfold/ui
 
-The site uses `@fivfold/ui` as a devDependency (`file:../ui`) for:
-
-- Kit components in demos (Auth, Kanban, Email)
-- Ensuring docs demos match what users get when they add Kits
+The site uses `@fivfold/ui` as a devDependency (`file:../ui`) for Kit demos and to keep examples aligned with the published UI package.
 
 Ensure `ui` is built before running the site: `pnpm run build -w ui` (or from root: `pnpm run build:ui`).

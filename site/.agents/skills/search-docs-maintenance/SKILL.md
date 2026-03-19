@@ -54,7 +54,7 @@ If using a new icon, add it to the `iconMap` in:
 ## Sections
 
 - **Getting Started**: Introduction, setup, CLI, how it works
-- **Kits**: Overview, Auth, Email, Kanban, and any new Kits
+- **Kits**: Overview plus per-Kit pages as they exist under `app/docs/kits/`
 - **API**: Backend setup, Express, NestJS, and framework-specific docs
 
 ## Checklist

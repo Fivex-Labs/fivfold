@@ -14,52 +14,46 @@ Please be respectful and constructive in all interactions. We aim to maintain a 
 - **pnpm** (package manager)
 
 ```bash
-# Install pnpm if needed
 npm install -g pnpm
 ```
 
 ### Setup
 
 ```bash
-# Clone the repository
 git clone https://github.com/Fivex-Labs/fivfold.git
 cd fivfold
-
-# Install dependencies
 pnpm install
-
-# Build all packages (core must be built before ui and api)
 pnpm run build
 ```
 
-### Project Structure
+### Project structure
 
 - **core/** — Shared engine (VFS, AST, manifests, strategies). Build first.
 - **ui/** — Frontend Kits CLI. Depends on core.
 - **api/** — Backend scaffolding CLI. Depends on core.
-- **site/** — Next.js docs site. Uses ui for demos.
+- **site/** — Next.js docs site. Uses `ui` for demos.
 
-## Development Workflow
+Manifest-driven Kits live under `ui/manifests/`, `api/manifests/` and matching `templates/`. See the root [README.md](./README.md) for commands and layout.
+
+## Development workflow
 
 1. **Create a branch** from `main` for your changes
-2. **Make changes** following the architectural rules in [AGENTS.md](./AGENTS.md)
-3. **Build and test** — run `pnpm run build` from root
-4. **Submit a pull request** with a clear description of your changes
+2. **Follow** the rules in [AGENTS.md](./AGENTS.md)
+3. **Build and test** — `pnpm run build` from root
+4. **Open a pull request** with a clear description
 
-## Key Guidelines
+## Key guidelines
 
-- **VFS:** All file operations must go through the Virtual File System. No direct `fs.writeFileSync` during generation.
-- **AST:** Use ts-morph for modifying existing source files. No regex or string `.replace()` on source code.
-- **Strategy pattern:** Add new generators as strategies, not hardcoded if/else branches.
-- **Manifests:** Define Kits in JSON manifests, not in code.
+- **VFS:** All generation-time file operations go through the Virtual File System. No `fs.writeFileSync` in the middle of a generator run.
+- **AST:** Use ts-morph for editing existing source. No regex / string `.replace()` on source files.
+- **Strategies:** Add generators as strategies, not giant `if/else` trees.
+- **Manifests:** Define Kits in JSON manifests, not one-off hardcoded paths per stack.
 
-See [AGENTS.md](./AGENTS.md) and [OVERVIEW.md](./OVERVIEW.md) for full architectural rules.
+## Package-specific notes
 
-## Package-Specific Notes
-
-- **[core/CONTRIBUTING.md](./core/CONTRIBUTING.md)** — Core engine contributions
-- **[ui/CONTRIBUTING.md](./ui/CONTRIBUTING.md)** — UI CLI and Kits
-- **[api/CONTRIBUTING.md](./api/CONTRIBUTING.md)** — API scaffolding
+- **[core/CONTRIBUTING.md](./core/CONTRIBUTING.md)** — Core engine
+- **[ui/CONTRIBUTING.md](./ui/CONTRIBUTING.md)** — UI CLI
+- **[api/CONTRIBUTING.md](./api/CONTRIBUTING.md)** — API CLI
 - **[site/CONTRIBUTING.md](./site/CONTRIBUTING.md)** — Docs site
 
 ## Questions?

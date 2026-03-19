@@ -5,6 +5,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Version
 
 > Run `pnpm release` from the monorepo root to bump versions and generate a new entry automatically.
 
+## [Unreleased]
+
+### Changed
+- Documentation: removed root `OVERVIEW.md` (overlap with `README.md`); consolidated structure/manifest notes into README and CONTRIBUTING.
+- README, AGENTS, `skills.md`, and `site/README.md` generalized so shipped Kits are discovered via CLI `list` and manifest dirs, not static tables.
+
 ## [0.13.0] - 2026-03-19
 
 ### Added
