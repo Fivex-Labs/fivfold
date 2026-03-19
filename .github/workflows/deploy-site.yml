@@ -26,8 +26,8 @@ jobs:
 
       - run: npm install -g vercel@latest
 
+      # Run from repo root — if Root Directory on Vercel is "site", running from site/ doubles the path
+      # and breaks Next.js detection (site/site). Same for local: `vercel --prod` from monorepo root.
       - run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
-        working-directory: site
 
       - run: vercel --prod --yes --token=${{ secrets.VERCEL_TOKEN }}
-        working-directory: site
