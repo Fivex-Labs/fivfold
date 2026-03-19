@@ -1,5 +1,8 @@
 node_modules
 dist
+
+# Monorepo uses pnpm only — npm lockfile in site/ makes Vercel run npm install and breaks workspace:*
+site/package-lock.json
 .DS_Store
 .env
 .env.local
@@ -7,4 +10,8 @@ dist
 *.log
 .vercel
 .next
+
+# Cursor internal working files
+**/.cursor/plans/
+**/.cursor/projects/
 
