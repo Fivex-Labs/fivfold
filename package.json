@@ -12,6 +12,7 @@
     "build:site": "pnpm --filter fivfold-site build",
     "release": "node scripts/release.mjs"
   },
+  "packageManager": "pnpm@9.0.0",
   "engines": {
     "node": ">=20.0.0"
   }
