@@ -3,7 +3,7 @@ import path from "path";
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
-  outputFileTracingRoot: path.join(process.cwd()),
+  outputFileTracingRoot: path.join(__dirname, ".."),
   async redirects() {
     return [
       { source: "/docs/appkits", destination: "/docs/kits/overview", permanent: true },
