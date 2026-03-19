@@ -26,3 +26,17 @@ vercel --prod
 ```
 
 GitHub Actions runs `vercel pull` / `vercel --prod` from the repo root for the same reason.
+
+## Troubleshooting
+
+### “No Next.js version detected”
+
+This almost always means Vercel is using the **repository root** as the app root and reading the **root** `package.json` (which does not list `next`).
+
+**Fix:** In Vercel → **Project → Settings → Build and Deployment → Root Directory**, set **`site`** (not empty). Save, then deploy again from the **monorepo root** with `vercel --prod`.
+
+Do **not** clear Root Directory to work around install errors — use **`pnpm install --frozen-lockfile`** as the install command (no `pnpm -C ..`; on Vercel, `-C ..` can resolve to `/vercel`, which has no `package.json`).
+
+### “No package.json found in /vercel” (install)
+
+Remove **`-C ..`** from the install command. With Root Directory **`site`**, run install as **`pnpm install --frozen-lockfile`** so pnpm runs from `site/` and still resolves the workspace via the parent `pnpm-workspace.yaml`.
