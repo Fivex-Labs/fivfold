@@ -1,0 +1,514 @@
+import { Injectable, NotFoundException, ForbiddenException, ConflictException } from '@nestjs/common';
+{{#if (eq orm "typeorm")}}
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository, In } from 'typeorm';
+import { ConversationEntity } from './entities/conversation.entity';
+import { MessageEntity } from './entities/message.entity';
+import { ParticipantEntity } from './entities/participant.entity';
+import { AttachmentEntity } from './entities/attachment.entity';
+import { PollEntity } from './entities/poll.entity';
+import { PollVoteEntity } from './entities/poll-vote.entity';
+import { ReactionEntity } from './entities/reaction.entity';
+{{/if}}
+{{#if (eq orm "mongoose")}}
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import type { IConversation } from './schemas/conversation.schema';
+import type { IMessage } from './schemas/message.schema';
+import type { IParticipant } from './schemas/participant.schema';
+import type { IAttachment } from './schemas/attachment.schema';
+import type { IPoll } from './schemas/poll.schema';
+import type { IReaction } from './schemas/reaction.schema';
+{{/if}}
+{{#if (eq orm "prisma")}}
+import { PrismaService } from '../prisma/prisma.service';
+{{/if}}
+{{#if (eq orm "firebase-admin")}}
+import { ChatCollections } from './collections/chat.collections';
+import * as admin from 'firebase-admin';
+{{/if}}
+import type { IChatService } from './domain/chat.port';
+import type { CreateMessageDto } from './dto/create-message.dto';
+import type { CreateConversationDto } from './dto/create-conversation.dto';
+import type { CreateGroupDto } from './dto/create-group.dto';
+import type { UpdateGroupDto } from './dto/update-group.dto';
+import type { AddMemberDto } from './dto/add-member.dto';
+import type { RemoveMemberDto } from './dto/remove-member.dto';
+import type { SendAttachmentDto } from './dto/send-attachment.dto';
+import type { CreatePollDto } from './dto/create-poll.dto';
+import type { VotePollDto } from './dto/vote-poll.dto';
+import type { ShareLocationDto } from './dto/share-location.dto';
+import type { AddReactionDto } from './dto/add-reaction.dto';
+import type { SearchChatDto } from './dto/search-chat.dto';
+import type { PaginationDto } from './dto/pagination.dto';
+
+@Injectable()
+export class ChatService implements IChatService {
+  constructor(
+    {{#if (eq orm "typeorm")}}
+    @InjectRepository(ConversationEntity)
+    private readonly conversationRepo: Repository<ConversationEntity>,
+    @InjectRepository(MessageEntity)
+    private readonly messageRepo: Repository<MessageEntity>,
+    @InjectRepository(ParticipantEntity)
+    private readonly participantRepo: Repository<ParticipantEntity>,
+    @InjectRepository(AttachmentEntity)
+    private readonly attachmentRepo: Repository<AttachmentEntity>,
+    @InjectRepository(PollEntity)
+    private readonly pollRepo: Repository<PollEntity>,
+    @InjectRepository(PollVoteEntity)
+    private readonly pollVoteRepo: Repository<PollVoteEntity>,
+    @InjectRepository(ReactionEntity)
+    private readonly reactionRepo: Repository<ReactionEntity>,
+    {{/if}}
+    {{#if (eq orm "mongoose")}}
+    @InjectModel('ChatConversation') private readonly conversationModel: Model<IConversation>,
+    @InjectModel('ChatMessage') private readonly messageModel: Model<IMessage>,
+    @InjectModel('ChatParticipant') private readonly participantModel: Model<IParticipant>,
+    @InjectModel('ChatAttachment') private readonly attachmentModel: Model<IAttachment>,
+    @InjectModel('ChatPoll') private readonly pollModel: Model<IPoll>,
+    @InjectModel('ChatReaction') private readonly reactionModel: Model<IReaction>,
+    {{/if}}
+    {{#if (eq orm "prisma")}}
+    private readonly prisma: PrismaService,
+    {{/if}}
+  ) {}
+
+  async createConversation(dto: CreateConversationDto, userId: string): Promise<unknown> {
+    {{#if (eq orm "typeorm")}}
+    const conversation = this.conversationRepo.create({ type: 'direct' });
+    const saved = await this.conversationRepo.save(conversation);
+    const participantIds = [...new Set([userId, ...dto.participantIds])];
+    await this.participantRepo.save(
+      participantIds.map((uid) => this.participantRepo.create({ conversationId: saved.id, userId: uid, role: uid === userId ? 'admin' : 'member' }))
+    );
+    return saved;
+    {{/if}}
+    {{#if (eq orm "mongoose")}}
+    const conversation = await this.conversationModel.create({ type: 'direct', pinnedByUserIds: [], mutedByUsers: {} });
+    const participantIds = [...new Set([userId, ...dto.participantIds])];
+    await this.participantModel.create(
+      participantIds.map((uid) => ({ conversationId: conversation.id, userId: uid, role: uid === userId ? 'admin' : 'member' }))
+    );
+    return conversation;
+    {{/if}}
+    {{#if (eq orm "prisma")}}
+    const participantIds = [...new Set([userId, ...dto.participantIds])];
+    return this.prisma.chatConversation.create({
+      data: {
+        type: 'direct',
+        pinnedByUserIds: [],
+        participants: { create: participantIds.map((uid) => ({ userId: uid, role: uid === userId ? 'admin' : 'member' })) },
+      },
+      include: { participants: true },
+    });
+    {{/if}}
+    {{#if (eq orm "firebase-admin")}}
+    const ref = ChatCollections.conversations().doc();
+    const now = admin.firestore.Timestamp.now();
+    const participantIds = [...new Set([userId, ...dto.participantIds])];
+    await ref.set({ type: 'direct', pinnedByUserIds: [], mutedByUsers: {}, createdAt: now, updatedAt: now });
+    const batch = admin.firestore().batch();
+    participantIds.forEach((uid) => {
+      const pRef = ChatCollections.participants(ref.id).doc(uid);
+      batch.set(pRef, { conversationId: ref.id, userId: uid, role: uid === userId ? 'admin' : 'member', joinedAt: now });
+    });
+    await batch.commit();
+    return { id: ref.id, type: 'direct' };
+    {{/if}}
+  }
+
+  async getConversations(userId: string, pagination: PaginationDto): Promise<{ items: unknown[]; total: number; nextCursor?: string }> {
+    const limit = pagination.limit ?? 30;
+    {{#if (eq orm "typeorm")}}
+    const participations = await this.participantRepo.find({ where: { userId }, take: limit + 1 });
+    const conversationIds = participations.map((p) => p.conversationId);
+    const conversations = await this.conversationRepo.findBy({ id: In(conversationIds) });
+    const hasMore = conversations.length > limit;
+    return { items: conversations.slice(0, limit), total: conversations.length, nextCursor: hasMore ? conversations[limit - 1].id : undefined };
+    {{/if}}
+    {{#if (eq orm "mongoose")}}
+    const participations = await this.participantModel.find({ userId }).limit(limit + 1);
+    const conversationIds = participations.map((p) => p.conversationId);
+    const conversations = await this.conversationModel.find({ _id: { $in: conversationIds } });
+    const hasMore = conversations.length > limit;
+    return { items: conversations.slice(0, limit), total: conversations.length, nextCursor: hasMore ? String(conversations[limit - 1]._id) : undefined };
+    {{/if}}
+    {{#if (eq orm "prisma")}}
+    const participations = await this.prisma.chatParticipant.findMany({ where: { userId }, take: limit + 1 });
+    const conversationIds = participations.map((p) => p.conversationId);
+    const conversations = await this.prisma.chatConversation.findMany({ where: { id: { in: conversationIds } } });
+    const hasMore = conversations.length > limit;
+    return { items: conversations.slice(0, limit), total: conversations.length };
+    {{/if}}
+    {{#if (eq orm "firebase-admin")}}
+    const participationsSnap = await ChatCollections.participants('').parent.where('userId', '==', userId).limit(limit).get();
+    return { items: [], total: participationsSnap.size };
+    {{/if}}
+  }
+
+  async getConversation(id: string, userId: string): Promise<unknown> {
+    {{#if (eq orm "typeorm")}}
+    const participant = await this.participantRepo.findOneBy({ conversationId: id, userId });
+    if (!participant) throw new NotFoundException('Conversation not found');
+    return this.conversationRepo.findOneBy({ id });
+    {{/if}}
+    {{#if (eq orm "mongoose")}}
+    const participant = await this.participantModel.findOne({ conversationId: id, userId });
+    if (!participant) throw new NotFoundException('Conversation not found');
+    return this.conversationModel.findById(id);
+    {{/if}}
+    {{#if (eq orm "prisma")}}
+    const participant = await this.prisma.chatParticipant.findUnique({ where: { conversationId_userId: { conversationId: id, userId } } });
+    if (!participant) throw new NotFoundException('Conversation not found');
+    return this.prisma.chatConversation.findUnique({ where: { id } });
+    {{/if}}
+    {{#if (eq orm "firebase-admin")}}
+    const doc = await ChatCollections.conversations().doc(id).get();
+    if (!doc.exists) throw new NotFoundException('Conversation not found');
+    return { id: doc.id, ...doc.data() };
+    {{/if}}
+  }
+
+  async deleteConversation(id: string, userId: string): Promise<void> {
+    await this.getConversation(id, userId);
+    {{#if (eq orm "typeorm")}}
+    await this.conversationRepo.delete(id);
+    {{/if}}
+    {{#if (eq orm "mongoose")}}
+    await this.conversationModel.findByIdAndDelete(id);
+    {{/if}}
+    {{#if (eq orm "prisma")}}
+    await this.prisma.chatConversation.delete({ where: { id } });
+    {{/if}}
+    {{#if (eq orm "firebase-admin")}}
+    await ChatCollections.conversations().doc(id).delete();
+    {{/if}}
+  }
+
+  async pinConversation(conversationId: string, userId: string, pinned: boolean): Promise<void> {
+    {{#if (eq orm "typeorm")}}
+    const conv = await this.conversationRepo.findOneBy({ id: conversationId });
+    if (!conv) throw new NotFoundException();
+    const current = conv.pinnedByUserIds ?? [];
+    conv.pinnedByUserIds = pinned ? [...new Set([...current, userId])] : current.filter((id) => id !== userId);
+    await this.conversationRepo.save(conv);
+    {{/if}}
+    {{#if (eq orm "mongoose")}}
+    const update = pinned ? { $addToSet: { pinnedByUserIds: userId } } : { $pull: { pinnedByUserIds: userId } };
+    await this.conversationModel.findByIdAndUpdate(conversationId, update);
+    {{/if}}
+    {{#if (eq orm "prisma")}}
+    const conv = await this.prisma.chatConversation.findUnique({ where: { id: conversationId } });
+    if (!conv) throw new NotFoundException();
+    const current = (conv.pinnedByUserIds as string[]) ?? [];
+    await this.prisma.chatConversation.update({ where: { id: conversationId }, data: { pinnedByUserIds: pinned ? [...new Set([...current, userId])] : current.filter((id) => id !== userId) } });
+    {{/if}}
+    {{#if (eq orm "firebase-admin")}}
+    const ref = ChatCollections.conversations().doc(conversationId);
+    await ref.update({ pinnedByUserIds: pinned ? admin.firestore.FieldValue.arrayUnion(userId) : admin.firestore.FieldValue.arrayRemove(userId) });
+    {{/if}}
+  }
+
+  async muteConversation(conversationId: string, userId: string, mutedUntil: Date | null): Promise<void> {
+    {{#if (eq orm "typeorm")}}
+    const conv = await this.conversationRepo.findOneBy({ id: conversationId });
+    if (!conv) throw new NotFoundException();
+    const muted = { ...(conv.mutedByUsers ?? {}) };
+    if (mutedUntil) muted[userId] = mutedUntil.toISOString(); else delete muted[userId];
+    conv.mutedByUsers = muted;
+    await this.conversationRepo.save(conv);
+    {{/if}}
+    {{#if (eq orm "mongoose")}}
+    const key = `mutedByUsers.${userId}`;
+    const update = mutedUntil ? { $set: { [key]: mutedUntil.toISOString() } } : { $unset: { [key]: '' } };
+    await this.conversationModel.findByIdAndUpdate(conversationId, update);
+    {{/if}}
+    {{#if (eq orm "prisma")}}
+    const conv = await this.prisma.chatConversation.findUnique({ where: { id: conversationId } });
+    if (!conv) throw new NotFoundException();
+    const muted = { ...((conv.mutedByUsers as Record<string, string>) ?? {}) };
+    if (mutedUntil) muted[userId] = mutedUntil.toISOString(); else delete muted[userId];
+    await this.prisma.chatConversation.update({ where: { id: conversationId }, data: { mutedByUsers: muted } });
+    {{/if}}
+    {{#if (eq orm "firebase-admin")}}
+    const ref = ChatCollections.conversations().doc(conversationId);
+    if (mutedUntil) {
+      await ref.update({ [`mutedByUsers.${userId}`]: mutedUntil.toISOString() });
+    } else {
+      await ref.update({ [`mutedByUsers.${userId}`]: admin.firestore.FieldValue.delete() });
+    }
+    {{/if}}
+  }
+
+  async markAsRead(conversationId: string, userId: string): Promise<void> {
+    {{#if (eq orm "typeorm")}}
+    await this.participantRepo.update({ conversationId, userId }, { lastReadAt: new Date() });
+    {{/if}}
+    {{#if (eq orm "mongoose")}}
+    await this.participantModel.updateOne({ conversationId, userId }, { lastReadAt: new Date() });
+    {{/if}}
+    {{#if (eq orm "prisma")}}
+    await this.prisma.chatParticipant.update({ where: { conversationId_userId: { conversationId, userId } }, data: { lastReadAt: new Date() } });
+    {{/if}}
+    {{#if (eq orm "firebase-admin")}}
+    await ChatCollections.participants(conversationId).doc(userId).update({ lastReadAt: admin.firestore.Timestamp.now() });
+    {{/if}}
+  }
+
+  async sendMessage(dto: CreateMessageDto, senderId: string): Promise<unknown> {
+    {{#if (eq orm "typeorm")}}
+    const msg = this.messageRepo.create({ conversationId: dto.conversationId, senderId, content: dto.content, type: dto.type, metadata: dto.metadata, readByUserIds: [senderId], replyToMessageId: dto.replyToMessageId, status: 'sent' });
+    return this.messageRepo.save(msg);
+    {{/if}}
+    {{#if (eq orm "mongoose")}}
+    return this.messageModel.create({ conversationId: dto.conversationId, senderId, content: dto.content, type: dto.type, metadata: dto.metadata, readByUserIds: [senderId], replyToMessageId: dto.replyToMessageId, status: 'sent' });
+    {{/if}}
+    {{#if (eq orm "prisma")}}
+    return this.prisma.chatMessage.create({ data: { conversationId: dto.conversationId, senderId, content: dto.content, type: dto.type, metadata: dto.metadata ?? {}, readByUserIds: [senderId], status: 'sent' } });
+    {{/if}}
+    {{#if (eq orm "firebase-admin")}}
+    const ref = ChatCollections.messages(dto.conversationId).doc();
+    const now = admin.firestore.Timestamp.now();
+    await ref.set({ conversationId: dto.conversationId, senderId, content: dto.content, type: dto.type, metadata: dto.metadata ?? {}, readByUserIds: [senderId], status: 'sent', createdAt: now, updatedAt: now });
+    return { id: ref.id, ...dto };
+    {{/if}}
+  }
+
+  async getMessages(conversationId: string, userId: string, pagination: PaginationDto): Promise<{ items: unknown[]; total: number; nextCursor?: string }> {
+    const limit = pagination.limit ?? 30;
+    {{#if (eq orm "typeorm")}}
+    const [items, total] = await this.messageRepo.findAndCount({ where: { conversationId }, order: { createdAt: 'DESC' }, take: limit });
+    return { items: items.reverse(), total, nextCursor: items.length === limit ? String(items[0].createdAt.getTime()) : undefined };
+    {{/if}}
+    {{#if (eq orm "mongoose")}}
+    const items = await this.messageModel.find({ conversationId, deletedAt: null }).sort({ createdAt: -1 }).limit(limit);
+    return { items: items.reverse(), total: items.length };
+    {{/if}}
+    {{#if (eq orm "prisma")}}
+    const items = await this.prisma.chatMessage.findMany({ where: { conversationId, deletedAt: null }, orderBy: { createdAt: 'desc' }, take: limit });
+    return { items: items.reverse(), total: items.length };
+    {{/if}}
+    {{#if (eq orm "firebase-admin")}}
+    const snap = await ChatCollections.messages(conversationId).orderBy('createdAt', 'desc').limit(limit).get();
+    return { items: snap.docs.map((d) => ({ id: d.id, ...d.data() })).reverse(), total: snap.size };
+    {{/if}}
+  }
+
+  async deleteMessage(messageId: string, userId: string): Promise<void> {
+    {{#if (eq orm "typeorm")}}
+    await this.messageRepo.softDelete({ id: messageId, senderId: userId });
+    {{/if}}
+    {{#if (eq orm "mongoose")}}
+    await this.messageModel.findOneAndUpdate({ _id: messageId, senderId: userId }, { deletedAt: new Date() });
+    {{/if}}
+    {{#if (eq orm "prisma")}}
+    await this.prisma.chatMessage.updateMany({ where: { id: messageId, senderId: userId }, data: { deletedAt: new Date() } });
+    {{/if}}
+    {{#if (eq orm "firebase-admin")}}
+    throw new Error('Not implemented for Firebase - requires conversation context');
+    {{/if}}
+  }
+
+  async createGroup(dto: CreateGroupDto, creatorId: string): Promise<unknown> {
+    {{#if (eq orm "typeorm")}}
+    const group = this.conversationRepo.create({ type: 'group', name: dto.name, avatarUrl: dto.avatarUrl, description: dto.description });
+    const saved = await this.conversationRepo.save(group);
+    const memberIds = [...new Set([creatorId, ...dto.memberIds])];
+    await this.participantRepo.save(memberIds.map((uid) => this.participantRepo.create({ conversationId: saved.id, userId: uid, role: uid === creatorId ? 'admin' : 'member' })));
+    return saved;
+    {{/if}}
+    {{#if (eq orm "mongoose")}}
+    const group = await this.conversationModel.create({ type: 'group', name: dto.name, avatarUrl: dto.avatarUrl, description: dto.description, pinnedByUserIds: [], mutedByUsers: {} });
+    const memberIds = [...new Set([creatorId, ...dto.memberIds])];
+    await this.participantModel.create(memberIds.map((uid) => ({ conversationId: group.id, userId: uid, role: uid === creatorId ? 'admin' : 'member' })));
+    return group;
+    {{/if}}
+    {{#if (eq orm "prisma")}}
+    const memberIds = [...new Set([creatorId, ...dto.memberIds])];
+    return this.prisma.chatConversation.create({ data: { type: 'group', name: dto.name, avatarUrl: dto.avatarUrl, description: dto.description, pinnedByUserIds: [], participants: { create: memberIds.map((uid) => ({ userId: uid, role: uid === creatorId ? 'admin' : 'member' })) } }, include: { participants: true } });
+    {{/if}}
+    {{#if (eq orm "firebase-admin")}}
+    const ref = ChatCollections.conversations().doc();
+    const now = admin.firestore.Timestamp.now();
+    const memberIds = [...new Set([creatorId, ...dto.memberIds])];
+    await ref.set({ type: 'group', name: dto.name, avatarUrl: dto.avatarUrl ?? null, description: dto.description ?? null, pinnedByUserIds: [], mutedByUsers: {}, createdAt: now, updatedAt: now });
+    const batch = admin.firestore().batch();
+    memberIds.forEach((uid) => { batch.set(ChatCollections.participants(ref.id).doc(uid), { conversationId: ref.id, userId: uid, role: uid === creatorId ? 'admin' : 'member', joinedAt: now }); });
+    await batch.commit();
+    return { id: ref.id, type: 'group' };
+    {{/if}}
+  }
+
+  async updateGroup(groupId: string, dto: UpdateGroupDto, requesterId: string): Promise<unknown> {
+    {{#if (eq orm "typeorm")}}
+    const requester = await this.participantRepo.findOneBy({ conversationId: groupId, userId: requesterId });
+    if (!requester || requester.role !== 'admin') throw new ForbiddenException('Only admins can update group info');
+    await this.conversationRepo.update(groupId, { ...(dto.name && { name: dto.name }), ...(dto.avatarUrl && { avatarUrl: dto.avatarUrl }), ...(dto.description && { description: dto.description }) });
+    return this.conversationRepo.findOneBy({ id: groupId });
+    {{/if}}
+    {{#if (eq orm "mongoose")}}
+    const requester = await this.participantModel.findOne({ conversationId: groupId, userId: requesterId });
+    if (!requester || requester.role !== 'admin') throw new ForbiddenException();
+    return this.conversationModel.findByIdAndUpdate(groupId, { $set: { ...dto } }, { new: true });
+    {{/if}}
+    {{#if (eq orm "prisma")}}
+    const requester = await this.prisma.chatParticipant.findUnique({ where: { conversationId_userId: { conversationId: groupId, userId: requesterId } } });
+    if (!requester || requester.role !== 'admin') throw new ForbiddenException();
+    return this.prisma.chatConversation.update({ where: { id: groupId }, data: { ...(dto.name && { name: dto.name }), ...(dto.avatarUrl && { avatarUrl: dto.avatarUrl }), ...(dto.description && { description: dto.description }) } });
+    {{/if}}
+    {{#if (eq orm "firebase-admin")}}
+    const ref = ChatCollections.conversations().doc(groupId);
+    await ref.update({ ...(dto.name && { name: dto.name }), ...(dto.avatarUrl && { avatarUrl: dto.avatarUrl }), updatedAt: admin.firestore.Timestamp.now() });
+    return { id: groupId, ...dto };
+    {{/if}}
+  }
+
+  async addMember(dto: AddMemberDto, requesterId: string): Promise<void> {
+    {{#if (eq orm "typeorm")}}
+    const requester = await this.participantRepo.findOneBy({ conversationId: dto.conversationId, userId: requesterId });
+    if (!requester || requester.role !== 'admin') throw new ForbiddenException();
+    await this.participantRepo.save(this.participantRepo.create({ conversationId: dto.conversationId, userId: dto.userId, role: dto.role ?? 'member' }));
+    {{/if}}
+    {{#if (eq orm "mongoose")}}
+    const requester = await this.participantModel.findOne({ conversationId: dto.conversationId, userId: requesterId });
+    if (!requester || requester.role !== 'admin') throw new ForbiddenException();
+    await this.participantModel.create({ conversationId: dto.conversationId, userId: dto.userId, role: dto.role ?? 'member' });
+    {{/if}}
+    {{#if (eq orm "prisma")}}
+    const requester = await this.prisma.chatParticipant.findUnique({ where: { conversationId_userId: { conversationId: dto.conversationId, userId: requesterId } } });
+    if (!requester || requester.role !== 'admin') throw new ForbiddenException();
+    await this.prisma.chatParticipant.create({ data: { conversationId: dto.conversationId, userId: dto.userId, role: dto.role ?? 'member' } });
+    {{/if}}
+    {{#if (eq orm "firebase-admin")}}
+    await ChatCollections.participants(dto.conversationId).doc(dto.userId).set({ conversationId: dto.conversationId, userId: dto.userId, role: dto.role ?? 'member', joinedAt: admin.firestore.Timestamp.now() });
+    {{/if}}
+  }
+
+  async removeMember(dto: RemoveMemberDto, requesterId: string): Promise<void> {
+    {{#if (eq orm "typeorm")}}
+    const requester = await this.participantRepo.findOneBy({ conversationId: dto.conversationId, userId: requesterId });
+    if (!requester || (requester.role !== 'admin' && requesterId !== dto.userId)) throw new ForbiddenException();
+    await this.participantRepo.delete({ conversationId: dto.conversationId, userId: dto.userId });
+    {{/if}}
+    {{#if (eq orm "mongoose")}}
+    await this.participantModel.deleteOne({ conversationId: dto.conversationId, userId: dto.userId });
+    {{/if}}
+    {{#if (eq orm "prisma")}}
+    await this.prisma.chatParticipant.delete({ where: { conversationId_userId: { conversationId: dto.conversationId, userId: dto.userId } } });
+    {{/if}}
+    {{#if (eq orm "firebase-admin")}}
+    await ChatCollections.participants(dto.conversationId).doc(dto.userId).delete();
+    {{/if}}
+  }
+
+  async updateMemberRole(conversationId: string, targetUserId: string, role: 'admin' | 'member', requesterId: string): Promise<void> {
+    {{#if (eq orm "typeorm")}}
+    const requester = await this.participantRepo.findOneBy({ conversationId, userId: requesterId });
+    if (!requester || requester.role !== 'admin') throw new ForbiddenException();
+    await this.participantRepo.update({ conversationId, userId: targetUserId }, { role });
+    {{/if}}
+    {{#if (eq orm "mongoose")}}
+    await this.participantModel.updateOne({ conversationId, userId: targetUserId }, { role });
+    {{/if}}
+    {{#if (eq orm "prisma")}}
+    await this.prisma.chatParticipant.update({ where: { conversationId_userId: { conversationId, userId: targetUserId } }, data: { role } });
+    {{/if}}
+    {{#if (eq orm "firebase-admin")}}
+    await ChatCollections.participants(conversationId).doc(targetUserId).update({ role });
+    {{/if}}
+  }
+
+  async leaveGroup(conversationId: string, userId: string): Promise<void> {
+    await this.removeMember({ conversationId, userId }, userId);
+  }
+
+  async sendAttachment(dto: SendAttachmentDto, senderId: string): Promise<unknown> {
+    const msg = await this.sendMessage({ conversationId: dto.conversationId, type: dto.type as 'image' | 'video' | 'file', content: undefined }, senderId);
+    {{#if (eq orm "typeorm")}}
+    const msgId = (msg as { id: string }).id;
+    return this.attachmentRepo.save(this.attachmentRepo.create({ messageId: msgId, type: dto.type, url: dto.url, name: dto.name, size: dto.size, mimeType: dto.mimeType, thumbnailUrl: dto.thumbnailUrl, durationSeconds: dto.durationSeconds }));
+    {{/if}}
+    return msg;
+  }
+
+  async createPoll(dto: CreatePollDto, creatorId: string): Promise<unknown> {
+    const msg = await this.sendMessage({ conversationId: dto.conversationId, type: 'poll', content: dto.question }, creatorId);
+    {{#if (eq orm "typeorm")}}
+    const msgId = (msg as { id: string }).id;
+    return this.pollRepo.save(this.pollRepo.create({ messageId: msgId, question: dto.question, options: dto.options, allowMultipleAnswers: dto.allowMultipleAnswers ?? false, expiresAt: dto.expiresAt ? new Date(dto.expiresAt) : undefined }));
+    {{/if}}
+    return msg;
+  }
+
+  async votePoll(dto: VotePollDto, userId: string): Promise<void> {
+    {{#if (eq orm "typeorm")}}
+    await this.pollVoteRepo.save(this.pollVoteRepo.create({ pollId: dto.pollId, userId, optionIndex: dto.optionIndex }));
+    {{/if}}
+    {{#if (eq orm "mongoose")}}
+    await this.pollModel.findByIdAndUpdate(dto.pollId, { $addToSet: { votes: { userId, optionIndex: dto.optionIndex } } });
+    {{/if}}
+    {{#if (eq orm "prisma")}}
+    await this.prisma.chatPollVote.upsert({ where: { pollId_userId_optionIndex: { pollId: dto.pollId, userId, optionIndex: dto.optionIndex } }, create: { pollId: dto.pollId, userId, optionIndex: dto.optionIndex }, update: {} });
+    {{/if}}
+    {{#if (eq orm "firebase-admin")}}
+    await ChatCollections.polls().doc(dto.pollId).update({ votes: admin.firestore.FieldValue.arrayUnion({ userId, optionIndex: dto.optionIndex }) });
+    {{/if}}
+  }
+
+  async shareLocation(dto: ShareLocationDto, senderId: string): Promise<unknown> {
+    return this.sendMessage({ conversationId: dto.conversationId, type: 'location', content: dto.label, metadata: { latitude: dto.latitude, longitude: dto.longitude, label: dto.label } }, senderId);
+  }
+
+  async addReaction(dto: AddReactionDto, userId: string): Promise<void> {
+    {{#if (eq orm "typeorm")}}
+    await this.reactionRepo.save(this.reactionRepo.create({ messageId: dto.messageId, userId, emoji: dto.emoji }));
+    {{/if}}
+    {{#if (eq orm "mongoose")}}
+    await this.reactionModel.create({ messageId: dto.messageId, userId, emoji: dto.emoji });
+    {{/if}}
+    {{#if (eq orm "prisma")}}
+    await this.prisma.chatReaction.upsert({ where: { messageId_userId_emoji: { messageId: dto.messageId, userId, emoji: dto.emoji } }, create: { messageId: dto.messageId, userId, emoji: dto.emoji }, update: {} });
+    {{/if}}
+    {{#if (eq orm "firebase-admin")}}
+    throw new Error('Requires conversation context to add reaction in Firebase');
+    {{/if}}
+  }
+
+  async removeReaction(messageId: string, emoji: string, userId: string): Promise<void> {
+    {{#if (eq orm "typeorm")}}
+    await this.reactionRepo.delete({ messageId, userId, emoji });
+    {{/if}}
+    {{#if (eq orm "mongoose")}}
+    await this.reactionModel.deleteOne({ messageId, userId, emoji });
+    {{/if}}
+    {{#if (eq orm "prisma")}}
+    await this.prisma.chatReaction.deleteMany({ where: { messageId, userId, emoji } });
+    {{/if}}
+    {{#if (eq orm "firebase-admin")}}
+    throw new Error('Requires conversation context');
+    {{/if}}
+  }
+
+  async searchConversations(dto: SearchChatDto, userId: string): Promise<{ conversations: unknown[]; messages: unknown[] }> {
+    {{#if (eq orm "typeorm")}}
+    const conversations = dto.includeConversations !== false ? await this.conversationRepo.createQueryBuilder('c').where('LOWER(c.name) LIKE :q', { q: `%${dto.query.toLowerCase()}%` }).take(20).getMany() : [];
+    const messages = dto.includeMessages !== false ? await this.messageRepo.createQueryBuilder('m').where('LOWER(m.content) LIKE :q', { q: `%${dto.query.toLowerCase()}%` }).take(20).getMany() : [];
+    return { conversations, messages };
+    {{/if}}
+    {{#if (eq orm "mongoose")}}
+    const q = new RegExp(dto.query, 'i');
+    const conversations = dto.includeConversations !== false ? await this.conversationModel.find({ name: q }).limit(20) : [];
+    const messages = dto.includeMessages !== false ? await this.messageModel.find({ content: q }).limit(20) : [];
+    return { conversations, messages };
+    {{/if}}
+    {{#if (eq orm "prisma")}}
+    const conversations = dto.includeConversations !== false ? await this.prisma.chatConversation.findMany({ where: { name: { contains: dto.query, mode: 'insensitive' } }, take: 20 }) : [];
+    const messages = dto.includeMessages !== false ? await this.prisma.chatMessage.findMany({ where: { content: { contains: dto.query, mode: 'insensitive' } }, take: 20 }) : [];
+    return { conversations, messages };
+    {{/if}}
+    {{#if (eq orm "firebase-admin")}}
+    return { conversations: [], messages: [] };
+    {{/if}}
+  }
+}

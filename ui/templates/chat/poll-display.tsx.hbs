@@ -1,0 +1,76 @@
+'use client';
+
+import React from 'react';
+import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { Progress } from '@/components/ui/progress';
+import type { FivFoldChatPoll } from './types';
+
+interface PollDisplayProps {
+  poll: FivFoldChatPoll;
+  currentUserId: string;
+  onVote: (optionIndex: number) => void;
+  isOwn?: boolean;
+}
+
+export function PollDisplay({ poll, currentUserId, onVote, isOwn }: PollDisplayProps) {
+  const totalVotes = poll.totalVotes ?? poll.options.reduce((sum, opt) => sum + opt.voteCount, 0);
+  const hasVoted = (poll.currentUserVotedOptionIndices?.length ?? 0) > 0;
+  const isExpired = poll.expiresAt ? new Date(poll.expiresAt) < new Date() : false;
+  const canVote = !hasVoted && !isExpired;
+
+  return (
+    <div className={cn('min-w-[200px] space-y-2', isOwn ? 'text-primary-foreground' : 'text-foreground')}>
+      <p className="text-sm font-semibold leading-snug">{poll.question}</p>
+
+      <div className="space-y-1.5">
+        {poll.options.map((option, i) => {
+          const percentage = totalVotes > 0 ? Math.round((option.voteCount / totalVotes) * 100) : 0;
+          const isMyVote = poll.currentUserVotedOptionIndices?.includes(i);
+
+          return (
+            <button
+              key={i}
+              type="button"
+              disabled={!canVote}
+              onClick={() => canVote && onVote(i)}
+              className={cn(
+                'relative w-full overflow-hidden rounded-lg px-3 py-1.5 text-left text-xs transition-all',
+                canVote ? 'hover:bg-black/10 cursor-pointer' : 'cursor-default',
+                isMyVote && 'ring-2 ring-white/30'
+              )}
+            >
+              {/* Progress bar background */}
+              {!canVote && (
+                <div
+                  className={cn(
+                    'absolute inset-y-0 left-0 rounded-lg transition-all',
+                    isOwn ? 'bg-white/20' : 'bg-primary/15',
+                    isMyVote && (isOwn ? 'bg-white/30' : 'bg-primary/25')
+                  )}
+                  style={{ width: `${percentage}%` }}
+                />
+              )}
+
+              <div className="relative flex items-center justify-between">
+                <span className={cn('font-medium', isMyVote && 'font-bold')}>
+                  {option.text}
+                  {isMyVote && ' ✓'}
+                </span>
+                {!canVote && (
+                  <span className="text-[10px] opacity-70">{percentage}%</span>
+                )}
+              </div>
+            </button>
+          );
+        })}
+      </div>
+
+      <p className={cn('text-[10px]', isOwn ? 'text-primary-foreground/60' : 'text-muted-foreground')}>
+        {totalVotes} vote{totalVotes !== 1 ? 's' : ''}
+        {isExpired ? ' · Ended' : ''}
+        {poll.expiresAt && !isExpired ? ` · Ends ${new Date(poll.expiresAt).toLocaleDateString()}` : ''}
+      </p>
+    </div>
+  );
+}

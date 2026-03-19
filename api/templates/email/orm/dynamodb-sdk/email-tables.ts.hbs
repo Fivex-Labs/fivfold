@@ -1,0 +1,109 @@
+import {
+  DynamoDBClient,
+  CreateTableCommand,
+  CreateTableCommandInput,
+} from '@aws-sdk/client-dynamodb';
+import { DynamoDBDocumentClient, PutCommand, GetCommand, QueryCommand, UpdateCommand, DeleteCommand } from '@aws-sdk/lib-dynamodb';
+
+const region = process.env.AWS_REGION ?? 'us-east-1';
+const rawClient = new DynamoDBClient({ region });
+export const dynamo = DynamoDBDocumentClient.from(rawClient);
+
+export const TABLE_NAMES = {
+  FOLDERS: '{{kitName}}_folders',
+  LABELS: '{{kitName}}_labels',
+  THREADS: '{{kitName}}_threads',
+  MESSAGES: '{{kitName}}_messages',
+  ATTACHMENTS: '{{kitName}}_attachments',
+} as const;
+
+export interface {{moduleName}}FolderItem {
+  PK: string;       // USER#<userId>
+  SK: string;       // FOLDER#<id>
+  id: string;
+  name: string;
+  icon?: string | null;
+  userId: string;
+  isSystem: boolean;
+  unreadCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface {{moduleName}}ThreadItem {
+  PK: string;       // USER#<ownerId> or FOLDER#<folderId>
+  SK: string;       // THREAD#<lastMessageAt>#<id>
+  id: string;
+  subject: string;
+  ownerId: string;
+  folderId?: string | null;
+  starred: boolean;
+  unread: boolean;
+  labelIds: string[];
+  lastMessageAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  GSI1PK?: string;  // THREAD#<id> for message queries
+  GSI1SK?: string;
+}
+
+export interface {{moduleName}}MessageItem {
+  PK: string;       // THREAD#<threadId>
+  SK: string;       // MSG#<createdAt>#<id>
+  id: string;
+  threadId: string;
+  senderId: string;
+  senderEmail: string;
+  senderName?: string | null;
+  toRecipients: string[];
+  ccRecipients: string[];
+  bccRecipients: string[];
+  subject: string;
+  body: string;
+  bodyType: 'text' | 'html';
+  read: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** Table definitions for provisioning (optional, use IaC in production) */
+export const TABLE_DEFINITIONS: CreateTableCommandInput[] = [
+  {
+    TableName: TABLE_NAMES.THREADS,
+    BillingMode: 'PAY_PER_REQUEST',
+    AttributeDefinitions: [
+      { AttributeName: 'PK', AttributeType: 'S' },
+      { AttributeName: 'SK', AttributeType: 'S' },
+      { AttributeName: 'GSI1PK', AttributeType: 'S' },
+      { AttributeName: 'GSI1SK', AttributeType: 'S' },
+    ],
+    KeySchema: [
+      { AttributeName: 'PK', KeyType: 'HASH' },
+      { AttributeName: 'SK', KeyType: 'RANGE' },
+    ],
+    GlobalSecondaryIndexes: [
+      {
+        IndexName: 'GSI1',
+        KeySchema: [
+          { AttributeName: 'GSI1PK', KeyType: 'HASH' },
+          { AttributeName: 'GSI1SK', KeyType: 'RANGE' },
+        ],
+        Projection: { ProjectionType: 'ALL' },
+      },
+    ],
+  },
+  {
+    TableName: TABLE_NAMES.MESSAGES,
+    BillingMode: 'PAY_PER_REQUEST',
+    AttributeDefinitions: [
+      { AttributeName: 'PK', AttributeType: 'S' },
+      { AttributeName: 'SK', AttributeType: 'S' },
+    ],
+    KeySchema: [
+      { AttributeName: 'PK', KeyType: 'HASH' },
+      { AttributeName: 'SK', KeyType: 'RANGE' },
+    ],
+  },
+];
+
+export { PutCommand, GetCommand, QueryCommand, UpdateCommand, DeleteCommand };

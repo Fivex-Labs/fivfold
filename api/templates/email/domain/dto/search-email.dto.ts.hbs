@@ -1,0 +1,28 @@
+import { IsOptional, IsString, IsNumber, Min } from 'class-validator';
+import { Type } from 'class-transformer';
+
+export class Search{{moduleName}}Dto {
+  @IsString()
+  @IsOptional()
+  q?: string;
+
+  @IsString()
+  @IsOptional()
+  folderId?: string;
+
+  @IsString()
+  @IsOptional()
+  labelId?: string;
+
+  @IsNumber()
+  @Min(1)
+  @Type(() => Number)
+  @IsOptional()
+  page?: number;
+
+  @IsNumber()
+  @Min(1)
+  @Type(() => Number)
+  @IsOptional()
+  limit?: number;
+}

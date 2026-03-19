@@ -1,0 +1,114 @@
+import { CosmosClient, Container, Database } from '@azure/cosmos';
+
+const endpoint = process.env.COSMOS_ENDPOINT!;
+const key = process.env.COSMOS_KEY!;
+const databaseId = process.env.COSMOS_DATABASE_ID ?? 'emaildb';
+
+const client = new CosmosClient({ endpoint, key });
+
+export interface {{moduleName}}FolderItem {
+  id: string;
+  name: string;
+  icon?: string | null;
+  userId: string;
+  isSystem: boolean;
+  unreadCount: number;
+  createdAt: string;
+  updatedAt: string;
+  _partitionKey: string; // userId
+}
+
+export interface {{moduleName}}LabelItem {
+  id: string;
+  name: string;
+  color?: string | null;
+  userId: string;
+  createdAt: string;
+  updatedAt: string;
+  _partitionKey: string; // userId
+}
+
+export interface {{moduleName}}ThreadItem {
+  id: string;
+  subject: string;
+  ownerId: string;
+  folderId?: string | null;
+  starred: boolean;
+  unread: boolean;
+  labelIds: string[];
+  lastMessageAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  _partitionKey: string; // ownerId
+}
+
+export interface {{moduleName}}MessageItem {
+  id: string;
+  threadId: string;
+  senderId: string;
+  senderEmail: string;
+  senderName?: string | null;
+  toRecipients: string[];
+  ccRecipients: string[];
+  bccRecipients: string[];
+  subject: string;
+  body: string;
+  bodyType: 'text' | 'html';
+  read: boolean;
+  createdAt: string;
+  updatedAt: string;
+  _partitionKey: string; // threadId
+}
+
+export interface {{moduleName}}AttachmentItem {
+  id: string;
+  messageId: string;
+  filename: string;
+  mimeType: string;
+  size: number;
+  storageUrl: string;
+  createdAt: string;
+  _partitionKey: string; // messageId
+}
+
+export async function get{{moduleName}}Containers(): Promise<{
+  folders: Container;
+  labels: Container;
+  threads: Container;
+  messages: Container;
+  attachments: Container;
+}> {
+  const { database } = await client.databases.createIfNotExists({ id: databaseId });
+
+  const [foldersResult, labelsResult, threadsResult, messagesResult, attachmentsResult] =
+    await Promise.all([
+      database.containers.createIfNotExists({
+        id: '{{kitName}}_folders',
+        partitionKey: '/userId',
+      }),
+      database.containers.createIfNotExists({
+        id: '{{kitName}}_labels',
+        partitionKey: '/userId',
+      }),
+      database.containers.createIfNotExists({
+        id: '{{kitName}}_threads',
+        partitionKey: '/ownerId',
+      }),
+      database.containers.createIfNotExists({
+        id: '{{kitName}}_messages',
+        partitionKey: '/threadId',
+      }),
+      database.containers.createIfNotExists({
+        id: '{{kitName}}_attachments',
+        partitionKey: '/messageId',
+      }),
+    ]);
+
+  return {
+    folders: foldersResult.container,
+    labels: labelsResult.container,
+    threads: threadsResult.container,
+    messages: messagesResult.container,
+    attachments: attachmentsResult.container,
+  };
+}

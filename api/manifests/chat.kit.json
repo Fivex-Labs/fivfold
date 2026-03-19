@@ -1,0 +1,111 @@
+{
+  "name": "chat",
+  "version": "1.0.0",
+  "description": "Full-stack real-time chat with 1-1 messaging, groups, attachments, polls, reactions, GIFs, location sharing, and Socket.IO real-time communication.",
+  "domain": {
+    "files": [
+      { "template": "chat/domain/chat.port.ts.hbs", "output": "{{outputDir}}/{{kitName}}/domain/chat.port.ts" },
+      { "template": "chat/domain/dto/create-message.dto.ts.hbs", "output": "{{outputDir}}/{{kitName}}/dto/create-message.dto.ts" },
+      { "template": "chat/domain/dto/create-conversation.dto.ts.hbs", "output": "{{outputDir}}/{{kitName}}/dto/create-conversation.dto.ts" },
+      { "template": "chat/domain/dto/create-group.dto.ts.hbs", "output": "{{outputDir}}/{{kitName}}/dto/create-group.dto.ts" },
+      { "template": "chat/domain/dto/update-group.dto.ts.hbs", "output": "{{outputDir}}/{{kitName}}/dto/update-group.dto.ts" },
+      { "template": "chat/domain/dto/add-member.dto.ts.hbs", "output": "{{outputDir}}/{{kitName}}/dto/add-member.dto.ts" },
+      { "template": "chat/domain/dto/remove-member.dto.ts.hbs", "output": "{{outputDir}}/{{kitName}}/dto/remove-member.dto.ts" },
+      { "template": "chat/domain/dto/send-attachment.dto.ts.hbs", "output": "{{outputDir}}/{{kitName}}/dto/send-attachment.dto.ts" },
+      { "template": "chat/domain/dto/create-poll.dto.ts.hbs", "output": "{{outputDir}}/{{kitName}}/dto/create-poll.dto.ts" },
+      { "template": "chat/domain/dto/vote-poll.dto.ts.hbs", "output": "{{outputDir}}/{{kitName}}/dto/vote-poll.dto.ts" },
+      { "template": "chat/domain/dto/share-location.dto.ts.hbs", "output": "{{outputDir}}/{{kitName}}/dto/share-location.dto.ts" },
+      { "template": "chat/domain/dto/add-reaction.dto.ts.hbs", "output": "{{outputDir}}/{{kitName}}/dto/add-reaction.dto.ts" },
+      { "template": "chat/domain/dto/search-chat.dto.ts.hbs", "output": "{{outputDir}}/{{kitName}}/dto/search-chat.dto.ts" },
+      { "template": "chat/domain/dto/pagination.dto.ts.hbs", "output": "{{outputDir}}/{{kitName}}/dto/pagination.dto.ts" }
+    ]
+  },
+  "framework": {
+    "express": {
+      "files": [
+        { "template": "chat/framework/express/chat.routes.ts.hbs", "output": "{{outputDir}}/{{kitName}}/chat.routes.ts" },
+        { "template": "chat/framework/express/chat.service.ts.hbs", "output": "{{outputDir}}/{{kitName}}/chat.service.ts" },
+        { "template": "chat/framework/express/chat.socket-handler.ts.hbs", "output": "{{outputDir}}/{{kitName}}/chat.socket-handler.ts" }
+      ],
+      "dependencies": ["express", "class-validator", "class-transformer", "uuid", "socket.io"],
+      "devDependencies": ["@types/express", "@types/uuid"],
+      "astMutations": [
+        { "target": "src/app.ts", "action": "registerMiddleware", "routePath": "/api/chat", "importPath": "./modules/chat/chat.routes", "importName": "createChatRouter" }
+      ]
+    },
+    "nestjs": {
+      "files": [
+        { "template": "chat/framework/nestjs/chat.module.ts.hbs", "output": "{{outputDir}}/{{kitName}}/chat.module.ts" },
+        { "template": "chat/framework/nestjs/chat.controller.ts.hbs", "output": "{{outputDir}}/{{kitName}}/chat.controller.ts" },
+        { "template": "chat/framework/nestjs/chat.service.ts.hbs", "output": "{{outputDir}}/{{kitName}}/chat.service.ts" },
+        { "template": "chat/framework/nestjs/chat.gateway.ts.hbs", "output": "{{outputDir}}/{{kitName}}/chat.gateway.ts" }
+      ],
+      "dependencies": ["@nestjs/common", "@nestjs/core", "@nestjs/websockets", "@nestjs/platform-socket.io", "class-validator", "class-transformer", "uuid", "socket.io"],
+      "devDependencies": ["@types/uuid"],
+      "astMutations": [
+        { "target": "src/app.module.ts", "action": "registerModule", "module": "ChatModule", "importPath": "./modules/chat/chat.module" }
+      ]
+    }
+  },
+  "orm": {
+    "typeorm": {
+      "files": [
+        { "template": "chat/orm/typeorm/conversation.entity.ts.hbs", "output": "{{outputDir}}/{{kitName}}/entities/conversation.entity.ts" },
+        { "template": "chat/orm/typeorm/message.entity.ts.hbs", "output": "{{outputDir}}/{{kitName}}/entities/message.entity.ts" },
+        { "template": "chat/orm/typeorm/participant.entity.ts.hbs", "output": "{{outputDir}}/{{kitName}}/entities/participant.entity.ts" },
+        { "template": "chat/orm/typeorm/attachment.entity.ts.hbs", "output": "{{outputDir}}/{{kitName}}/entities/attachment.entity.ts" },
+        { "template": "chat/orm/typeorm/poll.entity.ts.hbs", "output": "{{outputDir}}/{{kitName}}/entities/poll.entity.ts" },
+        { "template": "chat/orm/typeorm/poll-vote.entity.ts.hbs", "output": "{{outputDir}}/{{kitName}}/entities/poll-vote.entity.ts" },
+        { "template": "chat/orm/typeorm/reaction.entity.ts.hbs", "output": "{{outputDir}}/{{kitName}}/entities/reaction.entity.ts" }
+      ],
+      "dependencies": ["typeorm", "reflect-metadata"],
+      "devDependencies": []
+    },
+    "prisma": {
+      "files": [
+        { "template": "chat/orm/prisma/chat-models.prisma.hbs", "output": "prisma/schema.prisma", "mode": "append" }
+      ],
+      "dependencies": ["@prisma/client"],
+      "devDependencies": ["prisma"],
+      "postInstall": "npx prisma generate"
+    },
+    "mongoose": {
+      "files": [
+        { "template": "chat/orm/mongoose/conversation.schema.ts.hbs", "output": "{{outputDir}}/{{kitName}}/schemas/conversation.schema.ts" },
+        { "template": "chat/orm/mongoose/message.schema.ts.hbs", "output": "{{outputDir}}/{{kitName}}/schemas/message.schema.ts" },
+        { "template": "chat/orm/mongoose/participant.schema.ts.hbs", "output": "{{outputDir}}/{{kitName}}/schemas/participant.schema.ts" },
+        { "template": "chat/orm/mongoose/attachment.schema.ts.hbs", "output": "{{outputDir}}/{{kitName}}/schemas/attachment.schema.ts" },
+        { "template": "chat/orm/mongoose/poll.schema.ts.hbs", "output": "{{outputDir}}/{{kitName}}/schemas/poll.schema.ts" },
+        { "template": "chat/orm/mongoose/reaction.schema.ts.hbs", "output": "{{outputDir}}/{{kitName}}/schemas/reaction.schema.ts" }
+      ],
+      "dependencies": ["mongoose"],
+      "devDependencies": []
+    },
+    "cosmos-sdk": {
+      "files": [
+        { "template": "chat/orm/cosmos-sdk/chat-containers.ts.hbs", "output": "{{outputDir}}/{{kitName}}/containers/chat.containers.ts" }
+      ],
+      "dependencies": ["@azure/cosmos"],
+      "devDependencies": [],
+      "envVars": ["COSMOS_ENDPOINT", "COSMOS_KEY", "COSMOS_DATABASE_ID"]
+    },
+    "dynamodb-sdk": {
+      "files": [
+        { "template": "chat/orm/dynamodb-sdk/chat-tables.ts.hbs", "output": "{{outputDir}}/{{kitName}}/tables/chat.tables.ts" }
+      ],
+      "dependencies": ["@aws-sdk/client-dynamodb", "@aws-sdk/lib-dynamodb"],
+      "devDependencies": [],
+      "envVars": ["AWS_REGION", "AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY"]
+    }
+  },
+  "realtime": {
+    "socketio": {
+      "files": [
+        { "template": "chat/realtime/socketio/socketio-realtime.adapter.ts.hbs", "output": "{{outputDir}}/{{kitName}}/realtime/socketio-realtime.adapter.ts" }
+      ],
+      "dependencies": ["socket.io"],
+      "devDependencies": ["@types/socket.io"],
+      "envVars": []
+    }
+  }
+}

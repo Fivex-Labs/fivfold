@@ -1,0 +1,24 @@
+import { Schema, model, Document } from 'mongoose';
+
+export interface I{{moduleName}}Attachment extends Document {
+  messageId: string;
+  filename: string;
+  mimeType: string;
+  size: number;
+  storageUrl: string;
+  createdAt: Date;
+}
+
+const {{moduleName}}AttachmentSchema = new Schema<I{{moduleName}}Attachment>(
+  {
+    messageId: { type: String, required: true, index: true },
+    filename: { type: String, required: true },
+    mimeType: { type: String, required: true },
+    size: { type: Number, required: true },
+    storageUrl: { type: String, required: true },
+  },
+  { timestamps: { createdAt: true, updatedAt: false }, collection: '{{kitName}}_attachments' }
+);
+
+export const {{moduleName}}Attachment = model<I{{moduleName}}Attachment>('{{moduleName}}Attachment', {{moduleName}}AttachmentSchema);
+export { {{moduleName}}AttachmentSchema };

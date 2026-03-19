@@ -1,0 +1,117 @@
+// ---- Chat Kit Models ----
+
+model ChatConversation {
+  id          String   @id @default(cuid())
+  type        String   // "direct" | "group"
+  name        String?
+  avatarUrl   String?
+  description String?
+  pinnedByUserIds String[]
+  mutedByUsers    Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  messages     ChatMessage[]
+  participants ChatParticipant[]
+
+  @@map("chat_conversations")
+}
+
+model ChatMessage {
+  id               String    @id @default(cuid())
+  conversationId   String
+  senderId         String
+  content          String?
+  type             String    // "text"|"image"|"video"|"file"|"poll"|"location"|"gif"
+  metadata         Json?
+  readByUserIds    String[]
+  replyToMessageId String?
+  status           String    @default("sent")
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  deletedAt        DateTime?
+
+  conversation ChatConversation @relation(fields: [conversationId], references: [id])
+  attachments  ChatAttachment[]
+  reactions    ChatReaction[]
+  poll         ChatPoll?
+
+  @@index([conversationId, createdAt])
+  @@map("chat_messages")
+}
+
+model ChatParticipant {
+  id             String    @id @default(cuid())
+  conversationId String
+  userId         String
+  role           String    @default("member") // "admin" | "member"
+  lastReadAt     DateTime?
+  joinedAt       DateTime  @default(now())
+
+  conversation ChatConversation @relation(fields: [conversationId], references: [id])
+
+  @@unique([conversationId, userId])
+  @@index([userId])
+  @@map("chat_participants")
+}
+
+model ChatAttachment {
+  id              String   @id @default(cuid())
+  messageId       String
+  type            String   // "image"|"video"|"file"|"audio"
+  url             String
+  name            String
+  size            Int
+  mimeType        String
+  thumbnailUrl    String?
+  durationSeconds Int?
+  createdAt       DateTime @default(now())
+
+  message ChatMessage @relation(fields: [messageId], references: [id])
+
+  @@index([messageId])
+  @@map("chat_attachments")
+}
+
+model ChatPoll {
+  id                   String    @id @default(cuid())
+  messageId            String    @unique
+  question             String
+  options              String[]
+  allowMultipleAnswers Boolean   @default(false)
+  expiresAt            DateTime?
+  createdAt            DateTime  @default(now())
+
+  message ChatMessage @relation(fields: [messageId], references: [id])
+  votes   ChatPollVote[]
+
+  @@map("chat_polls")
+}
+
+model ChatPollVote {
+  id          String   @id @default(cuid())
+  pollId      String
+  userId      String
+  optionIndex Int
+  createdAt   DateTime @default(now())
+
+  poll ChatPoll @relation(fields: [pollId], references: [id])
+
+  @@unique([pollId, userId, optionIndex])
+  @@index([pollId])
+  @@map("chat_poll_votes")
+}
+
+model ChatReaction {
+  id        String   @id @default(cuid())
+  messageId String
+  userId    String
+  emoji     String
+  createdAt DateTime @default(now())
+
+  message ChatMessage @relation(fields: [messageId], references: [id])
+
+  @@unique([messageId, userId, emoji])
+  @@index([messageId])
+  @@map("chat_reactions")
+}

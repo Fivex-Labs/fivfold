@@ -1,0 +1,39 @@
+import { Schema, model, Document } from 'mongoose';
+
+export interface I{{moduleName}}Message extends Document {
+  threadId: string;
+  senderId: string;
+  senderEmail: string;
+  senderName?: string | null;
+  toRecipients: string[];
+  ccRecipients: string[];
+  bccRecipients: string[];
+  subject: string;
+  body: string;
+  bodyType: 'text' | 'html';
+  read: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+const {{moduleName}}MessageSchema = new Schema<I{{moduleName}}Message>(
+  {
+    threadId: { type: String, required: true, index: true },
+    senderId: { type: String, required: true },
+    senderEmail: { type: String, required: true },
+    senderName: { type: String },
+    toRecipients: { type: [String], default: [] },
+    ccRecipients: { type: [String], default: [] },
+    bccRecipients: { type: [String], default: [] },
+    subject: { type: String, required: true },
+    body: { type: String, required: true },
+    bodyType: { type: String, enum: ['text', 'html'], default: 'text' },
+    read: { type: Boolean, default: false },
+  },
+  { timestamps: true, collection: '{{kitName}}_messages' }
+);
+
+{{moduleName}}MessageSchema.index({ threadId: 1, createdAt: -1 });
+
+export const {{moduleName}}Message = model<I{{moduleName}}Message>('{{moduleName}}Message', {{moduleName}}MessageSchema);
+export { {{moduleName}}MessageSchema };

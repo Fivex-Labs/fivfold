@@ -1,0 +1,39 @@
+import { Module } from '@nestjs/common';
+import { {{moduleName}}Controller } from './push.controller';
+import { {{moduleName}}Service } from './push.service';
+{{#if (eq orm "typeorm")}}
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { PushSubscription } from './entities/push-subscription.entity';
+import { PushNotificationLog } from './entities/notification-log.entity';
+{{/if}}
+{{#if (eq orm "mongoose")}}
+import { MongooseModule } from '@nestjs/mongoose';
+import { {{moduleName}}SubscriptionSchema } from './schemas/push-subscription.schema';
+import { {{moduleName}}NotificationLogSchema } from './schemas/notification-log.schema';
+{{/if}}
+{{#if provider}}
+import { {{providerNamePascal}}PushAdapter } from './adapters/{{provider}}-push.adapter';
+{{/if}}
+
+@Module({
+  imports: [
+    {{#if (eq orm "typeorm")}}
+    TypeOrmModule.forFeature([PushSubscription, PushNotificationLog]),
+    {{/if}}
+    {{#if (eq orm "mongoose")}}
+    MongooseModule.forFeature([
+      { name: '{{moduleName}}Subscription', schema: {{moduleName}}SubscriptionSchema },
+      { name: '{{moduleName}}NotificationLog', schema: {{moduleName}}NotificationLogSchema },
+    ]),
+    {{/if}}
+  ],
+  controllers: [{{moduleName}}Controller],
+  providers: [
+    {{moduleName}}Service,
+    {{#if provider}}
+    {{providerNamePascal}}PushAdapter,
+    {{/if}}
+  ],
+  exports: [{{moduleName}}Service],
+})
+export class {{moduleName}}Module {}

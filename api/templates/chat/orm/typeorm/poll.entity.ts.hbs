@@ -1,0 +1,26 @@
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, Index } from 'typeorm';
+
+@Entity('chat_polls')
+@Index(['messageId'])
+export class PollEntity {
+  @PrimaryGeneratedColumn('uuid')
+  id!: string;
+
+  @Column({ type: 'uuid' })
+  messageId!: string;
+
+  @Column({ type: 'text' })
+  question!: string;
+
+  @Column({ type: 'simple-json' })
+  options!: string[];
+
+  @Column({ type: 'boolean', default: false })
+  allowMultipleAnswers!: boolean;
+
+  @Column({ type: 'timestamp', nullable: true })
+  expiresAt?: Date;
+
+  @CreateDateColumn()
+  createdAt!: Date;
+}

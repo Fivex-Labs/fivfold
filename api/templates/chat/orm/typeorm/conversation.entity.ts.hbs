@@ -1,0 +1,33 @@
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany } from 'typeorm';
+
+export type ConversationType = 'direct' | 'group';
+
+@Entity('chat_conversations')
+export class ConversationEntity {
+  @PrimaryGeneratedColumn('uuid')
+  id!: string;
+
+  @Column({ type: 'varchar', enum: ['direct', 'group'] })
+  type!: ConversationType;
+
+  @Column({ type: 'varchar', nullable: true })
+  name?: string;
+
+  @Column({ type: 'varchar', nullable: true })
+  avatarUrl?: string;
+
+  @Column({ type: 'varchar', nullable: true })
+  description?: string;
+
+  @Column({ type: 'simple-array', nullable: true })
+  pinnedByUserIds?: string[];
+
+  @Column({ type: 'json', nullable: true })
+  mutedByUsers?: Record<string, string>; // userId -> ISO date string (mutedUntil)
+
+  @CreateDateColumn()
+  createdAt!: Date;
+
+  @UpdateDateColumn()
+  updatedAt!: Date;
+}

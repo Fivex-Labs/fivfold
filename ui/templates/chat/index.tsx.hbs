@@ -1,0 +1,231 @@
+'use client';
+
+import React, { useState, useCallback, useRef, useEffect } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { cn } from '@/lib/utils';
+import { ThreadsList } from './threads-list';
+import { Conversation } from './conversation';
+import { SearchPanel } from './search-panel';
+import { NewChatDialog } from './new-chat-dialog';
+import { ContactDetail } from './contact-detail';
+import { GroupDetail } from './group-detail';
+import type {
+  FivFoldChatKitProps,
+  FivFoldChatConversation,
+  FivFoldChatUser,
+} from './types';
+
+type DetailPanel = { type: 'contact'; user: FivFoldChatUser } | { type: 'group'; conversationId: string } | null;
+
+export function ChatKit({
+  currentUser,
+  conversations,
+  messages,
+  typingUsers = {},
+  gifApiKey,
+  onSendMessage,
+  onCreateGroup,
+  onStartConversation,
+  onLoadMoreMessages,
+  onSearchContacts,
+  onTypingStart,
+  onTypingStop,
+  onReaction,
+  onVotePoll,
+  onPinConversation,
+  onMuteConversation,
+  onDeleteMessage,
+  onAddMember,
+  onRemoveMember,
+  onLeaveGroup,
+  onUpdateGroup,
+  className,
+}: FivFoldChatKitProps) {
+  const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
+  const [showSearch, setShowSearch] = useState(false);
+  const [showNewChat, setShowNewChat] = useState(false);
+  const [detailPanel, setDetailPanel] = useState<DetailPanel>(null);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 767px)');
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    setIsMobile(mq.matches);
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
+
+  const selectedConversation = conversations.find((c) => c.id === selectedConversationId) ?? null;
+  const conversationMessages = selectedConversationId ? (messages[selectedConversationId] ?? []) : [];
+  const activeTypingUsers = selectedConversationId ? (typingUsers[selectedConversationId] ?? []) : [];
+
+  const handleSelectConversation = useCallback((conversation: FivFoldChatConversation) => {
+    setSelectedConversationId(conversation.id);
+    setDetailPanel(null);
+  }, []);
+
+  const handleBackToList = useCallback(() => {
+    setSelectedConversationId(null);
+    setDetailPanel(null);
+  }, []);
+
+  const handleHeaderClick = useCallback(() => {
+    if (!selectedConversation) return;
+    if (selectedConversation.type === 'group') {
+      setDetailPanel({ type: 'group', conversationId: selectedConversation.id });
+    } else {
+      const otherParticipant = selectedConversation.participants.find((p) => p.id !== currentUser.id);
+      if (otherParticipant) setDetailPanel({ type: 'contact', user: otherParticipant });
+    }
+  }, [selectedConversation, currentUser.id]);
+
+  const handleCloseDetail = useCallback(() => setDetailPanel(null), []);
+
+  const showSidebar = !isMobile || !selectedConversationId;
+  const showMain = !isMobile || !!selectedConversationId;
+
+  return (
+    <div
+      className={cn(
+        'relative flex h-full w-full overflow-hidden rounded-2xl',
+        'bg-background/80 backdrop-blur-xl',
+        'border border-white/10 shadow-2xl shadow-black/10',
+        className
+      )}
+    >
+      {/* Sidebar — thread list */}
+      <AnimatePresence initial={false}>
+        {showSidebar && (
+          <motion.aside
+            key="sidebar"
+            initial={{ x: isMobile ? '-100%' : 0, opacity: isMobile ? 0 : 1 }}
+            animate={{ x: 0, opacity: 1 }}
+            exit={{ x: '-100%', opacity: 0 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 40 }}
+            className={cn(
+              'flex flex-col',
+              'border-r border-border/50',
+              isMobile ? 'absolute inset-0 z-20 w-full' : 'w-80 shrink-0 lg:w-96'
+            )}
+          >
+            <ThreadsList
+              conversations={conversations}
+              currentUserId={currentUser.id}
+              selectedConversationId={selectedConversationId}
+              onSelectConversation={handleSelectConversation}
+              onNewChat={() => setShowNewChat(true)}
+              onSearch={() => setShowSearch(true)}
+              onPin={onPinConversation}
+              onMute={onMuteConversation}
+            />
+          </motion.aside>
+        )}
+      </AnimatePresence>
+
+      {/* Main conversation area */}
+      <AnimatePresence initial={false}>
+        {showMain && (
+          <motion.main
+            key="main"
+            initial={{ x: isMobile ? '100%' : 0, opacity: isMobile ? 0 : 1 }}
+            animate={{ x: 0, opacity: 1 }}
+            exit={{ x: '100%', opacity: 0 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 40 }}
+            className="relative flex flex-1 flex-col overflow-hidden"
+          >
+            {selectedConversation ? (
+              <Conversation
+                conversation={selectedConversation}
+                messages={conversationMessages}
+                currentUser={currentUser}
+                typingUsers={activeTypingUsers}
+                gifApiKey={gifApiKey}
+                onSendMessage={(payload) => onSendMessage?.(selectedConversation.id, payload)}
+                onLoadMore={() => onLoadMoreMessages?.(selectedConversation.id)}
+                onReaction={onReaction}
+                onVotePoll={onVotePoll}
+                onDeleteMessage={onDeleteMessage}
+                onTypingStart={() => onTypingStart?.(selectedConversation.id)}
+                onTypingStop={() => onTypingStop?.(selectedConversation.id)}
+                onHeaderClick={handleHeaderClick}
+                onBack={isMobile ? handleBackToList : undefined}
+              />
+            ) : (
+              <div className="flex flex-1 items-center justify-center text-muted-foreground">
+                <div className="text-center">
+                  <p className="text-lg font-medium">Select a conversation</p>
+                  <p className="text-sm">Choose from your chats on the left</p>
+                </div>
+              </div>
+            )}
+          </motion.main>
+        )}
+      </AnimatePresence>
+
+      {/* Detail panel */}
+      <AnimatePresence>
+        {detailPanel && (
+          <motion.aside
+            key="detail"
+            initial={{ x: '100%', opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            exit={{ x: '100%', opacity: 0 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 40 }}
+            className={cn(
+              'flex flex-col overflow-hidden',
+              'border-l border-border/50',
+              isMobile ? 'absolute inset-0 z-30 w-full' : 'w-80 shrink-0'
+            )}
+          >
+            {detailPanel.type === 'contact' ? (
+              <ContactDetail
+                user={detailPanel.user}
+                onClose={handleCloseDetail}
+              />
+            ) : (
+              <GroupDetail
+                conversation={conversations.find((c) => c.id === detailPanel.conversationId)!}
+                currentUserId={currentUser.id}
+                onClose={handleCloseDetail}
+                onAddMember={(userId) => onAddMember?.(detailPanel.conversationId, userId)}
+                onRemoveMember={(userId) => onRemoveMember?.(detailPanel.conversationId, userId)}
+                onLeaveGroup={() => onLeaveGroup?.(detailPanel.conversationId)}
+                onUpdateGroup={(updates) => onUpdateGroup?.(detailPanel.conversationId, updates)}
+              />
+            )}
+          </motion.aside>
+        )}
+      </AnimatePresence>
+
+      {/* Modals */}
+      <SearchPanel
+        open={showSearch}
+        conversations={conversations}
+        messages={messages}
+        onClose={() => setShowSearch(false)}
+        onSelectConversation={(conv) => {
+          handleSelectConversation(conv);
+          setShowSearch(false);
+        }}
+      />
+
+      <NewChatDialog
+        open={showNewChat}
+        conversations={conversations}
+        currentUserId={currentUser.id}
+        onSearchContacts={onSearchContacts}
+        onClose={() => setShowNewChat(false)}
+        onStartConversation={(ids) => {
+          onStartConversation?.(ids);
+          setShowNewChat(false);
+        }}
+        onCreateGroup={(name, memberIds, avatarUrl) => {
+          onCreateGroup?.(name, memberIds, avatarUrl);
+          setShowNewChat(false);
+        }}
+      />
+    </div>
+  );
+}
+
+export type { FivFoldChatKitProps } from './types';

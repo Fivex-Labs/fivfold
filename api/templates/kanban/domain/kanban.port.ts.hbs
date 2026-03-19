@@ -1,0 +1,15 @@
+export interface I{{moduleName}}Service {
+  getBoards(userId: string): Promise<unknown[]>;
+  getBoard(userId: string, boardId: string): Promise<unknown>;
+  createBoard(userId: string, title: string, description?: string): Promise<unknown>;
+  deleteBoard(userId: string, boardId: string): Promise<void>;
+  createColumn(userId: string, boardId: string, title: string, color?: string, maxTasks?: number): Promise<unknown>;
+  updateColumnPositions(userId: string, boardId: string, columnOrders: { id: string; position: number }[]): Promise<void>;
+  deleteColumn(userId: string, boardId: string, columnId: string): Promise<void>;
+  createTask(dto: import('../dto/create-task.dto').CreateTaskDto): Promise<unknown>;
+  updateTask(taskId: string, dto: import('../dto/update-task.dto').UpdateTaskDto): Promise<unknown>;
+  moveTask(taskId: string, targetColumnId: string, targetPosition: number): Promise<unknown>;
+  deleteTask(taskId: string): Promise<void>;
+  getLabels(boardId: string): Promise<unknown[]>;
+  createLabel(boardId: string, name: string, color: string): Promise<unknown>;
+}

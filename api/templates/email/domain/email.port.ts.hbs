@@ -1,0 +1,13 @@
+export interface I{{moduleName}}Service {
+  getThreads(userId: string, query: import('../dto/search-email.dto').SearchEmailDto): Promise<{ threads: unknown[]; total: number; page: number; limit: number }>;
+  getThread(userId: string, threadId: string): Promise<unknown>;
+  updateThread(userId: string, threadId: string, dto: import('../dto/update-email.dto').UpdateEmailDto): Promise<unknown>;
+  deleteThread(userId: string, threadId: string): Promise<void>;
+  sendEmail(senderId: string, senderEmail: string, dto: import('../dto/create-email.dto').CreateEmailDto): Promise<unknown>;
+  getFolders(userId: string): Promise<unknown[]>;
+  createFolder(userId: string, name: string, icon?: string): Promise<unknown>;
+  deleteFolder(userId: string, folderId: string): Promise<void>;
+  getLabels(userId: string): Promise<unknown[]>;
+  createLabel(userId: string, name: string, color?: string): Promise<unknown>;
+  deleteLabel(userId: string, labelId: string): Promise<void>;
+}

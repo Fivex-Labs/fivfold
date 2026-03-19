@@ -1,0 +1,140 @@
+'use client';
+
+import React, { useState, useMemo, useCallback } from 'react';
+import { Search, Plus, Edit3 } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuSeparator,
+  ContextMenuTrigger,
+} from '@/components/ui/context-menu';
+import { ThreadItem } from './thread-item';
+import type { FivFoldChatConversation } from './types';
+
+interface ThreadsListProps {
+  conversations: FivFoldChatConversation[];
+  currentUserId: string;
+  selectedConversationId: string | null;
+  onSelectConversation: (conversation: FivFoldChatConversation) => void;
+  onNewChat?: () => void;
+  onSearch?: () => void;
+  onPin?: (conversationId: string, pinned: boolean) => void;
+  onMute?: (conversationId: string, mutedUntil: Date | null) => void;
+}
+
+export function ThreadsList({
+  conversations,
+  currentUserId,
+  selectedConversationId,
+  onSelectConversation,
+  onNewChat,
+  onSearch,
+  onPin,
+  onMute,
+}: ThreadsListProps) {
+  const [search, setSearch] = useState('');
+
+  const filtered = useMemo(() => {
+    const pinned: FivFoldChatConversation[] = [];
+    const unpinned: FivFoldChatConversation[] = [];
+    const q = search.toLowerCase();
+
+    for (const conv of conversations) {
+      if (q) {
+        const name = conv.name ?? conv.participants.find((p) => p.id !== currentUserId)?.name ?? '';
+        if (!name.toLowerCase().includes(q)) continue;
+      }
+      if (conv.isPinned) pinned.push(conv);
+      else unpinned.push(conv);
+    }
+
+    const sortByLastMessage = (a: FivFoldChatConversation, b: FivFoldChatConversation) => {
+      const ta = a.lastMessage?.createdAt ? new Date(a.lastMessage.createdAt).getTime() : 0;
+      const tb = b.lastMessage?.createdAt ? new Date(b.lastMessage.createdAt).getTime() : 0;
+      return tb - ta;
+    };
+
+    return [...pinned.sort(sortByLastMessage), ...unpinned.sort(sortByLastMessage)];
+  }, [conversations, currentUserId, search]);
+
+  return (
+    <div className="flex h-full flex-col bg-background/60">
+      {/* Header */}
+      <div className="flex items-center justify-between border-b border-border/50 px-4 py-3">
+        <h1 className="text-lg font-bold tracking-tight">Messages</h1>
+        <div className="flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            onClick={onSearch}
+            aria-label="Search"
+          >
+            <Search className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            onClick={onNewChat}
+            aria-label="New Chat"
+          >
+            <Edit3 className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+
+      {/* Inline search bar */}
+      <div className="px-3 py-2">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder="Search conversations..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="h-8 rounded-full pl-8 text-sm"
+          />
+        </div>
+      </div>
+
+      {/* Thread list */}
+      <ScrollArea className="flex-1 px-2">
+        <div className="space-y-0.5 pb-4">
+          {filtered.length === 0 ? (
+            <div className="px-4 py-8 text-center text-sm text-muted-foreground">
+              {search ? 'No conversations found' : 'No conversations yet'}
+            </div>
+          ) : (
+            filtered.map((conv) => (
+              <ContextMenu key={conv.id}>
+                <ContextMenuTrigger>
+                  <ThreadItem
+                    conversation={conv}
+                    currentUserId={currentUserId}
+                    isSelected={conv.id === selectedConversationId}
+                    onClick={() => onSelectConversation(conv)}
+                  />
+                </ContextMenuTrigger>
+                <ContextMenuContent>
+                  <ContextMenuItem onClick={() => onPin?.(conv.id, !conv.isPinned)}>
+                    {conv.isPinned ? 'Unpin' : 'Pin'} Conversation
+                  </ContextMenuItem>
+                  <ContextMenuItem onClick={() => onMute?.(conv.id, conv.isMuted ? null : new Date(Date.now() + 8 * 3600000))}>
+                    {conv.isMuted ? 'Unmute' : 'Mute'} Notifications
+                  </ContextMenuItem>
+                  <ContextMenuSeparator />
+                  <ContextMenuItem className="text-destructive">Delete Conversation</ContextMenuItem>
+                </ContextMenuContent>
+              </ContextMenu>
+            ))
+          )}
+        </div>
+      </ScrollArea>
+    </div>
+  );
+}

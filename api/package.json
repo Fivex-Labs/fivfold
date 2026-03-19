@@ -1,0 +1,68 @@
+{
+  "name": "@fivfold/api",
+  "version": "0.13.0",
+  "description": "FivFold API -- backend scaffolding for FivFold Kits (Express/NestJS + TypeORM + PostgreSQL)",
+  "type": "module",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "bin": {
+    "fivfold-api": "dist/cli/index.js"
+  },
+  "files": [
+    "dist",
+    "manifests",
+    "templates",
+    "README.md",
+    "LICENSE",
+    "CONTRIBUTING.md"
+  ],
+  "scripts": {
+    "build": "tsup --config tsup.cli.config.ts",
+    "dev": "tsup --config tsup.cli.config.ts --watch",
+    "clean": "rimraf dist",
+    "prebuild": "npm run clean",
+    "type-check": "tsc --noEmit",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "fivfold",
+    "kit",
+    "api",
+    "backend",
+    "typeorm",
+    "express",
+    "express.js",
+    "nestjs",
+    "nest.js",
+    "postgresql",
+    "cli",
+    "scaffolding",
+    "node",
+    "node.js",
+    "typescript",
+    "hexagonal-architecture"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Fivex-Labs/fivfold.git"
+  },
+  "homepage": "https://fold.fivexlabs.com/",
+  "author": "Fivex Labs",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "dependencies": {
+    "@clack/prompts": "^1.0.0",
+    "@fivfold/core": "workspace:*",
+    "commander": "^12.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "rimraf": "^6.1.3",
+    "tsup": "^8.3.5",
+    "typescript": "^5.7.2"
+  }
+}

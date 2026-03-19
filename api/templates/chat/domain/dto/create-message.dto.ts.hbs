@@ -1,0 +1,24 @@
+import { IsString, IsNotEmpty, IsEnum, IsOptional, IsObject } from 'class-validator';
+
+export type MessageType = 'text' | 'image' | 'video' | 'file' | 'poll' | 'location' | 'gif';
+
+export class CreateMessageDto {
+  @IsString()
+  @IsNotEmpty()
+  conversationId!: string;
+
+  @IsEnum(['text', 'image', 'video', 'file', 'poll', 'location', 'gif'])
+  type!: MessageType;
+
+  @IsString()
+  @IsOptional()
+  content?: string;
+
+  @IsObject()
+  @IsOptional()
+  metadata?: Record<string, unknown>;
+
+  @IsString()
+  @IsOptional()
+  replyToMessageId?: string;
+}

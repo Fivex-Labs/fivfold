@@ -1,0 +1,27 @@
+import { Schema, model, Document } from 'mongoose';
+
+export interface I{{moduleName}}Column extends Document {
+  title: string;
+  description?: string | null;
+  boardId: string;
+  position: number;
+  maxTasks?: number | null;
+  color?: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+const {{moduleName}}ColumnSchema = new Schema<I{{moduleName}}Column>(
+  {
+    title: { type: String, required: true },
+    description: { type: String },
+    boardId: { type: String, required: true, index: true },
+    position: { type: Number, default: 0 },
+    maxTasks: { type: Number },
+    color: { type: String },
+  },
+  { timestamps: true, collection: '{{kitName}}_columns' }
+);
+
+export const {{moduleName}}Column = model<I{{moduleName}}Column>('{{moduleName}}Column', {{moduleName}}ColumnSchema);
+export { {{moduleName}}ColumnSchema };

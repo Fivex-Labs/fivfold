@@ -1,0 +1,20 @@
+import { Schema, model, Document } from 'mongoose';
+
+export interface I{{moduleName}}Label extends Document {
+  name: string;
+  color: string;
+  boardId: string;
+  createdAt: Date;
+}
+
+const {{moduleName}}LabelSchema = new Schema<I{{moduleName}}Label>(
+  {
+    name: { type: String, required: true },
+    color: { type: String, required: true },
+    boardId: { type: String, required: true, index: true },
+  },
+  { timestamps: { createdAt: true, updatedAt: false }, collection: '{{kitName}}_labels' }
+);
+
+export const {{moduleName}}Label = model<I{{moduleName}}Label>('{{moduleName}}Label', {{moduleName}}LabelSchema);
+export { {{moduleName}}LabelSchema };

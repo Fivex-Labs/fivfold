@@ -1,0 +1,53 @@
+import { Module } from '@nestjs/common';
+{{#if (eq orm "typeorm")}}
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { ConversationEntity } from './entities/conversation.entity';
+import { MessageEntity } from './entities/message.entity';
+import { ParticipantEntity } from './entities/participant.entity';
+import { AttachmentEntity } from './entities/attachment.entity';
+import { PollEntity } from './entities/poll.entity';
+import { PollVoteEntity } from './entities/poll-vote.entity';
+import { ReactionEntity } from './entities/reaction.entity';
+{{/if}}
+{{#if (eq orm "mongoose")}}
+import { MongooseModule } from '@nestjs/mongoose';
+import { ConversationSchema } from './schemas/conversation.schema';
+import { MessageSchema } from './schemas/message.schema';
+import { ParticipantSchema } from './schemas/participant.schema';
+import { AttachmentSchema } from './schemas/attachment.schema';
+import { PollSchema } from './schemas/poll.schema';
+import { ReactionSchema } from './schemas/reaction.schema';
+{{/if}}
+import { ChatController } from './chat.controller';
+import { ChatService } from './chat.service';
+import { ChatGateway } from './chat.gateway';
+
+@Module({
+  imports: [
+    {{#if (eq orm "typeorm")}}
+    TypeOrmModule.forFeature([
+      ConversationEntity,
+      MessageEntity,
+      ParticipantEntity,
+      AttachmentEntity,
+      PollEntity,
+      PollVoteEntity,
+      ReactionEntity,
+    ]),
+    {{/if}}
+    {{#if (eq orm "mongoose")}}
+    MongooseModule.forFeature([
+      { name: 'ChatConversation', schema: ConversationSchema },
+      { name: 'ChatMessage', schema: MessageSchema },
+      { name: 'ChatParticipant', schema: ParticipantSchema },
+      { name: 'ChatAttachment', schema: AttachmentSchema },
+      { name: 'ChatPoll', schema: PollSchema },
+      { name: 'ChatReaction', schema: ReactionSchema },
+    ]),
+    {{/if}}
+  ],
+  controllers: [ChatController],
+  providers: [ChatService, ChatGateway],
+  exports: [ChatService],
+})
+export class ChatModule {}

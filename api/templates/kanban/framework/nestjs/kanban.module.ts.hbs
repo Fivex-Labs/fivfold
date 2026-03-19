@@ -1,0 +1,42 @@
+import { Module } from '@nestjs/common';
+{{#if (eq orm "typeorm")}}
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { {{moduleName}}Board } from './entities/board.entity';
+import { {{moduleName}}Column } from './entities/column.entity';
+import { {{moduleName}}Task } from './entities/task.entity';
+import { {{moduleName}}Label } from './entities/label.entity';
+{{/if}}
+{{#if (eq orm "mongoose")}}
+import { MongooseModule } from '@nestjs/mongoose';
+import { {{moduleName}}BoardSchema } from './schemas/board.schema';
+import { {{moduleName}}ColumnSchema } from './schemas/column.schema';
+import { {{moduleName}}TaskSchema } from './schemas/task.schema';
+import { {{moduleName}}LabelSchema } from './schemas/label.schema';
+{{/if}}
+import { {{moduleName}}Controller } from './{{kitName}}.controller';
+import { {{moduleName}}Service } from './{{kitName}}.service';
+
+@Module({
+  imports: [
+    {{#if (eq orm "typeorm")}}
+    TypeOrmModule.forFeature([
+      {{moduleName}}Board,
+      {{moduleName}}Column,
+      {{moduleName}}Task,
+      {{moduleName}}Label,
+    ]),
+    {{/if}}
+    {{#if (eq orm "mongoose")}}
+    MongooseModule.forFeature([
+      { name: '{{moduleName}}Board', schema: {{moduleName}}BoardSchema },
+      { name: '{{moduleName}}Column', schema: {{moduleName}}ColumnSchema },
+      { name: '{{moduleName}}Task', schema: {{moduleName}}TaskSchema },
+      { name: '{{moduleName}}Label', schema: {{moduleName}}LabelSchema },
+    ]),
+    {{/if}}
+  ],
+  controllers: [{{moduleName}}Controller],
+  providers: [{{moduleName}}Service],
+  exports: [{{moduleName}}Service],
+})
+export class {{moduleName}}Module {}

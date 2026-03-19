@@ -1,0 +1,119 @@
+'use client';
+
+import React from 'react';
+import { formatDistanceToNow } from 'date-fns';
+import { Pin, BellOff, Volume2 } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { Badge } from '@/components/ui/badge';
+import { ChatAvatar, GroupAvatar } from './chat-avatar';
+import type { FivFoldChatConversation } from './types';
+
+interface ThreadItemProps {
+  conversation: FivFoldChatConversation;
+  currentUserId: string;
+  isSelected?: boolean;
+  onClick: () => void;
+}
+
+function getConversationDisplayName(
+  conversation: FivFoldChatConversation,
+  currentUserId: string
+): string {
+  if (conversation.name) return conversation.name;
+  const other = conversation.participants.find((p) => p.id !== currentUserId);
+  return other?.name ?? 'Unknown';
+}
+
+function getLastMessagePreview(conversation: FivFoldChatConversation): string {
+  const msg = conversation.lastMessage;
+  if (!msg) return '';
+  switch (msg.type) {
+    case 'image': return '📷 Photo';
+    case 'video': return '🎥 Video';
+    case 'file': return '📎 File';
+    case 'poll': return '📊 Poll';
+    case 'location': return '📍 Location';
+    case 'gif': return '🎞️ GIF';
+    default: return msg.content ?? '';
+  }
+}
+
+function truncate(text: string, max = 42): string {
+  return text.length > max ? text.slice(0, max) + '…' : text;
+}
+
+export function ThreadItem({ conversation, currentUserId, isSelected, onClick }: ThreadItemProps) {
+  const displayName = getConversationDisplayName(conversation, currentUserId);
+  const preview = truncate(getLastMessagePreview(conversation));
+  const lastTime = conversation.lastMessage?.createdAt
+    ? formatDistanceToNow(new Date(conversation.lastMessage.createdAt), { addSuffix: false })
+    : '';
+  const hasUnread = (conversation.unreadCount ?? 0) > 0;
+  const otherParticipant = conversation.type === 'direct'
+    ? conversation.participants.find((p) => p.id !== currentUserId)
+    : null;
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        'relative flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-all',
+        'hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+        isSelected
+          ? 'bg-primary/10 shadow-sm'
+          : 'bg-transparent',
+      )}
+    >
+      {/* Avatar */}
+      <div className="relative shrink-0">
+        {conversation.type === 'group' ? (
+          <GroupAvatar
+            participants={conversation.participants.filter((p) => p.id !== currentUserId)}
+            size="md"
+          />
+        ) : (
+          <ChatAvatar
+            src={otherParticipant?.avatarUrl}
+            name={displayName}
+            online={otherParticipant?.online}
+            size="md"
+          />
+        )}
+      </div>
+
+      {/* Content */}
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center justify-between gap-1">
+          <span className={cn('truncate text-sm', hasUnread ? 'font-semibold text-foreground' : 'font-medium text-foreground/80')}>
+            {displayName}
+          </span>
+          <span className="shrink-0 text-[11px] text-muted-foreground">{lastTime}</span>
+        </div>
+
+        <div className="mt-0.5 flex items-center justify-between gap-1">
+          <span className={cn('truncate text-xs', hasUnread ? 'text-foreground/80' : 'text-muted-foreground')}>
+            {preview || <span className="italic">No messages yet</span>}
+          </span>
+
+          <div className="flex shrink-0 items-center gap-1">
+            {conversation.isMuted && (
+              <BellOff className="h-3 w-3 text-muted-foreground/60" />
+            )}
+            {conversation.isPinned && (
+              <Pin className="h-3 w-3 text-muted-foreground/60" />
+            )}
+            {hasUnread && (
+              <Badge
+                variant="default"
+                className="flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[10px] font-bold"
+              >
+                {conversation.unreadCount > 99 ? '99+' : conversation.unreadCount}
+              </Badge>
+            )}
+          </div>
+        </div>
+      </div>
+    </button>
+  );
+}

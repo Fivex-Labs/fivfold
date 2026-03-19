@@ -1,0 +1,37 @@
+import { Schema, model, Document } from 'mongoose';
+
+export type TaskPriority = 'low' | 'medium' | 'high' | 'urgent';
+
+export interface I{{moduleName}}Task extends Document {
+  title: string;
+  description?: string | null;
+  columnId: string;
+  priority: TaskPriority;
+  assigneeId?: string | null;
+  dueDate?: Date | null;
+  estimatedHours?: number | null;
+  actualHours?: number | null;
+  labels: string[];
+  position: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+const {{moduleName}}TaskSchema = new Schema<I{{moduleName}}Task>(
+  {
+    title: { type: String, required: true },
+    description: { type: String },
+    columnId: { type: String, required: true, index: true },
+    priority: { type: String, enum: ['low', 'medium', 'high', 'urgent'], default: 'medium' },
+    assigneeId: { type: String },
+    dueDate: { type: Date },
+    estimatedHours: { type: Number },
+    actualHours: { type: Number },
+    labels: { type: [String], default: [] },
+    position: { type: Number, default: 0 },
+  },
+  { timestamps: true, collection: '{{kitName}}_tasks' }
+);
+
+export const {{moduleName}}Task = model<I{{moduleName}}Task>('{{moduleName}}Task', {{moduleName}}TaskSchema);
+export { {{moduleName}}TaskSchema };

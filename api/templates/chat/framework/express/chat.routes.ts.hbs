@@ -1,0 +1,147 @@
+import { Router, Request, Response } from 'express';
+import { ChatService } from './chat.service';
+
+export function createChatRouter(chatService: ChatService): Router {
+  const router = Router();
+
+  // ── Conversations ──────────────────────────────────────────────────────────
+  router.post('/conversations', async (req: Request, res: Response) => {
+    const userId = (req as Request & { user: { id: string } }).user.id;
+    const result = await chatService.createConversation(req.body, userId);
+    res.status(201).json(result);
+  });
+
+  router.get('/conversations', async (req: Request, res: Response) => {
+    const userId = (req as Request & { user: { id: string } }).user.id;
+    const result = await chatService.getConversations(userId, { limit: Number(req.query.limit) || 30, cursor: req.query.cursor as string });
+    res.json(result);
+  });
+
+  router.get('/conversations/:id', async (req: Request, res: Response) => {
+    const userId = (req as Request & { user: { id: string } }).user.id;
+    const result = await chatService.getConversation(req.params.id, userId);
+    res.json(result);
+  });
+
+  router.delete('/conversations/:id', async (req: Request, res: Response) => {
+    const userId = (req as Request & { user: { id: string } }).user.id;
+    await chatService.deleteConversation(req.params.id, userId);
+    res.sendStatus(204);
+  });
+
+  router.patch('/conversations/:id/pin', async (req: Request, res: Response) => {
+    const userId = (req as Request & { user: { id: string } }).user.id;
+    await chatService.pinConversation(req.params.id, userId, req.body.pinned);
+    res.sendStatus(204);
+  });
+
+  router.patch('/conversations/:id/mute', async (req: Request, res: Response) => {
+    const userId = (req as Request & { user: { id: string } }).user.id;
+    await chatService.muteConversation(req.params.id, userId, req.body.mutedUntil ? new Date(req.body.mutedUntil) : null);
+    res.sendStatus(204);
+  });
+
+  router.patch('/conversations/:id/read', async (req: Request, res: Response) => {
+    const userId = (req as Request & { user: { id: string } }).user.id;
+    await chatService.markAsRead(req.params.id, userId);
+    res.sendStatus(204);
+  });
+
+  // ── Messages ───────────────────────────────────────────────────────────────
+  router.post('/messages', async (req: Request, res: Response) => {
+    const userId = (req as Request & { user: { id: string } }).user.id;
+    const result = await chatService.sendMessage(req.body, userId);
+    res.status(201).json(result);
+  });
+
+  router.get('/conversations/:id/messages', async (req: Request, res: Response) => {
+    const userId = (req as Request & { user: { id: string } }).user.id;
+    const result = await chatService.getMessages(req.params.id, userId, { limit: Number(req.query.limit) || 30, cursor: req.query.cursor as string });
+    res.json(result);
+  });
+
+  router.delete('/messages/:id', async (req: Request, res: Response) => {
+    const userId = (req as Request & { user: { id: string } }).user.id;
+    await chatService.deleteMessage(req.params.id, userId);
+    res.sendStatus(204);
+  });
+
+  // ── Groups ─────────────────────────────────────────────────────────────────
+  router.post('/groups', async (req: Request, res: Response) => {
+    const userId = (req as Request & { user: { id: string } }).user.id;
+    const result = await chatService.createGroup(req.body, userId);
+    res.status(201).json(result);
+  });
+
+  router.patch('/groups/:id', async (req: Request, res: Response) => {
+    const userId = (req as Request & { user: { id: string } }).user.id;
+    const result = await chatService.updateGroup(req.params.id, req.body, userId);
+    res.json(result);
+  });
+
+  router.post('/groups/members', async (req: Request, res: Response) => {
+    const userId = (req as Request & { user: { id: string } }).user.id;
+    await chatService.addMember(req.body, userId);
+    res.sendStatus(201);
+  });
+
+  router.delete('/groups/members', async (req: Request, res: Response) => {
+    const userId = (req as Request & { user: { id: string } }).user.id;
+    await chatService.removeMember(req.body, userId);
+    res.sendStatus(204);
+  });
+
+  router.patch('/groups/:id/members/:userId/role', async (req: Request, res: Response) => {
+    const requesterId = (req as Request & { user: { id: string } }).user.id;
+    await chatService.updateMemberRole(req.params.id, req.params.userId, req.body.role, requesterId);
+    res.sendStatus(204);
+  });
+
+  router.post('/groups/:id/leave', async (req: Request, res: Response) => {
+    const userId = (req as Request & { user: { id: string } }).user.id;
+    await chatService.leaveGroup(req.params.id, userId);
+    res.sendStatus(204);
+  });
+
+  // ── Polls ──────────────────────────────────────────────────────────────────
+  router.post('/polls', async (req: Request, res: Response) => {
+    const userId = (req as Request & { user: { id: string } }).user.id;
+    const result = await chatService.createPoll(req.body, userId);
+    res.status(201).json(result);
+  });
+
+  router.post('/polls/vote', async (req: Request, res: Response) => {
+    const userId = (req as Request & { user: { id: string } }).user.id;
+    await chatService.votePoll(req.body, userId);
+    res.sendStatus(204);
+  });
+
+  // ── Location ───────────────────────────────────────────────────────────────
+  router.post('/location', async (req: Request, res: Response) => {
+    const userId = (req as Request & { user: { id: string } }).user.id;
+    const result = await chatService.shareLocation(req.body, userId);
+    res.status(201).json(result);
+  });
+
+  // ── Reactions ──────────────────────────────────────────────────────────────
+  router.post('/reactions', async (req: Request, res: Response) => {
+    const userId = (req as Request & { user: { id: string } }).user.id;
+    await chatService.addReaction(req.body, userId);
+    res.sendStatus(201);
+  });
+
+  router.delete('/reactions/messages/:messageId/emoji/:emoji', async (req: Request, res: Response) => {
+    const userId = (req as Request & { user: { id: string } }).user.id;
+    await chatService.removeReaction(req.params.messageId, req.params.emoji, userId);
+    res.sendStatus(204);
+  });
+
+  // ── Search ─────────────────────────────────────────────────────────────────
+  router.get('/search', async (req: Request, res: Response) => {
+    const userId = (req as Request & { user: { id: string } }).user.id;
+    const result = await chatService.searchConversations({ query: req.query.q as string, includeMessages: req.query.messages !== 'false', includeConversations: req.query.conversations !== 'false' }, userId);
+    res.json(result);
+  });
+
+  return router;
+}

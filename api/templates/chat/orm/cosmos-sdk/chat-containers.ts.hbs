@@ -1,0 +1,91 @@
+import { CosmosClient, Container, Database } from '@azure/cosmos';
+
+const endpoint = process.env.COSMOS_ENDPOINT!;
+const key = process.env.COSMOS_KEY!;
+const databaseId = process.env.COSMOS_DATABASE_ID ?? 'chatdb';
+
+const client = new CosmosClient({ endpoint, key });
+
+export type ConversationType = 'direct' | 'group';
+export type MessageType = 'text' | 'image' | 'video' | 'file' | 'poll' | 'location' | 'gif';
+
+export interface ChatConversationItem {
+  id: string;
+  type: ConversationType;
+  name?: string;
+  avatarUrl?: string;
+  description?: string;
+  pinnedByUserIds: string[];
+  mutedByUsers: Record<string, string>;
+  createdAt: string;
+  updatedAt: string;
+  _partitionKey: string; // conversationId
+}
+
+export interface ChatMessageItem {
+  id: string;
+  conversationId: string;
+  senderId: string;
+  content?: string;
+  type: MessageType;
+  metadata?: Record<string, unknown>;
+  readByUserIds: string[];
+  replyToMessageId?: string;
+  status: string;
+  deletedAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  _partitionKey: string; // conversationId
+}
+
+export interface ChatParticipantItem {
+  id: string;
+  conversationId: string;
+  userId: string;
+  role: 'admin' | 'member';
+  lastReadAt?: string | null;
+  joinedAt: string;
+  _partitionKey: string; // conversationId
+}
+
+export async function getChatContainers(): Promise<{
+  conversations: Container;
+  messages: Container;
+  participants: Container;
+  reactions: Container;
+  polls: Container;
+}> {
+  const { database } = await client.databases.createIfNotExists({ id: databaseId });
+
+  const [conversationsResult, messagesResult, participantsResult, reactionsResult, pollsResult] =
+    await Promise.all([
+      database.containers.createIfNotExists({
+        id: 'chat_conversations',
+        partitionKey: '/id',
+      }),
+      database.containers.createIfNotExists({
+        id: 'chat_messages',
+        partitionKey: '/conversationId',
+      }),
+      database.containers.createIfNotExists({
+        id: 'chat_participants',
+        partitionKey: '/conversationId',
+      }),
+      database.containers.createIfNotExists({
+        id: 'chat_reactions',
+        partitionKey: '/messageId',
+      }),
+      database.containers.createIfNotExists({
+        id: 'chat_polls',
+        partitionKey: '/messageId',
+      }),
+    ]);
+
+  return {
+    conversations: conversationsResult.container,
+    messages: messagesResult.container,
+    participants: participantsResult.container,
+    reactions: reactionsResult.container,
+    polls: pollsResult.container,
+  };
+}

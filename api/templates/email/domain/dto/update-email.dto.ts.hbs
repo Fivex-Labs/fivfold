@@ -1,0 +1,19 @@
+import { IsBoolean, IsOptional, IsString } from 'class-validator';
+
+export class Update{{moduleName}}Dto {
+  @IsBoolean()
+  @IsOptional()
+  read?: boolean;
+
+  @IsBoolean()
+  @IsOptional()
+  starred?: boolean;
+
+  @IsString()
+  @IsOptional()
+  folderId?: string;
+
+  @IsString({ each: true })
+  @IsOptional()
+  labelIds?: string[];
+}

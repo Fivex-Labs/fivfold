@@ -1,0 +1,62 @@
+import * as admin from 'firebase-admin';
+import type { SendNotificationDto } from '../dto/send-notification.dto';
+import type { SendResult } from '../domain/push.port';
+
+export class FcmPushAdapter {
+  private messaging: admin.messaging.Messaging;
+
+  constructor() {
+    if (!admin.apps.length) {
+      admin.initializeApp({
+        credential: admin.credential.cert({
+          projectId: process.env.FIREBASE_PROJECT_ID,
+          clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+          privateKey: (process.env.FIREBASE_PRIVATE_KEY ?? '').replace(/\\n/g, '\n'),
+        }),
+      });
+    }
+    this.messaging = admin.messaging();
+  }
+
+  async sendToDevice(token: string, payload: SendNotificationDto): Promise<SendResult> {
+    try {
+      const message: admin.messaging.Message = {
+        token,
+        notification: {
+          title: payload.title,
+          body: payload.body ?? undefined,
+          imageUrl: payload.imageUrl,
+        },
+        data: payload.data as Record<string, string> | undefined,
+        android: payload.channelId
+          ? { notification: { channelId: payload.channelId } }
+          : undefined,
+        apns: {
+          payload: { aps: { badge: payload.badge, sound: payload.sound } },
+        },
+      };
+      const messageId = await this.messaging.send(message);
+      return { success: true, messageId };
+    } catch (err) {
+      return { success: false, error: String(err) };
+    }
+  }
+
+  async sendToTopic(topic: string, payload: SendNotificationDto): Promise<SendResult> {
+    try {
+      const message: admin.messaging.Message = {
+        topic,
+        notification: {
+          title: payload.title,
+          body: payload.body ?? undefined,
+          imageUrl: payload.imageUrl,
+        },
+        data: payload.data as Record<string, string> | undefined,
+      };
+      const messageId = await this.messaging.send(message);
+      return { success: true, messageId };
+    } catch (err) {
+      return { success: false, error: String(err) };
+    }
+  }
+}

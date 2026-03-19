@@ -1,0 +1,36 @@
+import { IsArray, IsEmail, IsEnum, IsOptional, IsString, MinLength } from 'class-validator';
+
+export class Create{{moduleName}}Dto {
+  @IsArray()
+  @IsEmail({}, { each: true })
+  to: string[];
+
+  @IsArray()
+  @IsEmail({}, { each: true })
+  @IsOptional()
+  cc?: string[];
+
+  @IsArray()
+  @IsEmail({}, { each: true })
+  @IsOptional()
+  bcc?: string[];
+
+  @IsString()
+  @MinLength(1)
+  subject: string;
+
+  @IsString()
+  body: string;
+
+  @IsEnum(['text', 'html'])
+  @IsOptional()
+  bodyType?: 'text' | 'html';
+
+  @IsString()
+  @IsOptional()
+  threadId?: string;
+
+  @IsString()
+  @IsOptional()
+  folderId?: string;
+}

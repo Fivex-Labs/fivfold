@@ -1,0 +1,47 @@
+'use client';
+
+import React from 'react';
+import { MapPin, ExternalLink } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import type { FivFoldChatLocation } from './types';
+
+interface LocationDisplayProps {
+  location: FivFoldChatLocation;
+}
+
+export function LocationDisplay({ location }: LocationDisplayProps) {
+  const mapsUrl = `https://www.google.com/maps?q=${location.latitude},${location.longitude}`;
+  const staticMapUrl = `https://maps.geoapify.com/v1/staticmap?style=osm-bright-smooth&width=250&height=120&center=lonlat:${location.longitude},${location.latitude}&zoom=13&marker=lonlat:${location.longitude},${location.latitude};color:%23e11d48&apiKey=YOUR_GEOAPIFY_KEY`;
+
+  return (
+    <div className="space-y-1.5">
+      <div className="overflow-hidden rounded-lg">
+        <img
+          src={staticMapUrl}
+          alt={location.label ?? 'Location'}
+          className="w-full max-w-[220px] object-cover"
+          onError={(e) => {
+            (e.target as HTMLImageElement).style.display = 'none';
+          }}
+        />
+      </div>
+
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-1.5 text-xs">
+          <MapPin className="h-3 w-3 shrink-0" />
+          <span className="line-clamp-1">
+            {location.label ?? `${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}`}
+          </span>
+        </div>
+        <a
+          href={mapsUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1 rounded text-[10px] underline underline-offset-2 hover:no-underline"
+        >
+          Open <ExternalLink className="h-2.5 w-2.5" />
+        </a>
+      </div>
+    </div>
+  );
+}

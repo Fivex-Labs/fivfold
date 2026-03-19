@@ -1,0 +1,52 @@
+{
+  "name": "email",
+  "version": "1.0.0",
+  "description": "Full-featured email client with folders, threads, compose dialog, labels, and responsive layout.",
+  "dependencies": ["lucide-react"],
+  "shadcnDependencies": [
+    "button",
+    "input",
+    "dropdown-menu",
+    "card",
+    "dialog",
+    "scroll-area",
+    "label",
+    "textarea",
+    "accordion",
+    "command",
+    "popover",
+    "badge",
+    "separator",
+    "tooltip"
+  ],
+  "files": [
+    {
+      "template": "templates/email/types.ts",
+      "output": "{{outputDir}}/{{kitName}}/types.ts"
+    },
+    {
+      "template": "templates/email/recipient-input.tsx",
+      "output": "{{outputDir}}/{{kitName}}/recipient-input.tsx"
+    },
+    {
+      "template": "templates/email/thread-item.tsx",
+      "output": "{{outputDir}}/{{kitName}}/thread-item.tsx"
+    },
+    {
+      "template": "templates/email/compose-dialog.tsx",
+      "output": "{{outputDir}}/{{kitName}}/compose-dialog.tsx"
+    },
+    {
+      "template": "templates/email/message-panel.tsx",
+      "output": "{{outputDir}}/{{kitName}}/message-panel.tsx"
+    },
+    {
+      "template": "templates/email/sidebar-content.tsx",
+      "output": "{{outputDir}}/{{kitName}}/sidebar-content.tsx"
+    },
+    {
+      "template": "templates/email/index.tsx",
+      "output": "{{outputDir}}/{{kitName}}/index.tsx"
+    }
+  ]
+}

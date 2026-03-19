@@ -1,0 +1,15 @@
+import { IsString, IsNotEmpty, IsEnum, IsOptional } from 'class-validator';
+
+export class AddMemberDto {
+  @IsString()
+  @IsNotEmpty()
+  conversationId!: string;
+
+  @IsString()
+  @IsNotEmpty()
+  userId!: string;
+
+  @IsEnum(['admin', 'member'])
+  @IsOptional()
+  role?: 'admin' | 'member';
+}

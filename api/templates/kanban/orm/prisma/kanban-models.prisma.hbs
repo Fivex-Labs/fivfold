@@ -1,0 +1,69 @@
+// ---- Kanban Kit Models ----
+
+model {{moduleName}}Board {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  ownerId     String   @map("owner_id")
+  coverColor  String?  @map("cover_color")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  columns {{moduleName}}Column[]
+  labels {{moduleName}}Label[]
+
+  @@index([ownerId])
+  @@map("{{kitName}}_boards")
+}
+
+model {{moduleName}}Column {
+  id        String   @id @default(uuid())
+  title     String
+  description String?
+  boardId   String   @map("board_id")
+  position  Int      @default(0)
+  maxTasks  Int?     @map("max_tasks")
+  color     String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  board {{moduleName}}Board @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  tasks {{moduleName}}Task[]
+
+  @@index([boardId])
+  @@map("{{kitName}}_columns")
+}
+
+model {{moduleName}}Task {
+  id            String    @id @default(uuid())
+  title         String
+  description   String?
+  columnId      String    @map("column_id")
+  priority      String    @default("medium")
+  assigneeId    String?   @map("assignee_id")
+  dueDate       DateTime? @map("due_date")
+  estimatedHours Float?   @map("estimated_hours")
+  actualHours    Float?   @map("actual_hours")
+  labels        String[]
+  position      Int       @default(0)
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  column {{moduleName}}Column @relation(fields: [columnId], references: [id], onDelete: Cascade)
+
+  @@index([columnId])
+  @@map("{{kitName}}_tasks")
+}
+
+model {{moduleName}}Label {
+  id        String   @id @default(uuid())
+  name      String
+  color     String
+  boardId   String   @map("board_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  board {{moduleName}}Board @relation(fields: [boardId], references: [id], onDelete: Cascade)
+
+  @@index([boardId])
+  @@map("{{kitName}}_labels")
+}

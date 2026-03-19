@@ -1,0 +1,27 @@
+import { Schema, model, Document, Types } from 'mongoose';
+
+export interface IConversation extends Document {
+  type: 'direct' | 'group';
+  name?: string;
+  avatarUrl?: string;
+  description?: string;
+  pinnedByUserIds: string[];
+  mutedByUsers: Record<string, string>;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+const ConversationSchema = new Schema<IConversation>(
+  {
+    type: { type: String, enum: ['direct', 'group'], required: true },
+    name: { type: String },
+    avatarUrl: { type: String },
+    description: { type: String },
+    pinnedByUserIds: { type: [String], default: [] },
+    mutedByUsers: { type: Map, of: String, default: {} },
+  },
+  { timestamps: true, collection: 'chat_conversations' }
+);
+
+export const Conversation = model<IConversation>('ChatConversation', ConversationSchema);
+export { ConversationSchema };

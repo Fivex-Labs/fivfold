@@ -1,0 +1,31 @@
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  ManyToOne,
+  JoinColumn,
+} from 'typeorm';
+import { KanbanBoard } from './board.entity';
+
+@Entity('kanban_labels')
+export class KanbanLabel {
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
+
+  @Column({ type: 'varchar', length: 100 })
+  name: string;
+
+  @Column({ type: 'varchar', length: 20 })
+  color: string;
+
+  @Column({ type: 'varchar', name: 'board_id' })
+  boardId: string;
+
+  @ManyToOne(() => KanbanBoard, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'board_id' })
+  board: KanbanBoard;
+
+  @CreateDateColumn({ name: 'created_at' })
+  createdAt: Date;
+}

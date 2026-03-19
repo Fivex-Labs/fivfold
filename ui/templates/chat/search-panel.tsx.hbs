@@ -1,0 +1,155 @@
+'use client';
+
+import React, { useState, useMemo } from 'react';
+import { Search, X, MessageSquare, Users } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
+import { ChatAvatar, GroupAvatar } from './chat-avatar';
+import type { FivFoldChatConversation, FivFoldChatMessage } from './types';
+
+interface SearchPanelProps {
+  open: boolean;
+  conversations: FivFoldChatConversation[];
+  messages: Record<string, FivFoldChatMessage[]>;
+  onClose: () => void;
+  onSelectConversation: (conversation: FivFoldChatConversation) => void;
+}
+
+export function SearchPanel({ open, conversations, messages, onClose, onSelectConversation }: SearchPanelProps) {
+  const [query, setQuery] = useState('');
+
+  const results = useMemo(() => {
+    if (!query.trim()) return { conversations: [], messages: [] };
+    const q = query.toLowerCase();
+
+    const matchedConversations = conversations.filter((c) => {
+      const name = c.name ?? c.participants.map((p) => p.name).join(' ');
+      return name.toLowerCase().includes(q);
+    });
+
+    const matchedMessages: Array<{ message: FivFoldChatMessage; conversation: FivFoldChatConversation }> = [];
+    for (const [conversationId, msgs] of Object.entries(messages)) {
+      const conv = conversations.find((c) => c.id === conversationId);
+      if (!conv) continue;
+      for (const msg of msgs) {
+        if (msg.content?.toLowerCase().includes(q)) {
+          matchedMessages.push({ message: msg, conversation: conv });
+          if (matchedMessages.length >= 20) break;
+        }
+      }
+    }
+
+    return { conversations: matchedConversations.slice(0, 10), messages: matchedMessages };
+  }, [query, conversations, messages]);
+
+  const hasResults = results.conversations.length > 0 || results.messages.length > 0;
+
+  return (
+    <Dialog open={open} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-w-md p-0" hideCloseButton>
+        <div className="flex items-center gap-2 border-b border-border/50 px-4 py-3">
+          <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
+          <Input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search messages and conversations…"
+            className="border-0 p-0 text-sm shadow-none focus-visible:ring-0"
+            autoFocus
+          />
+          <button type="button" onClick={onClose} className="shrink-0 text-muted-foreground hover:text-foreground">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        <ScrollArea className="max-h-[60vh]">
+          {!query.trim() ? (
+            <div className="flex flex-col items-center gap-2 py-12 text-center text-muted-foreground">
+              <Search className="h-8 w-8 opacity-30" />
+              <p className="text-sm">Search conversations and messages</p>
+            </div>
+          ) : !hasResults ? (
+            <div className="flex flex-col items-center gap-2 py-12 text-center text-muted-foreground">
+              <p className="text-sm">No results for "{query}"</p>
+            </div>
+          ) : (
+            <div className="pb-4">
+              {results.conversations.length > 0 && (
+                <>
+                  <div className="flex items-center gap-2 px-4 py-2">
+                    <Users className="h-3.5 w-3.5 text-muted-foreground" />
+                    <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                      Conversations
+                    </span>
+                  </div>
+                  {results.conversations.map((conv) => (
+                    <button
+                      key={conv.id}
+                      type="button"
+                      onClick={() => onSelectConversation(conv)}
+                      className="flex w-full items-center gap-3 px-4 py-2.5 text-left hover:bg-muted/50 transition-colors"
+                    >
+                      {conv.type === 'group' ? (
+                        <GroupAvatar participants={conv.participants} size="sm" />
+                      ) : (
+                        <ChatAvatar
+                          name={conv.name ?? conv.participants[0]?.name ?? '?'}
+                          src={conv.avatarUrl}
+                          size="sm"
+                          showOnlineDot={false}
+                        />
+                      )}
+                      <span className="text-sm font-medium">{conv.name ?? conv.participants.map((p) => p.name).join(', ')}</span>
+                    </button>
+                  ))}
+                </>
+              )}
+
+              {results.conversations.length > 0 && results.messages.length > 0 && (
+                <Separator className="my-2" />
+              )}
+
+              {results.messages.length > 0 && (
+                <>
+                  <div className="flex items-center gap-2 px-4 py-2">
+                    <MessageSquare className="h-3.5 w-3.5 text-muted-foreground" />
+                    <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                      Messages
+                    </span>
+                  </div>
+                  {results.messages.map(({ message, conversation }) => (
+                    <button
+                      key={message.id}
+                      type="button"
+                      onClick={() => onSelectConversation(conversation)}
+                      className="flex w-full items-start gap-3 px-4 py-2.5 text-left hover:bg-muted/50 transition-colors"
+                    >
+                      <ChatAvatar
+                        name={message.sender?.name ?? '?'}
+                        src={message.sender?.avatarUrl}
+                        size="sm"
+                        showOnlineDot={false}
+                      />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs text-muted-foreground">
+                          {conversation.name ?? conversation.participants.map((p) => p.name).join(', ')}
+                        </p>
+                        <p className="mt-0.5 truncate text-sm">
+                          {message.content}
+                        </p>
+                      </div>
+                    </button>
+                  ))}
+                </>
+              )}
+            </div>
+          )}
+        </ScrollArea>
+      </DialogContent>
+    </Dialog>
+  );
+}

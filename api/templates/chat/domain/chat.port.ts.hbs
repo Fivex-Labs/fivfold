@@ -1,0 +1,54 @@
+import type { CreateMessageDto } from '../dto/create-message.dto';
+import type { CreateConversationDto } from '../dto/create-conversation.dto';
+import type { CreateGroupDto } from '../dto/create-group.dto';
+import type { UpdateGroupDto } from '../dto/update-group.dto';
+import type { AddMemberDto } from '../dto/add-member.dto';
+import type { RemoveMemberDto } from '../dto/remove-member.dto';
+import type { SendAttachmentDto } from '../dto/send-attachment.dto';
+import type { CreatePollDto } from '../dto/create-poll.dto';
+import type { VotePollDto } from '../dto/vote-poll.dto';
+import type { ShareLocationDto } from '../dto/share-location.dto';
+import type { AddReactionDto } from '../dto/add-reaction.dto';
+import type { SearchChatDto } from '../dto/search-chat.dto';
+import type { PaginationDto } from '../dto/pagination.dto';
+
+export interface IChatService {
+  // Conversations
+  createConversation(dto: CreateConversationDto, userId: string): Promise<unknown>;
+  getConversations(userId: string, pagination: PaginationDto): Promise<{ items: unknown[]; total: number; nextCursor?: string }>;
+  getConversation(id: string, userId: string): Promise<unknown>;
+  deleteConversation(id: string, userId: string): Promise<void>;
+  pinConversation(conversationId: string, userId: string, pinned: boolean): Promise<void>;
+  muteConversation(conversationId: string, userId: string, mutedUntil: Date | null): Promise<void>;
+  markAsRead(conversationId: string, userId: string): Promise<void>;
+
+  // Messages
+  sendMessage(dto: CreateMessageDto, senderId: string): Promise<unknown>;
+  getMessages(conversationId: string, userId: string, pagination: PaginationDto): Promise<{ items: unknown[]; total: number; nextCursor?: string }>;
+  deleteMessage(messageId: string, userId: string): Promise<void>;
+
+  // Groups
+  createGroup(dto: CreateGroupDto, creatorId: string): Promise<unknown>;
+  updateGroup(groupId: string, dto: UpdateGroupDto, requesterId: string): Promise<unknown>;
+  addMember(dto: AddMemberDto, requesterId: string): Promise<void>;
+  removeMember(dto: RemoveMemberDto, requesterId: string): Promise<void>;
+  updateMemberRole(conversationId: string, targetUserId: string, role: 'admin' | 'member', requesterId: string): Promise<void>;
+  leaveGroup(conversationId: string, userId: string): Promise<void>;
+
+  // Attachments
+  sendAttachment(dto: SendAttachmentDto, senderId: string): Promise<unknown>;
+
+  // Polls
+  createPoll(dto: CreatePollDto, creatorId: string): Promise<unknown>;
+  votePoll(dto: VotePollDto, userId: string): Promise<void>;
+
+  // Location
+  shareLocation(dto: ShareLocationDto, senderId: string): Promise<unknown>;
+
+  // Reactions
+  addReaction(dto: AddReactionDto, userId: string): Promise<void>;
+  removeReaction(messageId: string, emoji: string, userId: string): Promise<void>;
+
+  // Search
+  searchConversations(dto: SearchChatDto, userId: string): Promise<{ conversations: unknown[]; messages: unknown[] }>;
+}

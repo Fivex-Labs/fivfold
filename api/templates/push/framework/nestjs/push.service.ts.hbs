@@ -1,0 +1,178 @@
+import { Injectable, NotFoundException } from '@nestjs/common';
+{{#if (eq orm "typeorm")}}
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { PushSubscription } from './entities/push-subscription.entity';
+import { PushNotificationLog } from './entities/notification-log.entity';
+{{/if}}
+{{#if (eq orm "prisma")}}
+import { PrismaService } from '../../prisma.service';
+{{/if}}
+{{#if provider}}
+import { {{providerNamePascal}}PushAdapter } from './adapters/{{provider}}-push.adapter';
+import type { IPushNotificationService } from './domain/push.port';
+{{/if}}
+import type { RegisterDeviceDto } from './dto/register-device.dto';
+import type { SendNotificationDto } from './dto/send-notification.dto';
+
+@Injectable()
+export class {{moduleName}}Service {{#if provider}}implements IPushNotificationService{{/if}} {
+  constructor(
+    {{#if (eq orm "typeorm")}}
+    @InjectRepository(PushSubscription)
+    private readonly subscriptionRepo: Repository<PushSubscription>,
+    @InjectRepository(PushNotificationLog)
+    private readonly logRepo: Repository<PushNotificationLog>,
+    {{#if provider}}
+    private readonly pushAdapter: {{providerNamePascal}}PushAdapter,
+    {{/if}}
+    {{/if}}
+    {{#if (eq orm "prisma")}}
+    private readonly prisma: PrismaService,
+    {{#if provider}}
+    private readonly pushAdapter: {{providerNamePascal}}PushAdapter,
+    {{/if}}
+    {{/if}}
+    {{#if (or (eq orm "mongoose") (eq orm "cosmos-sdk") (eq orm "dynamodb-sdk"))}}
+    {{#if provider}}
+    private readonly pushAdapter: {{providerNamePascal}}PushAdapter,
+    {{/if}}
+    {{/if}}
+  ) {}
+
+  async registerDevice(userId: string, dto: RegisterDeviceDto) {
+    {{#if (eq orm "typeorm")}}
+    const existing = await this.subscriptionRepo.findOne({
+      where: { userId, token: dto.token },
+    });
+    if (existing) {
+      existing.platform = dto.platform;
+      existing.metadata = dto.metadata ?? null;
+      return this.subscriptionRepo.save(existing);
+    }
+    const sub = this.subscriptionRepo.create({
+      userId,
+      token: dto.token,
+      platform: dto.platform,
+      provider: '{{provider}}',
+      metadata: dto.metadata ?? null,
+    });
+    return this.subscriptionRepo.save(sub);
+    {{/if}}
+    {{#if (eq orm "prisma")}}
+    const existing = await this.prisma.pushSubscription.findFirst({
+      where: { userId, token: dto.token },
+    });
+    if (existing) {
+      return this.prisma.pushSubscription.update({
+        where: { id: existing.id },
+        data: { platform: dto.platform, metadata: dto.metadata ?? undefined },
+      });
+    }
+    return this.prisma.pushSubscription.create({
+      data: {
+        userId,
+        token: dto.token,
+        platform: dto.platform,
+        provider: '{{provider}}',
+        metadata: dto.metadata ?? undefined,
+      },
+    });
+    {{/if}}
+    {{#if (or (eq orm "mongoose") (eq orm "cosmos-sdk") (eq orm "dynamodb-sdk"))}}
+    throw new Error(`{{moduleName}}Service not implemented for ORM: {{orm}}. Implement for your chosen database.`);
+    {{/if}}
+  }
+
+  async unregisterDevice(userId: string, token: string): Promise<void> {
+    {{#if (eq orm "typeorm")}}
+    await this.subscriptionRepo.delete({ userId, token });
+    {{/if}}
+    {{#if (eq orm "prisma")}}
+    await this.prisma.pushSubscription.deleteMany({ where: { userId, token } });
+    {{/if}}
+    {{#if (or (eq orm "mongoose") (eq orm "cosmos-sdk") (eq orm "dynamodb-sdk"))}}
+    throw new Error(`{{moduleName}}Service not implemented for ORM: {{orm}}. Implement for your chosen database.`);
+    {{/if}}
+  }
+
+  async sendToDevice(token: string, payload: SendNotificationDto) {
+    {{#if provider}}
+    return this.pushAdapter.sendToDevice(token, payload);
+    {{else}}
+    throw new Error('No push provider configured');
+    {{/if}}
+  }
+
+  async sendToUser(userId: string, payload: SendNotificationDto) {
+    {{#if provider}}
+    const subs = await this.getSubscriptions(userId);
+    if (subs.length === 0) throw new NotFoundException('No devices registered');
+    const results = await Promise.all(
+      subs.map((s) => this.pushAdapter.sendToDevice(s.token, payload))
+    );
+    return results[0] ?? { success: false, error: 'No devices' };
+    {{else}}
+    throw new Error('No push provider configured');
+    {{/if}}
+  }
+
+  async sendToTopic(topic: string, payload: SendNotificationDto) {
+    {{#if provider}}
+    return this.pushAdapter.sendToTopic(topic, payload);
+    {{else}}
+    throw new Error('No push provider configured');
+    {{/if}}
+  }
+
+  async getSubscriptions(userId: string) {
+    {{#if (eq orm "typeorm")}}
+    return this.subscriptionRepo.find({
+      where: { userId },
+      order: { createdAt: 'DESC' },
+    });
+    {{/if}}
+    {{#if (eq orm "prisma")}}
+    return this.prisma.pushSubscription.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+    });
+    {{/if}}
+    {{#if (or (eq orm "mongoose") (eq orm "cosmos-sdk") (eq orm "dynamodb-sdk"))}}
+    throw new Error(`{{moduleName}}Service not implemented for ORM: {{orm}}. Implement for your chosen database.`);
+    {{/if}}
+  }
+
+  async logNotification(
+    subscriptionId: string,
+    messageId: string | null,
+    status: 'sent' | 'failed',
+    error?: string
+  ): Promise<void> {
+    {{#if (eq orm "typeorm")}}
+    await this.logRepo.save(
+      this.logRepo.create({
+        subscriptionId,
+        messageId,
+        status,
+        error: error ?? null,
+        provider: '{{provider}}',
+      })
+    );
+    {{/if}}
+    {{#if (eq orm "prisma")}}
+    await this.prisma.pushNotificationLog.create({
+      data: {
+        subscriptionId,
+        messageId,
+        status,
+        error,
+        provider: '{{provider}}',
+      },
+    });
+    {{/if}}
+    {{#if (or (eq orm "mongoose") (eq orm "cosmos-sdk") (eq orm "dynamodb-sdk"))}}
+    throw new Error(`{{moduleName}}Service not implemented for ORM: {{orm}}. Implement for your chosen database.`);
+    {{/if}}
+  }
+}

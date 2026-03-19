@@ -1,0 +1,91 @@
+import { Server, Socket } from 'socket.io';
+import { ChatService } from './chat.service';
+
+export function initChatSocketHandlers(io: Server, chatService: ChatService): void {
+  const chatNamespace = io.of('/chat');
+
+  const userSocketMap = new Map<string, Set<string>>();
+  const presenceMap = new Map<string, boolean>();
+
+  chatNamespace.on('connection', (socket: Socket) => {
+    const userId = socket.handshake.query.userId as string;
+
+    if (userId) {
+      if (!userSocketMap.has(userId)) userSocketMap.set(userId, new Set());
+      userSocketMap.get(userId)!.add(socket.id);
+      presenceMap.set(userId, true);
+      chatNamespace.emit('user:online', { userId });
+    }
+
+    console.log(`[ChatSocket] Connected: ${socket.id}, userId: ${userId}`);
+
+    socket.on('conversation:join', async (data: { conversationId: string }) => {
+      await socket.join(`conversation:${data.conversationId}`);
+      socket.emit('conversation:joined', data);
+    });
+
+    socket.on('conversation:leave', async (data: { conversationId: string }) => {
+      await socket.leave(`conversation:${data.conversationId}`);
+    });
+
+    socket.on('message:send', async (data: { conversationId: string; type: string; content?: string; senderId: string }) => {
+      try {
+        const { senderId, ...dto } = data;
+        const message = await chatService.sendMessage(dto as Parameters<typeof chatService.sendMessage>[0], senderId);
+        chatNamespace.to(`conversation:${data.conversationId}`).emit('message:new', message);
+        socket.emit('message:sent', { success: true, message });
+      } catch (err) {
+        socket.emit('message:sent', { success: false, error: (err as Error).message });
+      }
+    });
+
+    socket.on('typing:start', (payload: { conversationId: string; userId: string; userName?: string; avatarUrl?: string }) => {
+      socket.to(`conversation:${payload.conversationId}`).emit('typing:start', payload);
+    });
+
+    socket.on('typing:stop', (payload: { conversationId: string; userId: string }) => {
+      socket.to(`conversation:${payload.conversationId}`).emit('typing:stop', payload);
+    });
+
+    socket.on('message:read', async (data: { conversationId: string; userId: string }) => {
+      await chatService.markAsRead(data.conversationId, data.userId);
+      socket.to(`conversation:${data.conversationId}`).emit('message:read', {
+        ...data,
+        readAt: new Date().toISOString(),
+      });
+    });
+
+    socket.on('reaction:add', async (data: { messageId: string; emoji: string; userId: string; conversationId: string }) => {
+      try {
+        await chatService.addReaction({ messageId: data.messageId, emoji: data.emoji }, data.userId);
+        chatNamespace.emit('reaction:added', data);
+      } catch (err) {
+        socket.emit('reaction:error', { error: (err as Error).message });
+      }
+    });
+
+    socket.on('reaction:remove', async (data: { messageId: string; emoji: string; userId: string; conversationId: string }) => {
+      try {
+        await chatService.removeReaction(data.messageId, data.emoji, data.userId);
+        chatNamespace.emit('reaction:removed', data);
+      } catch (err) {
+        socket.emit('reaction:error', { error: (err as Error).message });
+      }
+    });
+
+    socket.on('disconnect', () => {
+      if (userId) {
+        const sockets = userSocketMap.get(userId);
+        if (sockets) {
+          sockets.delete(socket.id);
+          if (sockets.size === 0) {
+            userSocketMap.delete(userId);
+            presenceMap.set(userId, false);
+            chatNamespace.emit('user:offline', { userId, lastSeen: new Date().toISOString() });
+          }
+        }
+      }
+      console.log(`[ChatSocket] Disconnected: ${socket.id}`);
+    });
+  });
+}

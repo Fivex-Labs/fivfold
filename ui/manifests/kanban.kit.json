@@ -1,0 +1,67 @@
+{
+  "name": "kanban",
+  "version": "1.0.0",
+  "description": "Drag-and-drop kanban board with columns, tasks, priorities, assignees, labels, and mobile-responsive layout.",
+  "dependencies": [
+    "lucide-react",
+    "@dnd-kit/core",
+    "@dnd-kit/sortable",
+    "@dnd-kit/utilities"
+  ],
+  "shadcnDependencies": [
+    "card",
+    "scroll-area",
+    "badge",
+    "avatar",
+    "button",
+    "dialog",
+    "input",
+    "label",
+    "textarea",
+    "select",
+    "separator",
+    "tooltip"
+  ],
+  "files": [
+    {
+      "template": "templates/kanban/index.tsx",
+      "output": "{{outputDir}}/{{kitName}}/index.tsx"
+    },
+    {
+      "template": "templates/kanban/types.ts",
+      "output": "{{outputDir}}/{{kitName}}/types.ts"
+    },
+    {
+      "template": "templates/kanban/task-card.tsx",
+      "output": "{{outputDir}}/{{kitName}}/task-card.tsx"
+    },
+    {
+      "template": "templates/kanban/column-header.tsx",
+      "output": "{{outputDir}}/{{kitName}}/column-header.tsx"
+    },
+    {
+      "template": "templates/kanban/column.tsx",
+      "output": "{{outputDir}}/{{kitName}}/column.tsx"
+    },
+    {
+      "template": "templates/kanban/drag-provider.tsx",
+      "output": "{{outputDir}}/{{kitName}}/drag-provider.tsx"
+    },
+    {
+      "template": "templates/kanban/board.tsx",
+      "output": "{{outputDir}}/{{kitName}}/board.tsx"
+    },
+    {
+      "template": "templates/kanban/board-header.tsx",
+      "output": "{{outputDir}}/{{kitName}}/board-header.tsx"
+    },
+    {
+      "template": "templates/kanban/add-task-dialog.tsx",
+      "output": "{{outputDir}}/{{kitName}}/add-task-dialog.tsx"
+    },
+    {
+      "template": "templates/kanban/task-detail.tsx",
+      "output": "{{outputDir}}/{{kitName}}/task-detail.tsx"
+    }
+  ]
+}

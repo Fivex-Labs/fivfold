@@ -1,0 +1,138 @@
+'use client';
+
+import React, { useState, useCallback, useEffect, useRef } from 'react';
+import { Search, X } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import type { FivFoldChatGif } from './types';
+
+interface TenorGifResult {
+  id: string;
+  media_formats: {
+    gif?: { url: string; dims: [number, number] };
+    tinygif?: { url: string; dims: [number, number] };
+    nanogif?: { url: string; dims: [number, number] };
+  };
+  title: string;
+  content_description: string;
+}
+
+interface GifPickerProps {
+  open: boolean;
+  onClose: () => void;
+  onSelect: (gif: FivFoldChatGif) => void;
+  apiKey?: string;
+}
+
+const DEFAULT_API_KEY = 'LIVDSRZULELA'; // Tenor demo key — replace with your own
+
+function mapTenorResult(result: TenorGifResult): FivFoldChatGif {
+  const full = result.media_formats.gif;
+  const preview = result.media_formats.tinygif ?? result.media_formats.nanogif;
+  return {
+    id: result.id,
+    url: full?.url ?? preview?.url ?? '',
+    previewUrl: preview?.url ?? full?.url ?? '',
+    title: result.content_description || result.title || 'GIF',
+    width: full?.dims[0] ?? 200,
+    height: full?.dims[1] ?? 150,
+  };
+}
+
+export function GifPicker({ open, onClose, onSelect, apiKey }: GifPickerProps) {
+  const [query, setQuery] = useState('');
+  const [gifs, setGifs] = useState<FivFoldChatGif[]>([]);
+  const [loading, setLoading] = useState(false);
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
+  const key = apiKey ?? DEFAULT_API_KEY;
+
+  const fetchGifs = useCallback(async (q: string) => {
+    setLoading(true);
+    try {
+      const endpoint = q
+        ? `https://tenor.googleapis.com/v2/search?q=${encodeURIComponent(q)}&key=${key}&limit=24&media_filter=gif,tinygif`
+        : `https://tenor.googleapis.com/v2/featured?key=${key}&limit=24&media_filter=gif,tinygif`;
+      const res = await fetch(endpoint);
+      if (!res.ok) return;
+      const data = (await res.json()) as { results?: TenorGifResult[] };
+      setGifs((data.results ?? []).map(mapTenorResult));
+    } catch {
+      // Silently fail — network errors should not break the UI
+    } finally {
+      setLoading(false);
+    }
+  }, [key]);
+
+  useEffect(() => {
+    if (!open) return;
+    clearTimeout(debounceRef.current);
+    if (query.trim()) {
+      debounceRef.current = setTimeout(() => void fetchGifs(query), 400);
+    } else {
+      void fetchGifs('');
+    }
+    return () => clearTimeout(debounceRef.current);
+  }, [query, open, fetchGifs]);
+
+  return (
+    <Dialog open={open} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-w-sm">
+        <DialogHeader>
+          <DialogTitle>Send a GIF</DialogTitle>
+        </DialogHeader>
+
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder="Search GIFs…"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            className="pl-8"
+            autoFocus
+          />
+        </div>
+
+        <ScrollArea className="h-72">
+          {loading ? (
+            <div className="flex h-full items-center justify-center">
+              <span className="text-sm text-muted-foreground">Loading…</span>
+            </div>
+          ) : gifs.length === 0 ? (
+            <div className="flex h-full items-center justify-center">
+              <span className="text-sm text-muted-foreground">
+                {query ? 'No GIFs found' : 'Start typing to search'}
+              </span>
+            </div>
+          ) : (
+            <div className="grid grid-cols-3 gap-1 p-1">
+              {gifs.map((gif) => (
+                <button
+                  key={gif.id}
+                  type="button"
+                  onClick={() => onSelect(gif)}
+                  className="group overflow-hidden rounded-lg transition-transform hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  <img
+                    src={gif.previewUrl}
+                    alt={gif.title}
+                    className="h-20 w-full object-cover"
+                    loading="lazy"
+                  />
+                </button>
+              ))}
+            </div>
+          )}
+        </ScrollArea>
+
+        <p className="text-center text-[10px] text-muted-foreground">Powered by Tenor</p>
+      </DialogContent>
+    </Dialog>
+  );
+}

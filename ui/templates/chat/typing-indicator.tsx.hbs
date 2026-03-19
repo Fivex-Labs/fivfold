@@ -1,0 +1,76 @@
+'use client';
+
+import React from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { cn } from '@/lib/utils';
+import { ChatAvatar } from './chat-avatar';
+import type { FivFoldChatTypingUser } from './types';
+
+interface TypingIndicatorProps {
+  typingUsers: FivFoldChatTypingUser[];
+  className?: string;
+}
+
+export function TypingIndicator({ typingUsers, className }: TypingIndicatorProps) {
+  if (typingUsers.length === 0) return null;
+
+  const primaryUser = typingUsers[0];
+  const extraCount = typingUsers.length - 1;
+
+  const label =
+    typingUsers.length === 1
+      ? `${primaryUser.userName ?? 'Someone'} is typing…`
+      : `${primaryUser.userName ?? 'Someone'} and ${extraCount} other${extraCount > 1 ? 's' : ''} are typing…`;
+
+  return (
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: 8 }}
+        transition={{ duration: 0.2 }}
+        className={cn('flex items-end gap-2 px-4 py-1', className)}
+      >
+        {/* Stacked avatars */}
+        <div className="flex -space-x-2">
+          {typingUsers.slice(0, 3).map((user, i) => (
+            <ChatAvatar
+              key={user.userId}
+              name={user.userName ?? '?'}
+              src={user.avatarUrl}
+              size="xs"
+              showOnlineDot={false}
+              className="ring-2 ring-background"
+              style={{ zIndex: 3 - i } as React.CSSProperties}
+            />
+          ))}
+        </div>
+
+        {/* Bubble with bouncing dots */}
+        <div
+          className={cn(
+            'flex items-center gap-1 rounded-2xl rounded-bl-sm px-3 py-2',
+            'bg-muted/70 backdrop-blur-sm',
+            'border border-border/30'
+          )}
+          aria-label={label}
+          title={label}
+        >
+          {[0, 1, 2].map((i) => (
+            <motion.span
+              key={i}
+              className="h-2 w-2 rounded-full bg-muted-foreground/60"
+              animate={{ y: ['0%', '-50%', '0%'] }}
+              transition={{
+                duration: 0.8,
+                repeat: Infinity,
+                delay: i * 0.16,
+                ease: 'easeInOut',
+              }}
+            />
+          ))}
+        </div>
+      </motion.div>
+    </AnimatePresence>
+  );
+}

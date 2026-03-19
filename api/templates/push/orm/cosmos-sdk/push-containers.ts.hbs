@@ -1,0 +1,54 @@
+import { CosmosClient, Container, Database } from '@azure/cosmos';
+
+const endpoint = process.env.COSMOS_ENDPOINT!;
+const key = process.env.COSMOS_KEY!;
+const databaseId = process.env.COSMOS_DATABASE_ID ?? 'pushdb';
+
+const client = new CosmosClient({ endpoint, key });
+
+export type PushPlatform = 'ios' | 'android' | 'web';
+
+export interface {{moduleName}}SubscriptionItem {
+  id: string;
+  userId: string;
+  token: string;
+  platform: PushPlatform;
+  provider: string;
+  metadata?: Record<string, string> | null;
+  createdAt: string;
+  _partitionKey: string; // userId
+}
+
+export interface {{moduleName}}NotificationLogItem {
+  id: string;
+  subscriptionId: string;
+  messageId?: string | null;
+  status: 'sent' | 'failed';
+  error?: string | null;
+  provider: string;
+  sentAt: string;
+  _partitionKey: string; // subscriptionId
+}
+
+export async function get{{moduleName}}Containers(): Promise<{
+  subscriptions: Container;
+  notificationLogs: Container;
+}> {
+  const { database } = await client.databases.createIfNotExists({ id: databaseId });
+
+  const [subscriptionsResult, notificationLogsResult] = await Promise.all([
+    database.containers.createIfNotExists({
+      id: '{{kitName}}_subscriptions',
+      partitionKey: '/userId',
+    }),
+    database.containers.createIfNotExists({
+      id: '{{kitName}}_notification_logs',
+      partitionKey: '/subscriptionId',
+    }),
+  ]);
+
+  return {
+    subscriptions: subscriptionsResult.container,
+    notificationLogs: notificationLogsResult.container,
+  };
+}

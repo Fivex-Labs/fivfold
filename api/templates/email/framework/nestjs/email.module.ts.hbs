@@ -1,0 +1,46 @@
+import { Module } from '@nestjs/common';
+{{#if (eq orm "typeorm")}}
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { {{moduleName}}Thread } from './entities/thread.entity';
+import { {{moduleName}}Message } from './entities/message.entity';
+import { {{moduleName}}Folder } from './entities/folder.entity';
+import { {{moduleName}}Label } from './entities/label.entity';
+import { {{moduleName}}Attachment } from './entities/attachment.entity';
+{{/if}}
+{{#if (eq orm "mongoose")}}
+import { MongooseModule } from '@nestjs/mongoose';
+import { {{moduleName}}FolderSchema } from './schemas/folder.schema';
+import { {{moduleName}}LabelSchema } from './schemas/label.schema';
+import { {{moduleName}}ThreadSchema } from './schemas/thread.schema';
+import { {{moduleName}}MessageSchema } from './schemas/message.schema';
+import { {{moduleName}}AttachmentSchema } from './schemas/attachment.schema';
+{{/if}}
+import { {{moduleName}}Controller } from './{{kitName}}.controller';
+import { {{moduleName}}Service } from './{{kitName}}.service';
+
+@Module({
+  imports: [
+    {{#if (eq orm "typeorm")}}
+    TypeOrmModule.forFeature([
+      {{moduleName}}Thread,
+      {{moduleName}}Message,
+      {{moduleName}}Folder,
+      {{moduleName}}Label,
+      {{moduleName}}Attachment,
+    ]),
+    {{/if}}
+    {{#if (eq orm "mongoose")}}
+    MongooseModule.forFeature([
+      { name: '{{moduleName}}Folder', schema: {{moduleName}}FolderSchema },
+      { name: '{{moduleName}}Label', schema: {{moduleName}}LabelSchema },
+      { name: '{{moduleName}}Thread', schema: {{moduleName}}ThreadSchema },
+      { name: '{{moduleName}}Message', schema: {{moduleName}}MessageSchema },
+      { name: '{{moduleName}}Attachment', schema: {{moduleName}}AttachmentSchema },
+    ]),
+    {{/if}}
+  ],
+  controllers: [{{moduleName}}Controller],
+  providers: [{{moduleName}}Service],
+  exports: [{{moduleName}}Service],
+})
+export class {{moduleName}}Module {}

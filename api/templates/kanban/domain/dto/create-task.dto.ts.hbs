@@ -1,0 +1,44 @@
+import {
+  IsArray,
+  IsEnum,
+  IsNumber,
+  IsOptional,
+  IsString,
+  MinLength,
+  Min,
+} from 'class-validator';
+
+export class CreateTaskDto {
+  @IsString()
+  @MinLength(1)
+  title: string;
+
+  @IsString()
+  @IsOptional()
+  description?: string;
+
+  @IsString()
+  columnId: string;
+
+  @IsEnum(['low', 'medium', 'high', 'urgent'])
+  @IsOptional()
+  priority?: 'low' | 'medium' | 'high' | 'urgent';
+
+  @IsString()
+  @IsOptional()
+  assigneeId?: string;
+
+  @IsString()
+  @IsOptional()
+  dueDate?: string;
+
+  @IsNumber()
+  @Min(0)
+  @IsOptional()
+  estimatedHours?: number;
+
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  labels?: string[];
+}

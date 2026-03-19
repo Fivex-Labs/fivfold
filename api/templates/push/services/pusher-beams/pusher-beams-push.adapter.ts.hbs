@@ -1,0 +1,76 @@
+import PushNotifications from '@pusher/push-notifications-server';
+import type { SendNotificationDto } from '../dto/send-notification.dto';
+import type { SendResult } from '../domain/push.port';
+
+export class PusherBeamsPushAdapter {
+  private beamsClient: PushNotifications;
+
+  constructor() {
+    this.beamsClient = new PushNotifications({
+      instanceId: process.env.PUSHER_BEAMS_INSTANCE_ID ?? '',
+      secretKey: process.env.PUSHER_BEAMS_SECRET_KEY ?? '',
+    });
+  }
+
+  async sendToDevice(token: string, payload: SendNotificationDto): Promise<SendResult> {
+    try {
+      await this.beamsClient.publishToUsers([token], {
+        web: {
+          notification: {
+            title: payload.title,
+            body: payload.body ?? '',
+            icon: payload.imageUrl,
+          },
+          data: payload.data ?? {},
+        },
+        fcm: {
+          notification: {
+            title: payload.title,
+            body: payload.body ?? '',
+          },
+          data: payload.data ?? {},
+        },
+        apns: {
+          aps: {
+            alert: { title: payload.title, body: payload.body ?? '' },
+            badge: payload.badge,
+            sound: payload.sound,
+          },
+          fcm_options: { image: payload.imageUrl },
+        },
+      });
+      return { success: true };
+    } catch (err) {
+      return { success: false, error: String(err) };
+    }
+  }
+
+  async sendToTopic(topic: string, payload: SendNotificationDto): Promise<SendResult> {
+    try {
+      await this.beamsClient.publishToInterests([topic], {
+        web: {
+          notification: {
+            title: payload.title,
+            body: payload.body ?? '',
+          },
+          data: { ...payload.data, topic },
+        },
+        fcm: {
+          notification: {
+            title: payload.title,
+            body: payload.body ?? '',
+          },
+          data: { ...payload.data, topic },
+        },
+        apns: {
+          aps: {
+            alert: { title: payload.title, body: payload.body ?? '' },
+          },
+        },
+      });
+      return { success: true };
+    } catch (err) {
+      return { success: false, error: String(err) };
+    }
+  }
+}

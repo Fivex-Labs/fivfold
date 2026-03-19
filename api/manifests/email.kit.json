@@ -1,0 +1,82 @@
+{
+  "name": "email",
+  "version": "1.0.0",
+  "description": "Complete email backend with threads, messages, folders, labels, and attachments.",
+  "domain": {
+    "files": [
+      { "template": "email/domain/email.port.ts.hbs", "output": "{{outputDir}}/{{kitName}}/domain/email.port.ts" },
+      { "template": "email/domain/dto/create-email.dto.ts.hbs", "output": "{{outputDir}}/{{kitName}}/dto/create-email.dto.ts" },
+      { "template": "email/domain/dto/update-email.dto.ts.hbs", "output": "{{outputDir}}/{{kitName}}/dto/update-email.dto.ts" },
+      { "template": "email/domain/dto/search-email.dto.ts.hbs", "output": "{{outputDir}}/{{kitName}}/dto/search-email.dto.ts" }
+    ]
+  },
+  "framework": {
+    "express": {
+      "files": [
+        { "template": "email/framework/express/email.routes.ts.hbs", "output": "{{outputDir}}/{{kitName}}/email.routes.ts" },
+        { "template": "email/framework/express/email.service.ts.hbs", "output": "{{outputDir}}/{{kitName}}/email.service.ts" }
+      ],
+      "dependencies": ["class-validator", "class-transformer", "express", "uuid"],
+      "devDependencies": ["@types/express", "@types/uuid"]
+    },
+    "nestjs": {
+      "files": [
+        { "template": "email/framework/nestjs/email.module.ts.hbs", "output": "{{outputDir}}/{{kitName}}/email.module.ts" },
+        { "template": "email/framework/nestjs/email.controller.ts.hbs", "output": "{{outputDir}}/{{kitName}}/email.controller.ts" },
+        { "template": "email/framework/nestjs/email.service.ts.hbs", "output": "{{outputDir}}/{{kitName}}/email.service.ts" }
+      ],
+      "dependencies": ["class-validator", "class-transformer", "@nestjs/common", "@nestjs/core", "uuid"],
+      "devDependencies": ["@types/uuid"],
+      "astMutations": [
+        { "target": "src/app.module.ts", "action": "registerModule", "module": "EmailModule", "importPath": "./modules/email/email.module" }
+      ]
+    }
+  },
+  "orm": {
+    "typeorm": {
+      "files": [
+        { "template": "email/orm/typeorm/folder.entity.ts.hbs", "output": "{{outputDir}}/{{kitName}}/entities/folder.entity.ts" },
+        { "template": "email/orm/typeorm/thread.entity.ts.hbs", "output": "{{outputDir}}/{{kitName}}/entities/thread.entity.ts" },
+        { "template": "email/orm/typeorm/message.entity.ts.hbs", "output": "{{outputDir}}/{{kitName}}/entities/message.entity.ts" },
+        { "template": "email/orm/typeorm/label.entity.ts.hbs", "output": "{{outputDir}}/{{kitName}}/entities/label.entity.ts" },
+        { "template": "email/orm/typeorm/attachment.entity.ts.hbs", "output": "{{outputDir}}/{{kitName}}/entities/attachment.entity.ts" }
+      ],
+      "dependencies": ["typeorm", "pg", "reflect-metadata"],
+      "devDependencies": ["@types/pg"]
+    },
+    "prisma": {
+      "files": [
+        { "template": "email/orm/prisma/email-models.prisma.hbs", "output": "prisma/schema.prisma", "mode": "append" }
+      ],
+      "dependencies": ["@prisma/client"],
+      "devDependencies": ["prisma"]
+    },
+    "mongoose": {
+      "files": [
+        { "template": "email/orm/mongoose/folder.schema.ts.hbs", "output": "{{outputDir}}/{{kitName}}/schemas/folder.schema.ts" },
+        { "template": "email/orm/mongoose/label.schema.ts.hbs", "output": "{{outputDir}}/{{kitName}}/schemas/label.schema.ts" },
+        { "template": "email/orm/mongoose/thread.schema.ts.hbs", "output": "{{outputDir}}/{{kitName}}/schemas/thread.schema.ts" },
+        { "template": "email/orm/mongoose/message.schema.ts.hbs", "output": "{{outputDir}}/{{kitName}}/schemas/message.schema.ts" },
+        { "template": "email/orm/mongoose/attachment.schema.ts.hbs", "output": "{{outputDir}}/{{kitName}}/schemas/attachment.schema.ts" }
+      ],
+      "dependencies": ["mongoose"],
+      "devDependencies": []
+    },
+    "cosmos-sdk": {
+      "files": [
+        { "template": "email/orm/cosmos-sdk/email-containers.ts.hbs", "output": "{{outputDir}}/{{kitName}}/containers/email.containers.ts" }
+      ],
+      "dependencies": ["@azure/cosmos"],
+      "devDependencies": [],
+      "envVars": ["COSMOS_ENDPOINT", "COSMOS_KEY", "COSMOS_DATABASE_ID"]
+    },
+    "dynamodb-sdk": {
+      "files": [
+        { "template": "email/orm/dynamodb-sdk/email-tables.ts.hbs", "output": "{{outputDir}}/{{kitName}}/tables/email.tables.ts" }
+      ],
+      "dependencies": ["@aws-sdk/client-dynamodb", "@aws-sdk/lib-dynamodb"],
+      "devDependencies": [],
+      "envVars": ["AWS_REGION", "AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY"]
+    }
+  }
+}

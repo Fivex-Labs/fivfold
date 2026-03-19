@@ -1,0 +1,73 @@
+{
+  "name": "auth",
+  "version": "1.0.0",
+  "description": "Authentication UI kit with Login, Register, ForgotPassword, ResetPassword, EmailVerification, OAuth buttons with branded logos, AuthLayout, AuthProvider, and AuthGuard. Supports Firebase, Cognito, Auth0, and JWT.",
+  "authProviders": ["firebase", "cognito", "auth0", "jwt"],
+  "dependencies": ["@icons-pack/react-simple-icons"],
+  "shadcnDependencies": [
+    "button",
+    "input",
+    "label",
+    "card",
+    "dialog",
+    "separator"
+  ],
+  "files": [
+    {
+      "template": "templates/auth/index.tsx",
+      "output": "{{outputDir}}/{{kitName}}/index.tsx"
+    },
+    {
+      "template": "templates/auth/types.ts",
+      "output": "{{outputDir}}/{{kitName}}/types.ts"
+    },
+    {
+      "template": "templates/auth/auth-layout.tsx",
+      "output": "{{outputDir}}/{{kitName}}/auth-layout.tsx"
+    },
+    {
+      "template": "templates/auth/login.tsx",
+      "output": "{{outputDir}}/{{kitName}}/login.tsx"
+    },
+    {
+      "template": "templates/auth/register.tsx",
+      "output": "{{outputDir}}/{{kitName}}/register.tsx"
+    },
+    {
+      "template": "templates/auth/forgot-password.tsx",
+      "output": "{{outputDir}}/{{kitName}}/forgot-password.tsx"
+    },
+    {
+      "template": "templates/auth/reset-password.tsx",
+      "output": "{{outputDir}}/{{kitName}}/reset-password.tsx"
+    },
+    {
+      "template": "templates/auth/email-verification.tsx",
+      "output": "{{outputDir}}/{{kitName}}/email-verification.tsx"
+    },
+    {
+      "template": "templates/auth/oauth-buttons.tsx",
+      "output": "{{outputDir}}/{{kitName}}/oauth-buttons.tsx"
+    },
+    {
+      "template": "templates/auth/auth-provider.tsx",
+      "output": "{{outputDir}}/{{kitName}}/auth-provider.tsx"
+    },
+    {
+      "template": "templates/auth/auth-guard.tsx",
+      "output": "{{outputDir}}/{{kitName}}/auth-guard.tsx"
+    },
+    {
+      "template": "templates/auth/providers/firebase-client.ts",
+      "output": "{{outputDir}}/{{kitName}}/providers/firebase-client.ts"
+    },
+    {
+      "template": "templates/auth/providers/cognito-client.ts",
+      "output": "{{outputDir}}/{{kitName}}/providers/cognito-client.ts"
+    },
+    {
+      "template": "templates/auth/providers/auth0-client.ts",
+      "output": "{{outputDir}}/{{kitName}}/providers/auth0-client.ts"
+    }
+  ]
+}

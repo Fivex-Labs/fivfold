@@ -1,0 +1,252 @@
+'use client';
+
+import React, { useState } from 'react';
+import { format } from 'date-fns';
+import { Check, CheckCheck, Trash2, Reply } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { cn } from '@/lib/utils';
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuSeparator,
+  ContextMenuTrigger,
+} from '@/components/ui/context-menu';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { ChatAvatar } from './chat-avatar';
+import { PollDisplay } from './poll-display';
+import { LocationDisplay } from './location-display';
+import { ReactionPicker } from './reaction-picker';
+import type { FivFoldChatMessage, FivFoldChatUser } from './types';
+
+interface MessageBubbleProps {
+  message: FivFoldChatMessage;
+  showAvatar?: boolean;
+  onReaction?: (messageId: string, emoji: string, remove?: boolean) => void;
+  onDelete?: (messageId: string) => void;
+  onVotePoll?: (pollId: string, optionIndex: number) => void;
+  currentUserId: string;
+  className?: string;
+}
+
+function StatusIcon({ status }: { status: FivFoldChatMessage['status'] }) {
+  if (status === 'sending') return <span className="text-[10px] text-muted-foreground/60">·</span>;
+  if (status === 'sent') return <Check className="h-3 w-3 text-muted-foreground/60" />;
+  if (status === 'delivered') return <CheckCheck className="h-3 w-3 text-muted-foreground/60" />;
+  if (status === 'read') return <CheckCheck className="h-3 w-3 text-blue-500" />;
+  if (status === 'failed') return <span className="text-[10px] text-destructive">!</span>;
+  return null;
+}
+
+export function MessageBubble({
+  message,
+  showAvatar = true,
+  onReaction,
+  onDelete,
+  onVotePoll,
+  currentUserId,
+  className,
+}: MessageBubbleProps) {
+  const isOwn = message.senderId === currentUserId || message.isOwn;
+  const [showReactionPicker, setShowReactionPicker] = useState(false);
+  const isDeleted = !!message.deletedAt;
+
+  const reactionGroups = (message.reactions ?? []).reduce<Record<string, string[]>>(
+    (acc, r) => {
+      if (!acc[r.emoji]) acc[r.emoji] = [];
+      acc[r.emoji] = r.userIds;
+      return acc;
+    },
+    {}
+  );
+
+  const hasReacted = (emoji: string) =>
+    reactionGroups[emoji]?.includes(currentUserId) ?? false;
+
+  return (
+    <motion.div
+      layout
+      initial={{ opacity: 0, y: 16, scale: 0.96 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.9 }}
+      transition={{ type: 'spring', stiffness: 400, damping: 35 }}
+      className={cn(
+        'group flex gap-2',
+        isOwn ? 'flex-row-reverse' : 'flex-row',
+        className
+      )}
+    >
+      {/* Avatar (received only) */}
+      {!isOwn && (
+        <div className="flex-shrink-0 self-end">
+          {showAvatar ? (
+            <ChatAvatar
+              src={message.sender?.avatarUrl}
+              name={message.sender?.name ?? 'U'}
+              size="sm"
+              showOnlineDot={false}
+            />
+          ) : (
+            <div className="h-8 w-8" />
+          )}
+        </div>
+      )}
+
+      <div className={cn('flex max-w-[75%] flex-col gap-0.5', isOwn ? 'items-end' : 'items-start')}>
+        {/* Sender name (received group messages) */}
+        {!isOwn && showAvatar && message.sender?.name && (
+          <span className="ml-1 text-[11px] font-medium text-muted-foreground">
+            {message.sender.name}
+          </span>
+        )}
+
+        <ContextMenu>
+          <ContextMenuTrigger asChild>
+            <div
+              className={cn(
+                'relative rounded-2xl px-3 py-2 text-sm',
+                'backdrop-blur-sm transition-all',
+                isOwn
+                  ? 'rounded-br-sm bg-primary/90 text-primary-foreground'
+                  : 'rounded-bl-sm bg-muted/70 text-foreground border border-border/20',
+                isDeleted && 'opacity-50 italic',
+                message.status === 'sending' && 'opacity-70'
+              )}
+            >
+              {isDeleted ? (
+                <span className="text-xs">Message deleted</span>
+              ) : (
+                <>
+                  {/* Reply preview */}
+                  {message.replyToMessage && (
+                    <div className={cn('mb-1.5 rounded-lg px-2 py-1 text-xs', isOwn ? 'bg-primary-foreground/10' : 'bg-background/40')}>
+                      <span className="font-medium opacity-70">
+                        {message.replyToMessage.senderId === currentUserId ? 'You' : 'Reply'}:{' '}
+                      </span>
+                      <span className="opacity-70 line-clamp-1">{message.replyToMessage.content ?? '...'}</span>
+                    </div>
+                  )}
+
+                  {/* Content by type */}
+                  {message.type === 'text' && (
+                    <p className="whitespace-pre-wrap break-words leading-relaxed">{message.content}</p>
+                  )}
+
+                  {message.type === 'gif' && message.gif && (
+                    <img
+                      src={message.gif.url}
+                      alt={message.gif.title}
+                      className="max-w-[200px] rounded-lg"
+                      style={{ aspectRatio: `${message.gif.width}/${message.gif.height}` }}
+                    />
+                  )}
+
+                  {(message.type === 'image') && message.attachments?.[0] && (
+                    <img
+                      src={message.attachments[0].url}
+                      alt={message.attachments[0].name}
+                      className="max-w-[240px] rounded-lg object-cover"
+                    />
+                  )}
+
+                  {message.type === 'video' && message.attachments?.[0] && (
+                    <video
+                      src={message.attachments[0].url}
+                      controls
+                      className="max-w-[240px] rounded-lg"
+                    />
+                  )}
+
+                  {message.type === 'file' && message.attachments?.[0] && (
+                    <a
+                      href={message.attachments[0].url}
+                      download={message.attachments[0].name}
+                      className="flex items-center gap-2 text-xs underline"
+                    >
+                      📎 {message.attachments[0].name}
+                    </a>
+                  )}
+
+                  {message.type === 'poll' && message.poll && (
+                    <PollDisplay
+                      poll={message.poll}
+                      currentUserId={currentUserId}
+                      onVote={(optionIndex) => onVotePoll?.(message.poll!.id, optionIndex)}
+                      isOwn={isOwn}
+                    />
+                  )}
+
+                  {message.type === 'location' && message.location && (
+                    <LocationDisplay location={message.location} />
+                  )}
+                </>
+              )}
+            </div>
+          </ContextMenuTrigger>
+          <ContextMenuContent>
+            <ContextMenuItem onClick={() => setShowReactionPicker(true)}>React</ContextMenuItem>
+            <ContextMenuSeparator />
+            {isOwn && (
+              <ContextMenuItem
+                className="text-destructive"
+                onClick={() => onDelete?.(message.id)}
+              >
+                <Trash2 className="mr-2 h-3.5 w-3.5" />
+                Delete
+              </ContextMenuItem>
+            )}
+          </ContextMenuContent>
+        </ContextMenu>
+
+        {/* Reactions */}
+        {Object.keys(reactionGroups).length > 0 && (
+          <div className={cn('flex flex-wrap gap-1 px-1', isOwn ? 'justify-end' : 'justify-start')}>
+            {Object.entries(reactionGroups).map(([emoji, userIds]) => (
+              <button
+                key={emoji}
+                type="button"
+                onClick={() => onReaction?.(message.id, emoji, hasReacted(emoji))}
+                className={cn(
+                  'flex items-center gap-0.5 rounded-full px-2 py-0.5 text-xs',
+                  'border transition-all',
+                  hasReacted(emoji)
+                    ? 'border-primary/30 bg-primary/10 font-medium'
+                    : 'border-border/30 bg-muted/50 hover:bg-muted'
+                )}
+              >
+                <span>{emoji}</span>
+                <span className="text-muted-foreground">{userIds.length}</span>
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Timestamp + status */}
+        <div className={cn('flex items-center gap-1 px-1', isOwn ? 'flex-row-reverse' : 'flex-row')}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="text-[10px] text-muted-foreground/50">
+                {format(new Date(message.createdAt), 'HH:mm')}
+              </span>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="text-xs">
+              {format(new Date(message.createdAt), 'PPpp')}
+            </TooltipContent>
+          </Tooltip>
+          {isOwn && <StatusIcon status={message.status} />}
+        </div>
+
+        {/* Reaction picker */}
+        {showReactionPicker && (
+          <ReactionPicker
+            onSelect={(emoji) => {
+              onReaction?.(message.id, emoji, hasReacted(emoji));
+              setShowReactionPicker(false);
+            }}
+            onClose={() => setShowReactionPicker(false)}
+          />
+        )}
+      </div>
+    </motion.div>
+  );
+}

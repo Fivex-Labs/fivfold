@@ -1,0 +1,25 @@
+import { Schema, model, Document } from 'mongoose';
+
+export interface I{{moduleName}}Folder extends Document {
+  name: string;
+  icon?: string | null;
+  userId: string;
+  isSystem: boolean;
+  unreadCount: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+const {{moduleName}}FolderSchema = new Schema<I{{moduleName}}Folder>(
+  {
+    name: { type: String, required: true },
+    icon: { type: String },
+    userId: { type: String, required: true, index: true },
+    isSystem: { type: Boolean, default: false },
+    unreadCount: { type: Number, default: 0 },
+  },
+  { timestamps: true, collection: '{{kitName}}_folders' }
+);
+
+export const {{moduleName}}Folder = model<I{{moduleName}}Folder>('{{moduleName}}Folder', {{moduleName}}FolderSchema);
+export { {{moduleName}}FolderSchema };

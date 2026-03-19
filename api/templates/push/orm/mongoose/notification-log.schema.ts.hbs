@@ -1,0 +1,26 @@
+import { Schema, model, Document } from 'mongoose';
+
+export interface I{{moduleName}}NotificationLog extends Document {
+  subscriptionId: string;
+  messageId?: string | null;
+  status: 'sent' | 'failed';
+  error?: string | null;
+  provider: string;
+  sentAt: Date;
+}
+
+const {{moduleName}}NotificationLogSchema = new Schema<I{{moduleName}}NotificationLog>(
+  {
+    subscriptionId: { type: String, required: true, index: true },
+    messageId: { type: String },
+    status: { type: String, enum: ['sent', 'failed'], required: true },
+    error: { type: String },
+    provider: { type: String, required: true },
+  },
+  { timestamps: false, collection: '{{kitName}}_notification_logs' }
+);
+
+{{moduleName}}NotificationLogSchema.index({ subscriptionId: 1, sentAt: -1 });
+
+export const {{moduleName}}NotificationLog = model<I{{moduleName}}NotificationLog>('{{moduleName}}NotificationLog', {{moduleName}}NotificationLogSchema);
+export { {{moduleName}}NotificationLogSchema };

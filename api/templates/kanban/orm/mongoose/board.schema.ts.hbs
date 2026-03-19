@@ -1,0 +1,23 @@
+import { Schema, model, Document } from 'mongoose';
+
+export interface I{{moduleName}}Board extends Document {
+  title: string;
+  description?: string | null;
+  ownerId: string;
+  coverColor?: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+const {{moduleName}}BoardSchema = new Schema<I{{moduleName}}Board>(
+  {
+    title: { type: String, required: true },
+    description: { type: String },
+    ownerId: { type: String, required: true, index: true },
+    coverColor: { type: String },
+  },
+  { timestamps: true, collection: '{{kitName}}_boards' }
+);
+
+export const {{moduleName}}Board = model<I{{moduleName}}Board>('{{moduleName}}Board', {{moduleName}}BoardSchema);
+export { {{moduleName}}BoardSchema };

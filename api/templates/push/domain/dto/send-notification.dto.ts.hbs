@@ -1,0 +1,10 @@
+export interface SendNotificationDto {
+  title: string;
+  body?: string;
+  data?: Record<string, string>;
+  imageUrl?: string;
+  badge?: number;
+  sound?: string;
+  channelId?: string;
+  priority?: 'high' | 'normal' | 'low';
+}

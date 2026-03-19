@@ -1,0 +1,112 @@
+import { Server, Socket } from 'socket.io';
+
+export interface IRealtimeService {
+  broadcastNewMessage(conversationId: string, message: unknown): void;
+  broadcastTypingStart(conversationId: string, payload: { userId: string; userName?: string; avatarUrl?: string }): void;
+  broadcastTypingStop(conversationId: string, userId: string): void;
+  broadcastReaction(messageId: string, reaction: unknown): void;
+  broadcastMemberJoined(conversationId: string, userId: string): void;
+  broadcastMemberLeft(conversationId: string, userId: string): void;
+  broadcastMessageRead(conversationId: string, userId: string, readAt: string): void;
+  isUserOnline(userId: string): boolean;
+}
+
+export class SocketIoRealtimeAdapter implements IRealtimeService {
+  private readonly userSocketMap = new Map<string, Set<string>>();
+  private readonly presenceMap = new Map<string, boolean>();
+
+  constructor(private readonly io: Server) {
+    this.setupNamespace();
+  }
+
+  private setupNamespace(): void {
+    const ns = this.io.of('/chat');
+
+    ns.on('connection', (socket: Socket) => {
+      const userId = socket.handshake.query.userId as string | undefined;
+
+      if (userId) {
+        this.trackUserSocket(userId, socket.id);
+        ns.emit('user:online', { userId });
+      }
+
+      socket.on('conversation:join', async (data: { conversationId: string }) => {
+        await socket.join(`conversation:${data.conversationId}`);
+        socket.emit('conversation:joined', data);
+      });
+
+      socket.on('conversation:leave', async (data: { conversationId: string }) => {
+        await socket.leave(`conversation:${data.conversationId}`);
+      });
+
+      socket.on('typing:start', (payload: { conversationId: string; userId: string; userName?: string; avatarUrl?: string }) => {
+        socket.to(`conversation:${payload.conversationId}`).emit('typing:start', payload);
+      });
+
+      socket.on('typing:stop', (payload: { conversationId: string; userId: string }) => {
+        socket.to(`conversation:${payload.conversationId}`).emit('typing:stop', payload);
+      });
+
+      socket.on('disconnect', () => {
+        if (userId) {
+          const sockets = this.userSocketMap.get(userId);
+          if (sockets) {
+            sockets.delete(socket.id);
+            if (sockets.size === 0) {
+              this.userSocketMap.delete(userId);
+              this.presenceMap.set(userId, false);
+              ns.emit('user:offline', { userId, lastSeen: new Date().toISOString() });
+            }
+          }
+        }
+      });
+    });
+  }
+
+  private trackUserSocket(userId: string, socketId: string): void {
+    if (!this.userSocketMap.has(userId)) this.userSocketMap.set(userId, new Set());
+    this.userSocketMap.get(userId)!.add(socketId);
+    this.presenceMap.set(userId, true);
+  }
+
+  broadcastNewMessage(conversationId: string, message: unknown): void {
+    this.io.of('/chat').to(`conversation:${conversationId}`).emit('message:new', message);
+  }
+
+  broadcastTypingStart(conversationId: string, payload: { userId: string; userName?: string; avatarUrl?: string }): void {
+    this.io.of('/chat').to(`conversation:${conversationId}`).emit('typing:start', payload);
+  }
+
+  broadcastTypingStop(conversationId: string, userId: string): void {
+    this.io.of('/chat').to(`conversation:${conversationId}`).emit('typing:stop', { userId });
+  }
+
+  broadcastReaction(messageId: string, reaction: unknown): void {
+    this.io.of('/chat').emit('reaction:added', reaction);
+  }
+
+  broadcastMemberJoined(conversationId: string, userId: string): void {
+    this.io.of('/chat').to(`conversation:${conversationId}`).emit('member:joined', { conversationId, userId });
+  }
+
+  broadcastMemberLeft(conversationId: string, userId: string): void {
+    this.io.of('/chat').to(`conversation:${conversationId}`).emit('member:left', { conversationId, userId });
+  }
+
+  broadcastMessageRead(conversationId: string, userId: string, readAt: string): void {
+    this.io.of('/chat').to(`conversation:${conversationId}`).emit('message:read', { conversationId, userId, readAt });
+  }
+
+  isUserOnline(userId: string): boolean {
+    return this.presenceMap.get(userId) ?? false;
+  }
+
+  emitToUser(userId: string, event: string, data: unknown): void {
+    const sockets = this.userSocketMap.get(userId);
+    if (sockets) {
+      for (const socketId of sockets) {
+        this.io.of('/chat').to(socketId).emit(event, data);
+      }
+    }
+  }
+}

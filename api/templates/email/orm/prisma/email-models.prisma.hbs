@@ -1,0 +1,82 @@
+// ---- Email Kit Models ----
+
+model {{moduleName}}Folder {
+  id         String   @id @default(uuid())
+  name       String
+  icon       String?
+  userId     String   @map("user_id")
+  isSystem   Boolean  @default(false)
+  unreadCount Int     @default(0)
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@map("{{kitName}}_folders")
+}
+
+model {{moduleName}}Label {
+  id        String   @id @default(uuid())
+  name      String
+  color     String?
+  userId    String   @map("user_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("{{kitName}}_labels")
+}
+
+model {{moduleName}}Thread {
+  id           String    @id @default(uuid())
+  subject      String
+  ownerId      String    @map("owner_id")
+  folderId     String?   @map("folder_id")
+  starred      Boolean   @default(false)
+  unread       Boolean   @default(true)
+  labelIds     String[]
+  lastMessageAt DateTime? @map("last_message_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  messages {{moduleName}}Message[]
+
+  @@index([ownerId])
+  @@index([folderId])
+  @@map("{{kitName}}_threads")
+}
+
+model {{moduleName}}Message {
+  id            String   @id @default(uuid())
+  threadId      String   @map("thread_id")
+  senderId      String   @map("sender_id")
+  senderEmail   String   @map("sender_email")
+  senderName    String?  @map("sender_name")
+  toRecipients  String[] @map("to_recipients")
+  ccRecipients  String[] @map("cc_recipients")
+  bccRecipients String[] @map("bcc_recipients")
+  subject       String
+  body          String
+  bodyType      String   @default("text") @map("body_type")
+  read          Boolean  @default(false)
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  thread      {{moduleName}}Thread     @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  attachments {{moduleName}}Attachment[]
+
+  @@index([threadId])
+  @@map("{{kitName}}_messages")
+}
+
+model {{moduleName}}Attachment {
+  id           String   @id @default(uuid())
+  messageId    String   @map("message_id")
+  filename     String
+  mimeType     String   @map("mime_type")
+  size         BigInt
+  storageUrl   String   @map("storage_url")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  message {{moduleName}}Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@index([messageId])
+  @@map("{{kitName}}_attachments")
+}

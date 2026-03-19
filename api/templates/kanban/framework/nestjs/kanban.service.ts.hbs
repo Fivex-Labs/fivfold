@@ -1,0 +1,135 @@
+import { Injectable, NotFoundException } from '@nestjs/common';
+{{#if (eq orm "typeorm")}}
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { KanbanBoard } from './entities/board.entity';
+import { KanbanColumn } from './entities/column.entity';
+import { KanbanTask } from './entities/task.entity';
+import { KanbanLabel } from './entities/label.entity';
+{{/if}}
+import type { CreateTaskDto } from './dto/create-task.dto';
+import type { UpdateTaskDto } from './dto/update-task.dto';
+
+@Injectable()
+export class {{moduleName}}Service {
+  {{#if (eq orm "typeorm")}}
+  constructor(
+    @InjectRepository(KanbanBoard)
+    private readonly boardRepo: Repository<KanbanBoard>,
+    @InjectRepository(KanbanColumn)
+    private readonly columnRepo: Repository<KanbanColumn>,
+    @InjectRepository(KanbanTask)
+    private readonly taskRepo: Repository<KanbanTask>,
+    @InjectRepository(KanbanLabel)
+    private readonly labelRepo: Repository<KanbanLabel>,
+  ) {}
+
+  async getBoards(userId: string) {
+    return this.boardRepo.find({ where: { ownerId: userId }, order: { createdAt: 'DESC' } });
+  }
+
+  async getBoard(userId: string, boardId: string) {
+    const board = await this.boardRepo.findOne({
+      where: { id: boardId, ownerId: userId },
+      relations: ['columns', 'columns.tasks'],
+      order: { columns: { position: 'ASC', tasks: { position: 'ASC' } } },
+    });
+    if (!board) throw new NotFoundException('Board not found');
+    return board;
+  }
+
+  async createBoard(userId: string, title: string, description?: string) {
+    return this.boardRepo.save(this.boardRepo.create({ ownerId: userId, title, description }));
+  }
+
+  async deleteBoard(userId: string, boardId: string): Promise<void> {
+    const board = await this.boardRepo.findOneBy({ id: boardId, ownerId: userId });
+    if (!board) throw new NotFoundException('Board not found');
+    await this.boardRepo.remove(board);
+  }
+
+  async createColumn(userId: string, boardId: string, title: string, color?: string, maxTasks?: number) {
+    await this.getBoard(userId, boardId);
+    const count = await this.columnRepo.countBy({ boardId });
+    return this.columnRepo.save(
+      this.columnRepo.create({ boardId, title, color, maxTasks, position: count })
+    );
+  }
+
+  async updateColumnPositions(
+    userId: string,
+    boardId: string,
+    columnOrders: { id: string; position: number }[],
+  ): Promise<void> {
+    await this.getBoard(userId, boardId);
+    await Promise.all(
+      columnOrders.map(({ id, position }) => this.columnRepo.update({ id, boardId }, { position }))
+    );
+  }
+
+  async deleteColumn(userId: string, boardId: string, columnId: string): Promise<void> {
+    await this.getBoard(userId, boardId);
+    const column = await this.columnRepo.findOneBy({ id: columnId, boardId });
+    if (!column) throw new NotFoundException('Column not found');
+    await this.columnRepo.remove(column);
+  }
+
+  async createTask(dto: CreateTaskDto) {
+    const count = await this.taskRepo.countBy({ columnId: dto.columnId });
+    return this.taskRepo.save(
+      this.taskRepo.create({ ...dto, priority: dto.priority ?? 'medium', labels: dto.labels ?? [], position: count })
+    );
+  }
+
+  async updateTask(taskId: string, dto: UpdateTaskDto) {
+    const task = await this.taskRepo.findOneBy({ id: taskId });
+    if (!task) throw new NotFoundException('Task not found');
+    Object.assign(task, dto);
+    return this.taskRepo.save(task);
+  }
+
+  async moveTask(taskId: string, targetColumnId: string, targetPosition: number) {
+    const task = await this.taskRepo.findOneBy({ id: taskId });
+    if (!task) throw new NotFoundException('Task not found');
+    const oldColumnId = task.columnId;
+    task.columnId = targetColumnId;
+    task.position = targetPosition;
+    await this.taskRepo.save(task);
+    if (oldColumnId !== targetColumnId) {
+      const remaining = await this.taskRepo.find({ where: { columnId: oldColumnId }, order: { position: 'ASC' } });
+      await Promise.all(remaining.map((t, i) => this.taskRepo.update(t.id, { position: i })));
+    }
+    return task;
+  }
+
+  async deleteTask(taskId: string): Promise<void> {
+    const task = await this.taskRepo.findOneBy({ id: taskId });
+    if (!task) throw new NotFoundException('Task not found');
+    await this.taskRepo.remove(task);
+  }
+
+  async getLabels(boardId: string) {
+    return this.labelRepo.find({ where: { boardId }, order: { name: 'ASC' } });
+  }
+
+  async createLabel(boardId: string, name: string, color: string) {
+    return this.labelRepo.save(this.labelRepo.create({ boardId, name, color }));
+  }
+  {{else}}
+  constructor() {}
+
+  async getBoards(_userId: string) { throw new Error(`{{moduleName}}Service not implemented for ORM: {{orm}}. Implement for your chosen database.`); }
+  async getBoard(_userId: string, _boardId: string) { throw new Error(`{{moduleName}}Service not implemented for ORM: {{orm}}. Implement for your chosen database.`); }
+  async createBoard(_userId: string, _title: string, _description?: string) { throw new Error(`{{moduleName}}Service not implemented for ORM: {{orm}}. Implement for your chosen database.`); }
+  async deleteBoard(_userId: string, _boardId: string): Promise<void> { throw new Error(`{{moduleName}}Service not implemented for ORM: {{orm}}. Implement for your chosen database.`); }
+  async createColumn(_userId: string, _boardId: string, _title: string, _color?: string, _maxTasks?: number) { throw new Error(`{{moduleName}}Service not implemented for ORM: {{orm}}. Implement for your chosen database.`); }
+  async updateColumnPositions(_userId: string, _boardId: string, _columnOrders: { id: string; position: number }[]): Promise<void> { throw new Error(`{{moduleName}}Service not implemented for ORM: {{orm}}. Implement for your chosen database.`); }
+  async deleteColumn(_userId: string, _boardId: string, _columnId: string): Promise<void> { throw new Error(`{{moduleName}}Service not implemented for ORM: {{orm}}. Implement for your chosen database.`); }
+  async createTask(_dto: CreateTaskDto) { throw new Error(`{{moduleName}}Service not implemented for ORM: {{orm}}. Implement for your chosen database.`); }
+  async updateTask(_taskId: string, _dto: UpdateTaskDto) { throw new Error(`{{moduleName}}Service not implemented for ORM: {{orm}}. Implement for your chosen database.`); }
+  async moveTask(_taskId: string, _targetColumnId: string, _targetPosition: number) { throw new Error(`{{moduleName}}Service not implemented for ORM: {{orm}}. Implement for your chosen database.`); }
+  async deleteTask(_taskId: string): Promise<void> { throw new Error(`{{moduleName}}Service not implemented for ORM: {{orm}}. Implement for your chosen database.`); }
+  async getLabels(_boardId: string) { throw new Error(`{{moduleName}}Service not implemented for ORM: {{orm}}. Implement for your chosen database.`); }
+  async createLabel(_boardId: string, _name: string, _color: string) { throw new Error(`{{moduleName}}Service not implemented for ORM: {{orm}}. Implement for your chosen database.`); }
+  {{/if}}
+}

@@ -1,0 +1,32 @@
+import type { RegisterDeviceDto } from '../dto/register-device.dto';
+import type { SendNotificationDto } from '../dto/send-notification.dto';
+
+export interface PushSubscription {
+  id: string;
+  userId: string;
+  token: string;
+  platform: 'ios' | 'android' | 'web';
+  provider: string;
+  createdAt: Date;
+}
+
+export interface SendResult {
+  success: boolean;
+  messageId?: string;
+  error?: string;
+}
+
+export interface IPushNotificationService {
+  registerDevice(userId: string, dto: RegisterDeviceDto): Promise<PushSubscription>;
+  unregisterDevice(userId: string, token: string): Promise<void>;
+  sendToDevice(token: string, payload: SendNotificationDto): Promise<SendResult>;
+  sendToUser(userId: string, payload: SendNotificationDto): Promise<SendResult>;
+  sendToTopic(topic: string, payload: SendNotificationDto): Promise<SendResult>;
+  getSubscriptions(userId: string): Promise<PushSubscription[]>;
+  logNotification(
+    subscriptionId: string,
+    messageId: string | null,
+    status: 'sent' | 'failed',
+    error?: string
+  ): Promise<void>;
+}

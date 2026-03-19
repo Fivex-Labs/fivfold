@@ -1,0 +1,57 @@
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  Post,
+  Request,
+} from '@nestjs/common';
+import { {{moduleName}}Service } from './push.service';
+import type { RegisterDeviceDto } from './dto/register-device.dto';
+import type { SendNotificationDto } from './dto/send-notification.dto';
+
+// TODO: Add @UseGuards(AuthGuard) from your auth module
+
+@Controller('push')
+export class {{moduleName}}Controller {
+  constructor(private readonly pushService: {{moduleName}}Service) {}
+
+  private getUser(req: any): { id: string } {
+    return req.user ?? { id: 'REPLACE_WITH_USER_ID' };
+  }
+
+  @Post('subscribe')
+  @HttpCode(HttpStatus.CREATED)
+  registerDevice(@Request() req: any, @Body() dto: RegisterDeviceDto) {
+    return this.pushService.registerDevice(this.getUser(req).id, dto);
+  }
+
+  @Delete('subscribe/:token')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  unregisterDevice(@Request() req: any, @Param('token') token: string) {
+    return this.pushService.unregisterDevice(this.getUser(req).id, token);
+  }
+
+  @Get('subscriptions')
+  getSubscriptions(@Request() req: any) {
+    return this.pushService.getSubscriptions(this.getUser(req).id);
+  }
+
+  @Post('send/device')
+  sendToDevice(@Body() body: { token: string; payload: SendNotificationDto }) {
+    return this.pushService.sendToDevice(body.token, body.payload);
+  }
+
+  @Post('send/user')
+  sendToUser(@Body() body: { userId: string; payload: SendNotificationDto }) {
+    return this.pushService.sendToUser(body.userId, body.payload);
+  }
+
+  @Post('send/topic')
+  sendToTopic(@Body() body: { topic: string; payload: SendNotificationDto }) {
+    return this.pushService.sendToTopic(body.topic, body.payload);
+  }
+}

@@ -1,0 +1,243 @@
+'use client';
+
+import React, { useState, useCallback, useEffect } from 'react';
+import { Search, Users, Plus, X, Check } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { ChatAvatar } from './chat-avatar';
+import type { FivFoldChatConversation, FivFoldChatUser } from './types';
+
+interface NewChatDialogProps {
+  open: boolean;
+  conversations: FivFoldChatConversation[];
+  currentUserId: string;
+  onClose: () => void;
+  onSearchContacts?: (query: string) => Promise<FivFoldChatUser[]>;
+  onStartConversation?: (participantIds: string[]) => void;
+  onCreateGroup?: (name: string, memberIds: string[], avatarUrl?: string) => void;
+}
+
+export function NewChatDialog({
+  open,
+  conversations,
+  currentUserId,
+  onClose,
+  onSearchContacts,
+  onStartConversation,
+  onCreateGroup,
+}: NewChatDialogProps) {
+  const [activeTab, setActiveTab] = useState<'chat' | 'group'>('chat');
+  const [search, setSearch] = useState('');
+  const [contacts, setContacts] = useState<FivFoldChatUser[]>([]);
+  const [selectedUsers, setSelectedUsers] = useState<FivFoldChatUser[]>([]);
+  const [groupName, setGroupName] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!open) {
+      setSearch('');
+      setContacts([]);
+      setSelectedUsers([]);
+      setGroupName('');
+    }
+  }, [open]);
+
+  useEffect(() => {
+    if (!search.trim() || !onSearchContacts) return;
+    const debounce = setTimeout(async () => {
+      setLoading(true);
+      try {
+        const results = await onSearchContacts(search);
+        setContacts(results.filter((u) => u.id !== currentUserId));
+      } finally {
+        setLoading(false);
+      }
+    }, 300);
+    return () => clearTimeout(debounce);
+  }, [search, onSearchContacts, currentUserId]);
+
+  const toggleUser = (user: FivFoldChatUser) => {
+    setSelectedUsers((prev) =>
+      prev.find((u) => u.id === user.id)
+        ? prev.filter((u) => u.id !== user.id)
+        : activeTab === 'chat' ? [user] : [...prev, user]
+    );
+  };
+
+  const findExistingConversation = (userIds: string[]) =>
+    conversations.find(
+      (c) =>
+        c.type === 'direct' &&
+        c.participants.length === 2 &&
+        c.participants.every((p) => userIds.includes(p.id) || p.id === currentUserId)
+    );
+
+  const handleStartChat = () => {
+    if (selectedUsers.length !== 1) return;
+    const [user] = selectedUsers;
+    const existing = findExistingConversation([user.id]);
+    if (existing) {
+      // Navigate to existing conversation
+      onStartConversation?.([user.id]);
+    } else {
+      onStartConversation?.([user.id]);
+    }
+    onClose();
+  };
+
+  const handleCreateGroup = () => {
+    if (!groupName.trim() || selectedUsers.length < 1) return;
+    onCreateGroup?.(groupName, selectedUsers.map((u) => u.id));
+    onClose();
+  };
+
+  const canStartChat = selectedUsers.length === 1;
+  const canCreateGroup = groupName.trim() && selectedUsers.length >= 1;
+
+  return (
+    <Dialog open={open} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>New Message</DialogTitle>
+        </DialogHeader>
+
+        <Tabs value={activeTab} onValueChange={(v) => { setActiveTab(v as typeof activeTab); setSelectedUsers([]); }}>
+          <TabsList className="w-full">
+            <TabsTrigger value="chat" className="flex-1">New Chat</TabsTrigger>
+            <TabsTrigger value="group" className="flex-1"><Users className="mr-1.5 h-3.5 w-3.5" />New Group</TabsTrigger>
+          </TabsList>
+
+          {/* Selected chips */}
+          {selectedUsers.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 py-2">
+              {selectedUsers.map((u) => (
+                <div key={u.id} className="flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs">
+                  <span>{u.name}</span>
+                  <button type="button" onClick={() => toggleUser(u)}>
+                    <X className="h-3 w-3" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <TabsContent value="chat" className="mt-0">
+            <div className="relative mb-3">
+              <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search contacts…"
+                className="pl-9"
+                autoFocus
+              />
+            </div>
+
+            <ScrollArea className="h-56">
+              {loading ? (
+                <p className="text-center text-sm text-muted-foreground py-4">Searching…</p>
+              ) : contacts.length === 0 ? (
+                <p className="text-center text-sm text-muted-foreground py-4">
+                  {search ? 'No contacts found' : 'Start typing to find contacts'}
+                </p>
+              ) : (
+                <div className="space-y-0.5">
+                  {contacts.map((user) => {
+                    const isSelected = selectedUsers.some((u) => u.id === user.id);
+                    return (
+                      <button
+                        key={user.id}
+                        type="button"
+                        onClick={() => toggleUser(user)}
+                        className={cn(
+                          'flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left transition-colors',
+                          isSelected ? 'bg-primary/10' : 'hover:bg-muted/50'
+                        )}
+                      >
+                        <ChatAvatar src={user.avatarUrl} name={user.name} size="sm" showOnlineDot={false} />
+                        <span className="flex-1 text-sm">{user.name}</span>
+                        {isSelected && <Check className="h-4 w-4 text-primary" />}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </ScrollArea>
+
+            <Button className="mt-3 w-full" disabled={!canStartChat} onClick={handleStartChat}>
+              Start Chat
+            </Button>
+          </TabsContent>
+
+          <TabsContent value="group" className="mt-0 space-y-3">
+            <div>
+              <Label className="text-xs">Group Name</Label>
+              <Input
+                value={groupName}
+                onChange={(e) => setGroupName(e.target.value)}
+                placeholder="e.g. Project Team"
+                className="mt-1"
+              />
+            </div>
+
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Add members…"
+                className="pl-9"
+              />
+            </div>
+
+            <ScrollArea className="h-40">
+              {loading ? (
+                <p className="text-center text-sm text-muted-foreground py-4">Searching…</p>
+              ) : contacts.length === 0 ? (
+                <p className="text-center text-sm text-muted-foreground py-4">
+                  {search ? 'No contacts found' : 'Start typing to add members'}
+                </p>
+              ) : (
+                <div className="space-y-0.5">
+                  {contacts.map((user) => {
+                    const isSelected = selectedUsers.some((u) => u.id === user.id);
+                    return (
+                      <button
+                        key={user.id}
+                        type="button"
+                        onClick={() => toggleUser(user)}
+                        className={cn(
+                          'flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left transition-colors',
+                          isSelected ? 'bg-primary/10' : 'hover:bg-muted/50'
+                        )}
+                      >
+                        <ChatAvatar src={user.avatarUrl} name={user.name} size="sm" showOnlineDot={false} />
+                        <span className="flex-1 text-sm">{user.name}</span>
+                        {isSelected && <Check className="h-4 w-4 text-primary" />}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </ScrollArea>
+
+            <Button className="w-full" disabled={!canCreateGroup} onClick={handleCreateGroup}>
+              <Plus className="mr-1.5 h-4 w-4" />
+              Create Group ({selectedUsers.length} member{selectedUsers.length !== 1 ? 's' : ''})
+            </Button>
+          </TabsContent>
+        </Tabs>
+      </DialogContent>
+    </Dialog>
+  );
+}

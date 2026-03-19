@@ -1,0 +1,117 @@
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  Patch,
+  Post,
+  Request,
+} from '@nestjs/common';
+import { {{moduleName}}Service } from './{{kitName}}.service';
+import { CreateTaskDto } from './dto/create-task.dto';
+import { UpdateTaskDto } from './dto/update-task.dto';
+
+// TODO: Add @UseGuards(AuthGuard) from your auth module
+
+@Controller('{{kitName}}')
+export class {{moduleName}}Controller {
+  constructor(private readonly {{kitName}}Service: {{moduleName}}Service) {}
+
+  private getUser(req: any): { id: string } {
+    return req.user ?? { id: 'REPLACE_WITH_USER_ID' };
+  }
+
+  @Get('boards')
+  getBoards(@Request() req: any) {
+    return this.{{kitName}}Service.getBoards(this.getUser(req).id);
+  }
+
+  @Post('boards')
+  @HttpCode(HttpStatus.CREATED)
+  createBoard(@Request() req: any, @Body() body: { title: string; description?: string }) {
+    return this.{{kitName}}Service.createBoard(this.getUser(req).id, body.title, body.description);
+  }
+
+  @Get('boards/:boardId')
+  getBoard(@Request() req: any, @Param('boardId') boardId: string) {
+    return this.{{kitName}}Service.getBoard(this.getUser(req).id, boardId);
+  }
+
+  @Delete('boards/:boardId')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  deleteBoard(@Request() req: any, @Param('boardId') boardId: string) {
+    return this.{{kitName}}Service.deleteBoard(this.getUser(req).id, boardId);
+  }
+
+  @Post('boards/:boardId/columns')
+  @HttpCode(HttpStatus.CREATED)
+  createColumn(
+    @Request() req: any,
+    @Param('boardId') boardId: string,
+    @Body() body: { title: string; color?: string; maxTasks?: number },
+  ) {
+    return this.{{kitName}}Service.createColumn(this.getUser(req).id, boardId, body.title, body.color, body.maxTasks);
+  }
+
+  @Patch('boards/:boardId/columns/reorder')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  reorderColumns(
+    @Request() req: any,
+    @Param('boardId') boardId: string,
+    @Body() body: { columns: { id: string; position: number }[] },
+  ) {
+    return this.{{kitName}}Service.updateColumnPositions(this.getUser(req).id, boardId, body.columns);
+  }
+
+  @Delete('boards/:boardId/columns/:columnId')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  deleteColumn(
+    @Request() req: any,
+    @Param('boardId') boardId: string,
+    @Param('columnId') columnId: string,
+  ) {
+    return this.{{kitName}}Service.deleteColumn(this.getUser(req).id, boardId, columnId);
+  }
+
+  @Post('tasks')
+  @HttpCode(HttpStatus.CREATED)
+  createTask(@Body() dto: CreateTaskDto) {
+    return this.{{kitName}}Service.createTask(dto);
+  }
+
+  @Patch('tasks/:taskId')
+  updateTask(@Param('taskId') taskId: string, @Body() dto: UpdateTaskDto) {
+    return this.{{kitName}}Service.updateTask(taskId, dto);
+  }
+
+  @Patch('tasks/:taskId/move')
+  moveTask(
+    @Param('taskId') taskId: string,
+    @Body() body: { columnId: string; position: number },
+  ) {
+    return this.{{kitName}}Service.moveTask(taskId, body.columnId, body.position);
+  }
+
+  @Delete('tasks/:taskId')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  deleteTask(@Param('taskId') taskId: string) {
+    return this.{{kitName}}Service.deleteTask(taskId);
+  }
+
+  @Get('boards/:boardId/labels')
+  getLabels(@Param('boardId') boardId: string) {
+    return this.{{kitName}}Service.getLabels(boardId);
+  }
+
+  @Post('boards/:boardId/labels')
+  @HttpCode(HttpStatus.CREATED)
+  createLabel(
+    @Param('boardId') boardId: string,
+    @Body() body: { name: string; color: string },
+  ) {
+    return this.{{kitName}}Service.createLabel(boardId, body.name, body.color);
+  }
+}

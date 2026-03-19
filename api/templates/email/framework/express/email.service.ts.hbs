@@ -1,0 +1,195 @@
+{{#if (eq orm "typeorm")}}
+import { DataSource, Repository } from 'typeorm';
+import { {{moduleName}}Thread } from './entities/thread.entity';
+import { {{moduleName}}Message } from './entities/message.entity';
+import { {{moduleName}}Folder } from './entities/folder.entity';
+import { {{moduleName}}Label } from './entities/label.entity';
+import { {{moduleName}}Attachment } from './entities/attachment.entity';
+{{/if}}
+import type { Create{{moduleName}}Dto } from './dto/create-email.dto';
+import type { Update{{moduleName}}Dto } from './dto/update-email.dto';
+import type { Search{{moduleName}}Dto } from './dto/search-email.dto';
+
+export class {{moduleName}}Service {
+  {{#if (eq orm "typeorm")}}
+  private threadRepo: Repository<{{moduleName}}Thread>;
+  private messageRepo: Repository<{{moduleName}}Message>;
+  private folderRepo: Repository<{{moduleName}}Folder>;
+  private labelRepo: Repository<{{moduleName}}Label>;
+
+  constructor(private dataSource: DataSource) {
+    this.threadRepo = dataSource.getRepository({{moduleName}}Thread);
+    this.messageRepo = dataSource.getRepository({{moduleName}}Message);
+    this.folderRepo = dataSource.getRepository({{moduleName}}Folder);
+    this.labelRepo = dataSource.getRepository({{moduleName}}Label);
+  }
+
+  // ── Threads ────────────────────────────────────────────────────────────────
+
+  async getThreads(userId: string, query: Search{{moduleName}}Dto) {
+    const page = query.page ?? 1;
+    const limit = query.limit ?? 25;
+    const skip = (page - 1) * limit;
+
+    const qb = this.threadRepo
+      .createQueryBuilder('thread')
+      .where('thread.ownerId = :userId', { userId })
+      .orderBy('thread.lastMessageAt', 'DESC')
+      .skip(skip)
+      .take(limit);
+
+    if (query.folderId) qb.andWhere('thread.folderId = :folderId', { folderId: query.folderId });
+    if (query.q) {
+      qb.andWhere('thread.subject ILIKE :q', { q: `%${query.q}%` });
+    }
+    if (query.labelId) {
+      qb.andWhere(':labelId = ANY(thread.labelIds)', { labelId: query.labelId });
+    }
+
+    const [threads, total] = await qb.getManyAndCount();
+    return { threads, total, page, limit };
+  }
+
+  async getThread(userId: string, threadId: string) {
+    return this.threadRepo.findOne({
+      where: { id: threadId, ownerId: userId },
+      relations: ['messages', 'messages.attachments'],
+      order: { messages: { createdAt: 'ASC' } },
+    });
+  }
+
+  async updateThread(userId: string, threadId: string, dto: Update{{moduleName}}Dto) {
+    const thread = await this.threadRepo.findOneBy({ id: threadId, ownerId: userId });
+    if (!thread) throw new Error('Thread not found');
+    if (dto.starred !== undefined) thread.starred = dto.starred;
+    if (dto.read !== undefined) thread.unread = !dto.read;
+    if (dto.folderId !== undefined) thread.folderId = dto.folderId;
+    if (dto.labelIds !== undefined) thread.labelIds = dto.labelIds;
+    return this.threadRepo.save(thread);
+  }
+
+  async deleteThread(userId: string, threadId: string) {
+    const thread = await this.threadRepo.findOneBy({ id: threadId, ownerId: userId });
+    if (!thread) throw new Error('Thread not found');
+    await this.threadRepo.remove(thread);
+  }
+
+  // ── Send / Reply ───────────────────────────────────────────────────────────
+
+  async sendEmail(senderId: string, senderEmail: string, dto: Create{{moduleName}}Dto) {
+    let thread: {{moduleName}}Thread;
+
+    if (dto.threadId) {
+      const existing = await this.threadRepo.findOneBy({ id: dto.threadId, ownerId: senderId });
+      if (!existing) throw new Error('Thread not found');
+      thread = existing;
+    } else {
+      thread = this.threadRepo.create({
+        subject: dto.subject,
+        ownerId: senderId,
+        folderId: dto.folderId ?? null,
+        starred: false,
+        unread: false,
+        labelIds: [],
+      });
+      thread = await this.threadRepo.save(thread);
+    }
+
+    const message = this.messageRepo.create({
+      threadId: thread.id,
+      senderId,
+      senderEmail,
+      toRecipients: dto.to,
+      ccRecipients: dto.cc ?? [],
+      bccRecipients: dto.bcc ?? [],
+      subject: dto.subject,
+      body: dto.body,
+      bodyType: dto.bodyType ?? 'text',
+      read: true,
+    });
+
+    await this.messageRepo.save(message);
+
+    thread.lastMessageAt = new Date();
+    await this.threadRepo.save(thread);
+
+    return { thread, message };
+  }
+
+  // ── Folders ────────────────────────────────────────────────────────────────
+
+  async getFolders(userId: string) {
+    return this.folderRepo.find({ where: { userId }, order: { name: 'ASC' } });
+  }
+
+  async createFolder(userId: string, name: string, icon?: string) {
+    const folder = this.folderRepo.create({ userId, name, icon: icon ?? null });
+    return this.folderRepo.save(folder);
+  }
+
+  async deleteFolder(userId: string, folderId: string) {
+    const folder = await this.folderRepo.findOneBy({ id: folderId, userId });
+    if (!folder) throw new Error('Folder not found');
+    if (folder.isSystem) throw new Error('Cannot delete system folders');
+    await this.folderRepo.remove(folder);
+  }
+
+  // ── Labels ─────────────────────────────────────────────────────────────────
+
+  async getLabels(userId: string) {
+    return this.labelRepo.find({ where: { userId }, order: { name: 'ASC' } });
+  }
+
+  async createLabel(userId: string, name: string, color?: string) {
+    const label = this.labelRepo.create({ userId, name, color: color ?? null });
+    return this.labelRepo.save(label);
+  }
+
+  async deleteLabel(userId: string, labelId: string) {
+    const label = await this.labelRepo.findOneBy({ id: labelId, userId });
+    if (!label) throw new Error('Label not found');
+    await this.labelRepo.remove(label);
+  }
+  {{else}}
+  constructor(_connection?: unknown) {}
+
+  async getThreads(_userId: string, _query: Search{{moduleName}}Dto) {
+    throw new Error(`{{moduleName}}Service not implemented for ORM: {{orm}}. Implement the service for your chosen database.`);
+  }
+  async getThread(_userId: string, _threadId: string) {
+    throw new Error(`{{moduleName}}Service not implemented for ORM: {{orm}}. Implement the service for your chosen database.`);
+  }
+  async updateThread(_userId: string, _threadId: string, _dto: Update{{moduleName}}Dto) {
+    throw new Error(`{{moduleName}}Service not implemented for ORM: {{orm}}. Implement the service for your chosen database.`);
+  }
+  async deleteThread(_userId: string, _threadId: string) {
+    throw new Error(`{{moduleName}}Service not implemented for ORM: {{orm}}. Implement the service for your chosen database.`);
+  }
+  async sendEmail(_senderId: string, _senderEmail: string, _dto: Create{{moduleName}}Dto) {
+    throw new Error(`{{moduleName}}Service not implemented for ORM: {{orm}}. Implement the service for your chosen database.`);
+  }
+  async getFolders(_userId: string) {
+    throw new Error(`{{moduleName}}Service not implemented for ORM: {{orm}}. Implement the service for your chosen database.`);
+  }
+  async createFolder(_userId: string, _name: string, _icon?: string) {
+    throw new Error(`{{moduleName}}Service not implemented for ORM: {{orm}}. Implement the service for your chosen database.`);
+  }
+  async deleteFolder(_userId: string, _folderId: string) {
+    throw new Error(`{{moduleName}}Service not implemented for ORM: {{orm}}. Implement the service for your chosen database.`);
+  }
+  async getLabels(_userId: string) {
+    throw new Error(`{{moduleName}}Service not implemented for ORM: {{orm}}. Implement the service for your chosen database.`);
+  }
+  async createLabel(_userId: string, _name: string, _color?: string) {
+    throw new Error(`{{moduleName}}Service not implemented for ORM: {{orm}}. Implement the service for your chosen database.`);
+  }
+  async deleteLabel(_userId: string, _labelId: string) {
+    throw new Error(`{{moduleName}}Service not implemented for ORM: {{orm}}. Implement the service for your chosen database.`);
+  }
+  {{/if}}
+}
+
+/** Factory for Express: create service from connection, then pass to create{{moduleName}}Router(service). */
+export function create{{moduleName}}Service(connection: {{#if (eq orm "typeorm")}}DataSource{{else}}unknown{{/if}}): {{moduleName}}Service {
+  return new {{moduleName}}Service(connection as any);
+}

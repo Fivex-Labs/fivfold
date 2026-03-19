@@ -1,0 +1,199 @@
+'use client';
+
+import React, { useState } from 'react';
+import { X, UserPlus, UserMinus, Crown, LogOut, Edit2, Check } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Separator } from '@/components/ui/separator';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Badge } from '@/components/ui/badge';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import { ChatAvatar, GroupAvatar } from './chat-avatar';
+import type { FivFoldChatConversation } from './types';
+
+interface GroupDetailProps {
+  conversation: FivFoldChatConversation;
+  currentUserId: string;
+  onClose: () => void;
+  onAddMember?: (userId: string) => void;
+  onRemoveMember?: (userId: string) => void;
+  onLeaveGroup?: () => void;
+  onUpdateGroup?: (updates: { name?: string; description?: string; avatarUrl?: string }) => void;
+}
+
+export function GroupDetail({
+  conversation,
+  currentUserId,
+  onClose,
+  onAddMember,
+  onRemoveMember,
+  onLeaveGroup,
+  onUpdateGroup,
+}: GroupDetailProps) {
+  const [editingName, setEditingName] = useState(false);
+  const [name, setName] = useState(conversation.name ?? '');
+
+  const currentParticipant = conversation.participants.find((p) => p.id === currentUserId);
+  const isAdmin = currentParticipant?.role === 'admin';
+
+  const handleSaveName = () => {
+    if (name.trim()) onUpdateGroup?.({ name: name.trim() });
+    setEditingName(false);
+  };
+
+  return (
+    <div className="flex h-full flex-col bg-background/80 backdrop-blur-sm">
+      <div className="flex items-center justify-between border-b border-border/50 px-4 py-3">
+        <h2 className="font-semibold">Group Info</h2>
+        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onClose}>
+          <X className="h-4 w-4" />
+        </Button>
+      </div>
+
+      <ScrollArea className="flex-1">
+        <div className="space-y-6 p-4">
+          {/* Group avatar + name */}
+          <div className="flex flex-col items-center gap-3 py-4">
+            <GroupAvatar
+              participants={conversation.participants.filter((p) => p.id !== currentUserId)}
+              size="lg"
+            />
+
+            {editingName ? (
+              <div className="flex items-center gap-2">
+                <Input
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="h-8 w-40 text-center text-sm"
+                  onKeyDown={(e) => { if (e.key === 'Enter') handleSaveName(); if (e.key === 'Escape') setEditingName(false); }}
+                  autoFocus
+                />
+                <Button size="icon" variant="ghost" className="h-7 w-7" onClick={handleSaveName}>
+                  <Check className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-1.5">
+                <p className="text-lg font-bold">{conversation.name ?? 'Group'}</p>
+                {isAdmin && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6"
+                    onClick={() => setEditingName(true)}
+                  >
+                    <Edit2 className="h-3 w-3" />
+                  </Button>
+                )}
+              </div>
+            )}
+
+            <p className="text-sm text-muted-foreground">
+              {conversation.participants.length} members
+            </p>
+          </div>
+
+          <Separator />
+
+          {/* Members */}
+          <div>
+            <div className="mb-3 flex items-center justify-between">
+              <h3 className="text-sm font-semibold">Members</h3>
+              {isAdmin && (
+                <Button variant="ghost" size="sm" className="h-7 gap-1.5 text-xs" onClick={() => onAddMember?.('')}>
+                  <UserPlus className="h-3.5 w-3.5" />
+                  Add
+                </Button>
+              )}
+            </div>
+
+            <div className="space-y-1">
+              {conversation.participants.map((participant) => {
+                const isMe = participant.id === currentUserId;
+                const canRemove = isAdmin && !isMe;
+
+                return (
+                  <div
+                    key={participant.id}
+                    className="flex items-center gap-3 rounded-lg px-2 py-2"
+                  >
+                    <ChatAvatar
+                      src={participant.avatarUrl}
+                      name={participant.name}
+                      size="sm"
+                      online={participant.online}
+                      showOnlineDot
+                    />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium">
+                        {participant.name}{isMe ? ' (you)' : ''}
+                      </p>
+                    </div>
+                    {participant.role === 'admin' && (
+                      <Badge variant="secondary" className="flex items-center gap-1 text-[10px]">
+                        <Crown className="h-2.5 w-2.5" />
+                        Admin
+                      </Badge>
+                    )}
+                    {canRemove && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 shrink-0 text-destructive hover:text-destructive"
+                        onClick={() => onRemoveMember?.(participant.id)}
+                      >
+                        <UserMinus className="h-3.5 w-3.5" />
+                      </Button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          <Separator />
+
+          {/* Leave group */}
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button
+                variant="outline"
+                className="w-full text-destructive hover:text-destructive"
+              >
+                <LogOut className="mr-2 h-4 w-4" />
+                Leave Group
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Leave Group</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Are you sure you want to leave this group? You will need to be invited back to rejoin.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={onLeaveGroup}
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                >
+                  Leave
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
+      </ScrollArea>
+    </div>
+  );
+}

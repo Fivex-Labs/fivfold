@@ -1,0 +1,37 @@
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  ManyToOne,
+  JoinColumn,
+} from 'typeorm';
+import { {{moduleName}}Message } from './message.entity';
+
+@Entity('{{kitName}}_attachments')
+export class {{moduleName}}Attachment {
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
+
+  @Column({ type: 'varchar', name: 'message_id' })
+  messageId: string;
+
+  @ManyToOne(() => {{moduleName}}Message, (msg) => msg.attachments, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'message_id' })
+  message: {{moduleName}}Message;
+
+  @Column({ type: 'varchar' })
+  filename: string;
+
+  @Column({ type: 'varchar', name: 'mime_type' })
+  mimeType: string;
+
+  @Column({ type: 'bigint' })
+  size: number;
+
+  @Column({ type: 'varchar', name: 'storage_url' })
+  storageUrl: string; // Replace with your file storage URL (S3, GCS, etc.)
+
+  @CreateDateColumn({ name: 'created_at' })
+  createdAt: Date;
+}

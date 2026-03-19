@@ -1,0 +1,175 @@
+import {
+  Controller, Get, Post, Patch, Delete, Body, Param, Query,
+  UseGuards, Request, HttpCode, HttpStatus,
+} from '@nestjs/common';
+import { ChatService } from './chat.service';
+import { CreateMessageDto } from './dto/create-message.dto';
+import { CreateConversationDto } from './dto/create-conversation.dto';
+import { CreateGroupDto } from './dto/create-group.dto';
+import { UpdateGroupDto } from './dto/update-group.dto';
+import { AddMemberDto } from './dto/add-member.dto';
+import { RemoveMemberDto } from './dto/remove-member.dto';
+import { CreatePollDto } from './dto/create-poll.dto';
+import { VotePollDto } from './dto/vote-poll.dto';
+import { ShareLocationDto } from './dto/share-location.dto';
+import { AddReactionDto } from './dto/add-reaction.dto';
+import { SearchChatDto } from './dto/search-chat.dto';
+import { PaginationDto } from './dto/pagination.dto';
+
+@Controller('chat')
+export class ChatController {
+  constructor(private readonly chatService: ChatService) {}
+
+  // ── Conversations ──────────────────────────────────────────────────────────
+
+  @Post('conversations')
+  createConversation(@Body() dto: CreateConversationDto, @Request() req: { user: { id: string } }) {
+    return this.chatService.createConversation(dto, req.user.id);
+  }
+
+  @Get('conversations')
+  getConversations(@Query() pagination: PaginationDto, @Request() req: { user: { id: string } }) {
+    return this.chatService.getConversations(req.user.id, pagination);
+  }
+
+  @Get('conversations/:id')
+  getConversation(@Param('id') id: string, @Request() req: { user: { id: string } }) {
+    return this.chatService.getConversation(id, req.user.id);
+  }
+
+  @Delete('conversations/:id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  deleteConversation(@Param('id') id: string, @Request() req: { user: { id: string } }) {
+    return this.chatService.deleteConversation(id, req.user.id);
+  }
+
+  @Patch('conversations/:id/pin')
+  pinConversation(
+    @Param('id') id: string,
+    @Body('pinned') pinned: boolean,
+    @Request() req: { user: { id: string } },
+  ) {
+    return this.chatService.pinConversation(id, req.user.id, pinned);
+  }
+
+  @Patch('conversations/:id/mute')
+  muteConversation(
+    @Param('id') id: string,
+    @Body('mutedUntil') mutedUntil: string | null,
+    @Request() req: { user: { id: string } },
+  ) {
+    return this.chatService.muteConversation(id, req.user.id, mutedUntil ? new Date(mutedUntil) : null);
+  }
+
+  @Patch('conversations/:id/read')
+  markAsRead(@Param('id') id: string, @Request() req: { user: { id: string } }) {
+    return this.chatService.markAsRead(id, req.user.id);
+  }
+
+  // ── Messages ───────────────────────────────────────────────────────────────
+
+  @Post('messages')
+  sendMessage(@Body() dto: CreateMessageDto, @Request() req: { user: { id: string } }) {
+    return this.chatService.sendMessage(dto, req.user.id);
+  }
+
+  @Get('conversations/:id/messages')
+  getMessages(
+    @Param('id') conversationId: string,
+    @Query() pagination: PaginationDto,
+    @Request() req: { user: { id: string } },
+  ) {
+    return this.chatService.getMessages(conversationId, req.user.id, pagination);
+  }
+
+  @Delete('messages/:id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  deleteMessage(@Param('id') id: string, @Request() req: { user: { id: string } }) {
+    return this.chatService.deleteMessage(id, req.user.id);
+  }
+
+  // ── Groups ─────────────────────────────────────────────────────────────────
+
+  @Post('groups')
+  createGroup(@Body() dto: CreateGroupDto, @Request() req: { user: { id: string } }) {
+    return this.chatService.createGroup(dto, req.user.id);
+  }
+
+  @Patch('groups/:id')
+  updateGroup(
+    @Param('id') id: string,
+    @Body() dto: UpdateGroupDto,
+    @Request() req: { user: { id: string } },
+  ) {
+    return this.chatService.updateGroup(id, dto, req.user.id);
+  }
+
+  @Post('groups/members')
+  addMember(@Body() dto: AddMemberDto, @Request() req: { user: { id: string } }) {
+    return this.chatService.addMember(dto, req.user.id);
+  }
+
+  @Delete('groups/members')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  removeMember(@Body() dto: RemoveMemberDto, @Request() req: { user: { id: string } }) {
+    return this.chatService.removeMember(dto, req.user.id);
+  }
+
+  @Patch('groups/:id/members/:userId/role')
+  updateMemberRole(
+    @Param('id') conversationId: string,
+    @Param('userId') targetUserId: string,
+    @Body('role') role: 'admin' | 'member',
+    @Request() req: { user: { id: string } },
+  ) {
+    return this.chatService.updateMemberRole(conversationId, targetUserId, role, req.user.id);
+  }
+
+  @Post('groups/:id/leave')
+  leaveGroup(@Param('id') id: string, @Request() req: { user: { id: string } }) {
+    return this.chatService.leaveGroup(id, req.user.id);
+  }
+
+  // ── Polls ──────────────────────────────────────────────────────────────────
+
+  @Post('polls')
+  createPoll(@Body() dto: CreatePollDto, @Request() req: { user: { id: string } }) {
+    return this.chatService.createPoll(dto, req.user.id);
+  }
+
+  @Post('polls/vote')
+  votePoll(@Body() dto: VotePollDto, @Request() req: { user: { id: string } }) {
+    return this.chatService.votePoll(dto, req.user.id);
+  }
+
+  // ── Location ───────────────────────────────────────────────────────────────
+
+  @Post('location')
+  shareLocation(@Body() dto: ShareLocationDto, @Request() req: { user: { id: string } }) {
+    return this.chatService.shareLocation(dto, req.user.id);
+  }
+
+  // ── Reactions ──────────────────────────────────────────────────────────────
+
+  @Post('reactions')
+  addReaction(@Body() dto: AddReactionDto, @Request() req: { user: { id: string } }) {
+    return this.chatService.addReaction(dto, req.user.id);
+  }
+
+  @Delete('reactions/messages/:messageId/emoji/:emoji')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  removeReaction(
+    @Param('messageId') messageId: string,
+    @Param('emoji') emoji: string,
+    @Request() req: { user: { id: string } },
+  ) {
+    return this.chatService.removeReaction(messageId, emoji, req.user.id);
+  }
+
+  // ── Search ─────────────────────────────────────────────────────────────────
+
+  @Get('search')
+  search(@Query() dto: SearchChatDto, @Request() req: { user: { id: string } }) {
+    return this.chatService.searchConversations(dto, req.user.id);
+  }
+}

@@ -1,0 +1,98 @@
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  Patch,
+  Post,
+  Query,
+  Request,
+} from '@nestjs/common';
+import { {{moduleName}}Service } from './{{kitName}}.service';
+import { Create{{moduleName}}Dto } from './dto/create-email.dto';
+import { Update{{moduleName}}Dto } from './dto/update-email.dto';
+import { Search{{moduleName}}Dto } from './dto/search-email.dto';
+
+// TODO: Add your @UseGuards(AuthGuard) decorator from your auth module
+// import { AuthGuard } from '../auth/auth.guard';
+// @UseGuards(AuthGuard)
+
+@Controller('{{kitName}}')
+export class {{moduleName}}Controller {
+  constructor(private readonly {{kitName}}Service: {{moduleName}}Service) {}
+
+  // Helper to get user from request -- replace with your actual auth decorator
+  private getUser(req: any): { id: string; email: string } {
+    // TODO: Return actual user from req.user after auth guard runs
+    return req.user ?? { id: 'REPLACE_WITH_USER_ID', email: 'user@example.com' };
+  }
+
+  @Get('threads')
+  getThreads(@Request() req: any, @Query() query: Search{{moduleName}}Dto) {
+    return this.{{kitName}}Service.getThreads(this.getUser(req).id, query);
+  }
+
+  @Get('threads/:id')
+  getThread(@Request() req: any, @Param('id') id: string) {
+    return this.{{kitName}}Service.getThread(this.getUser(req).id, id);
+  }
+
+  @Patch('threads/:id')
+  updateThread(
+    @Request() req: any,
+    @Param('id') id: string,
+    @Body() dto: Update{{moduleName}}Dto,
+  ) {
+    return this.{{kitName}}Service.updateThread(this.getUser(req).id, id, dto);
+  }
+
+  @Delete('threads/:id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  deleteThread(@Request() req: any, @Param('id') id: string) {
+    return this.{{kitName}}Service.deleteThread(this.getUser(req).id, id);
+  }
+
+  @Post('send')
+  @HttpCode(HttpStatus.CREATED)
+  sendEmail(@Request() req: any, @Body() dto: Create{{moduleName}}Dto) {
+    const user = this.getUser(req);
+    return this.{{kitName}}Service.sendEmail(user.id, user.email, dto);
+  }
+
+  @Get('folders')
+  getFolders(@Request() req: any) {
+    return this.{{kitName}}Service.getFolders(this.getUser(req).id);
+  }
+
+  @Post('folders')
+  @HttpCode(HttpStatus.CREATED)
+  createFolder(@Request() req: any, @Body() body: { name: string; icon?: string }) {
+    return this.{{kitName}}Service.createFolder(this.getUser(req).id, body.name, body.icon);
+  }
+
+  @Delete('folders/:id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  deleteFolder(@Request() req: any, @Param('id') id: string) {
+    return this.{{kitName}}Service.deleteFolder(this.getUser(req).id, id);
+  }
+
+  @Get('labels')
+  getLabels(@Request() req: any) {
+    return this.{{kitName}}Service.getLabels(this.getUser(req).id);
+  }
+
+  @Post('labels')
+  @HttpCode(HttpStatus.CREATED)
+  createLabel(@Request() req: any, @Body() body: { name: string; color?: string }) {
+    return this.{{kitName}}Service.createLabel(this.getUser(req).id, body.name, body.color);
+  }
+
+  @Delete('labels/:id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  deleteLabel(@Request() req: any, @Param('id') id: string) {
+    return this.{{kitName}}Service.deleteLabel(this.getUser(req).id, id);
+  }
+}

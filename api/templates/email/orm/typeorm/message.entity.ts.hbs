@@ -1,0 +1,64 @@
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+  ManyToOne,
+  OneToMany,
+  JoinColumn,
+} from 'typeorm';
+import { {{moduleName}}Thread } from './thread.entity';
+import { {{moduleName}}Attachment } from './attachment.entity';
+
+@Entity('{{kitName}}_messages')
+export class {{moduleName}}Message {
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
+
+  @Column({ type: 'varchar', name: 'thread_id' })
+  threadId: string;
+
+  @ManyToOne(() => {{moduleName}}Thread, (thread) => thread.messages, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'thread_id' })
+  thread: {{moduleName}}Thread;
+
+  @Column({ type: 'varchar', name: 'sender_id' })
+  senderId: string; // Replace with FK to your User entity
+
+  @Column({ type: 'varchar', name: 'sender_email' })
+  senderEmail: string;
+
+  @Column({ type: 'varchar', name: 'sender_name', nullable: true })
+  senderName: string | null;
+
+  @Column({ type: 'simple-array', name: 'to_recipients' })
+  toRecipients: string[];
+
+  @Column({ type: 'simple-array', name: 'cc_recipients', nullable: true })
+  ccRecipients: string[];
+
+  @Column({ type: 'simple-array', name: 'bcc_recipients', nullable: true })
+  bccRecipients: string[];
+
+  @Column({ type: 'varchar', length: 500 })
+  subject: string;
+
+  @Column({ type: 'text' })
+  body: string;
+
+  @Column({ type: 'varchar', name: 'body_type', default: 'text' })
+  bodyType: 'text' | 'html';
+
+  @Column({ type: 'boolean', default: false })
+  read: boolean;
+
+  @OneToMany(() => {{moduleName}}Attachment, (att) => att.message, { cascade: true })
+  attachments: {{moduleName}}Attachment[];
+
+  @CreateDateColumn({ name: 'created_at' })
+  createdAt: Date;
+
+  @UpdateDateColumn({ name: 'updated_at' })
+  updatedAt: Date;
+}

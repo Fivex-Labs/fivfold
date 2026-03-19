@@ -1,0 +1,30 @@
+import { Schema, model, Document } from 'mongoose';
+
+export interface IAttachment extends Document {
+  messageId: string;
+  type: 'image' | 'video' | 'file' | 'audio';
+  url: string;
+  name: string;
+  size: number;
+  mimeType: string;
+  thumbnailUrl?: string;
+  durationSeconds?: number;
+  createdAt: Date;
+}
+
+const AttachmentSchema = new Schema<IAttachment>(
+  {
+    messageId: { type: String, required: true, index: true },
+    type: { type: String, enum: ['image', 'video', 'file', 'audio'], required: true },
+    url: { type: String, required: true },
+    name: { type: String, required: true },
+    size: { type: Number, required: true },
+    mimeType: { type: String, required: true },
+    thumbnailUrl: { type: String },
+    durationSeconds: { type: Number },
+  },
+  { timestamps: true, collection: 'chat_attachments' }
+);
+
+export const Attachment = model<IAttachment>('ChatAttachment', AttachmentSchema);
+export { AttachmentSchema };

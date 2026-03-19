@@ -1,0 +1,115 @@
+name: Publish npm packages
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  id-token: write
+  contents: write
+
+jobs:
+  publish-core:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          registry-url: 'https://registry.npmjs.org'
+          cache: 'pnpm'
+
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm --filter @fivfold/core build
+
+      - run: npm install -g npm@latest
+
+      - run: pnpm publish --no-git-checks --provenance --access public
+        working-directory: core
+
+  publish-ui:
+    needs: publish-core
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          registry-url: 'https://registry.npmjs.org'
+          cache: 'pnpm'
+
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm --filter @fivfold/ui build
+
+      - run: npm install -g npm@latest
+
+      - run: pnpm publish --no-git-checks --provenance --access public
+        working-directory: ui
+
+  publish-api:
+    needs: publish-core
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          registry-url: 'https://registry.npmjs.org'
+          cache: 'pnpm'
+
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm --filter @fivfold/api build
+
+      - run: npm install -g npm@latest
+
+      - run: pnpm publish --no-git-checks --provenance --access public
+        working-directory: api
+
+  create-release:
+    needs: [publish-ui, publish-api]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Extract changelog entry for this version
+        id: changelog
+        run: |
+          TAG="${{ github.ref_name }}"
+          VERSION="${TAG#v}"
+          # Extract the block between this version header and the next
+          NOTES=$(awk "/^## \[$VERSION\]/{found=1; next} found && /^## \[/{exit} found{print}" CHANGELOG.md)
+          # Fallback if no matching section found
+          if [ -z "$NOTES" ]; then
+            NOTES="See [CHANGELOG.md](https://github.com/Fivex-Labs/fivfold/blob/main/CHANGELOG.md) for details."
+          fi
+          # Write to a temp file to handle multiline safely
+          echo "$NOTES" > /tmp/release-notes.md
+
+      - name: Create GitHub Release
+        run: |
+          gh release create ${{ github.ref_name }} \
+            --title "Release ${{ github.ref_name }}" \
+            --notes-file /tmp/release-notes.md
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

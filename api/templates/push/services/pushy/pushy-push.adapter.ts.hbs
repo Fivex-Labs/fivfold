@@ -1,0 +1,50 @@
+import Pushy from 'pushy';
+import type { SendNotificationDto } from '../dto/send-notification.dto';
+import type { SendResult } from '../domain/push.port';
+
+export class PushyPushAdapter {
+  private client: Pushy;
+
+  constructor() {
+    const apiKey = process.env.PUSHY_API_KEY ?? '';
+    this.client = new Pushy(apiKey);
+  }
+
+  async sendToDevice(token: string, payload: SendNotificationDto): Promise<SendResult> {
+    try {
+      const result = await this.client.sendPushNotification(
+        { ...payload.data, message: payload.body ?? payload.title },
+        [token],
+        {
+          notification: {
+            title: payload.title,
+            body: payload.body ?? '',
+            badge: payload.badge,
+            sound: payload.sound,
+          },
+        }
+      );
+      return { success: true, messageId: result?.id };
+    } catch (err) {
+      return { success: false, error: String(err) };
+    }
+  }
+
+  async sendToTopic(topic: string, payload: SendNotificationDto): Promise<SendResult> {
+    try {
+      const result = await this.client.sendPushNotification(
+        { ...payload.data, topic, message: payload.body ?? payload.title },
+        [`/topics/${topic}`],
+        {
+          notification: {
+            title: payload.title,
+            body: payload.body ?? '',
+          },
+        }
+      );
+      return { success: true, messageId: result?.id };
+    } catch (err) {
+      return { success: false, error: String(err) };
+    }
+  }
+}

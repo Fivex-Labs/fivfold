@@ -1,0 +1,142 @@
+'use client';
+
+import React, { useState } from 'react';
+import { MapPin, Navigation } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import type { FivFoldChatLocation } from './types';
+
+interface LocationPickerProps {
+  open: boolean;
+  onClose: () => void;
+  onShare: (location: FivFoldChatLocation) => void;
+}
+
+export function LocationPicker({ open, onClose, onShare }: LocationPickerProps) {
+  const [latitude, setLatitude] = useState('');
+  const [longitude, setLongitude] = useState('');
+  const [label, setLabel] = useState('');
+  const [detecting, setDetecting] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleDetect = () => {
+    if (!navigator.geolocation) {
+      setError('Geolocation is not supported by your browser.');
+      return;
+    }
+    setDetecting(true);
+    setError('');
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setLatitude(pos.coords.latitude.toFixed(6));
+        setLongitude(pos.coords.longitude.toFixed(6));
+        setDetecting(false);
+      },
+      () => {
+        setError('Could not get your location. Please enter coordinates manually.');
+        setDetecting(false);
+      }
+    );
+  };
+
+  const canShare = latitude && longitude && !isNaN(Number(latitude)) && !isNaN(Number(longitude));
+
+  const handleShare = () => {
+    if (!canShare) return;
+    onShare({ latitude: Number(latitude), longitude: Number(longitude), label: label || undefined });
+    setLatitude('');
+    setLongitude('');
+    setLabel('');
+    onClose();
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-w-sm">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <MapPin className="h-4 w-4" />
+            Share Location
+          </DialogTitle>
+        </DialogHeader>
+
+        <div className="space-y-4">
+          <Button
+            variant="outline"
+            className="w-full"
+            onClick={handleDetect}
+            disabled={detecting}
+          >
+            <Navigation className="mr-2 h-4 w-4" />
+            {detecting ? 'Detecting…' : 'Use My Current Location'}
+          </Button>
+
+          {error && <p className="text-xs text-destructive">{error}</p>}
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label className="text-xs">Latitude</Label>
+              <Input
+                type="number"
+                step="0.000001"
+                value={latitude}
+                onChange={(e) => setLatitude(e.target.value)}
+                placeholder="40.7128"
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <Label className="text-xs">Longitude</Label>
+              <Input
+                type="number"
+                step="0.000001"
+                value={longitude}
+                onChange={(e) => setLongitude(e.target.value)}
+                placeholder="-74.0060"
+                className="mt-1"
+              />
+            </div>
+          </div>
+
+          <div>
+            <Label className="text-xs">Label (optional)</Label>
+            <Input
+              value={label}
+              onChange={(e) => setLabel(e.target.value)}
+              placeholder="Home, Work…"
+              className="mt-1"
+            />
+          </div>
+
+          {/* Static map preview */}
+          {canShare && (
+            <div className="overflow-hidden rounded-lg">
+              <img
+                src={`https://maps.geoapify.com/v1/staticmap?style=osm-bright&width=300&height=150&center=lonlat:${longitude},${latitude}&zoom=13&marker=lonlat:${longitude},${latitude};color:%23ff5c00&apiKey=YOUR_GEOAPIFY_KEY`}
+                alt="Map preview"
+                className="w-full object-cover"
+                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+              />
+            </div>
+          )}
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>Cancel</Button>
+          <Button disabled={!canShare} onClick={handleShare}>
+            <MapPin className="mr-2 h-4 w-4" />
+            Share
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}

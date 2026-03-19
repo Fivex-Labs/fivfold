@@ -1,0 +1,92 @@
+import { CosmosClient, Container, Database } from '@azure/cosmos';
+
+const endpoint = process.env.COSMOS_ENDPOINT!;
+const key = process.env.COSMOS_KEY!;
+const databaseId = process.env.COSMOS_DATABASE_ID ?? 'kanbandb';
+
+const client = new CosmosClient({ endpoint, key });
+
+export interface {{moduleName}}BoardItem {
+  id: string;
+  title: string;
+  description?: string | null;
+  ownerId: string;
+  coverColor?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  _partitionKey: string; // ownerId
+}
+
+export interface {{moduleName}}ColumnItem {
+  id: string;
+  title: string;
+  description?: string | null;
+  boardId: string;
+  position: number;
+  maxTasks?: number | null;
+  color?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  _partitionKey: string; // boardId
+}
+
+export interface {{moduleName}}TaskItem {
+  id: string;
+  title: string;
+  description?: string | null;
+  columnId: string;
+  priority: string;
+  assigneeId?: string | null;
+  dueDate?: string | null;
+  estimatedHours?: number | null;
+  actualHours?: number | null;
+  labels: string[];
+  position: number;
+  createdAt: string;
+  updatedAt: string;
+  _partitionKey: string; // columnId
+}
+
+export interface {{moduleName}}LabelItem {
+  id: string;
+  name: string;
+  color: string;
+  boardId: string;
+  createdAt: string;
+  _partitionKey: string; // boardId
+}
+
+export async function get{{moduleName}}Containers(): Promise<{
+  boards: Container;
+  columns: Container;
+  tasks: Container;
+  labels: Container;
+}> {
+  const { database } = await client.databases.createIfNotExists({ id: databaseId });
+
+  const [boardsResult, columnsResult, tasksResult, labelsResult] = await Promise.all([
+    database.containers.createIfNotExists({
+      id: '{{kitName}}_boards',
+      partitionKey: '/ownerId',
+    }),
+    database.containers.createIfNotExists({
+      id: '{{kitName}}_columns',
+      partitionKey: '/boardId',
+    }),
+    database.containers.createIfNotExists({
+      id: '{{kitName}}_tasks',
+      partitionKey: '/columnId',
+    }),
+    database.containers.createIfNotExists({
+      id: '{{kitName}}_labels',
+      partitionKey: '/boardId',
+    }),
+  ]);
+
+  return {
+    boards: boardsResult.container,
+    columns: columnsResult.container,
+    tasks: tasksResult.container,
+    labels: labelsResult.container,
+  };
+}

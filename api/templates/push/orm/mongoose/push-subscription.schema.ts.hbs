@@ -1,0 +1,26 @@
+import { Schema, model, Document } from 'mongoose';
+
+export type PushPlatform = 'ios' | 'android' | 'web';
+
+export interface I{{moduleName}}Subscription extends Document {
+  userId: string;
+  token: string;
+  platform: PushPlatform;
+  provider: string;
+  metadata?: Record<string, string> | null;
+  createdAt: Date;
+}
+
+const {{moduleName}}SubscriptionSchema = new Schema<I{{moduleName}}Subscription>(
+  {
+    userId: { type: String, required: true, index: true },
+    token: { type: String, required: true },
+    platform: { type: String, enum: ['ios', 'android', 'web'], required: true },
+    provider: { type: String, default: 'fcm' },
+    metadata: { type: Schema.Types.Mixed },
+  },
+  { timestamps: { createdAt: true, updatedAt: false }, collection: '{{kitName}}_subscriptions' }
+);
+
+export const {{moduleName}}Subscription = model<I{{moduleName}}Subscription>('{{moduleName}}Subscription', {{moduleName}}SubscriptionSchema);
+export { {{moduleName}}SubscriptionSchema };

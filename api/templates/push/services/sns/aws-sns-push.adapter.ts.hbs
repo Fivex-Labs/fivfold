@@ -1,0 +1,68 @@
+import { SNSClient, PublishCommand } from '@aws-sdk/client-sns';
+import type { SendNotificationDto } from '../dto/send-notification.dto';
+import type { SendResult } from '../domain/push.port';
+
+export class AwsSnsPushAdapter {
+  private client: SNSClient;
+
+  constructor() {
+    this.client = new SNSClient({
+      region: process.env.AWS_REGION ?? 'us-east-1',
+    });
+  }
+
+  async sendToDevice(token: string, payload: SendNotificationDto): Promise<SendResult> {
+    try {
+      const cmd = new PublishCommand({
+        TargetArn: token,
+        Message: JSON.stringify({
+          default: payload.body ?? payload.title,
+          GCM: JSON.stringify({
+            notification: {
+              title: payload.title,
+              body: payload.body,
+              image: payload.imageUrl,
+              data: payload.data,
+            },
+          }),
+          APNS: JSON.stringify({
+            aps: {
+              alert: { title: payload.title, body: payload.body },
+              badge: payload.badge,
+              sound: payload.sound,
+            },
+            ...payload.data,
+          }),
+        }),
+        MessageStructure: 'json',
+      });
+      const res = await this.client.send(cmd);
+      return { success: true, messageId: res.MessageId };
+    } catch (err) {
+      return { success: false, error: String(err) };
+    }
+  }
+
+  async sendToTopic(topic: string, payload: SendNotificationDto): Promise<SendResult> {
+    try {
+      const topicArn = topic.startsWith('arn:') ? topic : `arn:aws:sns:${process.env.AWS_REGION ?? 'us-east-1'}:*:${topic}`;
+      const cmd = new PublishCommand({
+        TopicArn: topicArn,
+        Subject: payload.title,
+        Message: payload.body ?? payload.title,
+        MessageAttributes: payload.data
+          ? Object.fromEntries(
+              Object.entries(payload.data).map(([k, v]) => [
+                k,
+                { DataType: 'String', StringValue: v },
+              ])
+            )
+          : undefined,
+      });
+      const res = await this.client.send(cmd);
+      return { success: true, messageId: res.MessageId };
+    } catch (err) {
+      return { success: false, error: String(err) };
+    }
+  }
+}

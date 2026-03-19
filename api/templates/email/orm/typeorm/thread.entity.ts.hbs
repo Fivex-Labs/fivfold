@@ -1,0 +1,45 @@
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+  OneToMany,
+} from 'typeorm';
+import { {{moduleName}}Message } from './message.entity';
+
+@Entity('{{kitName}}_threads')
+export class {{moduleName}}Thread {
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
+
+  @Column({ type: 'varchar', length: 500 })
+  subject: string;
+
+  @Column({ type: 'varchar', name: 'owner_id' })
+  ownerId: string; // Replace with FK to your User entity
+
+  @Column({ type: 'varchar', name: 'folder_id', nullable: true })
+  folderId: string | null;
+
+  @Column({ type: 'boolean', default: false })
+  starred: boolean;
+
+  @Column({ type: 'boolean', default: true })
+  unread: boolean;
+
+  @Column({ type: 'simple-array', nullable: true })
+  labelIds: string[];
+
+  @Column({ type: 'timestamp', name: 'last_message_at', nullable: true })
+  lastMessageAt: Date | null;
+
+  @OneToMany(() => {{moduleName}}Message, (msg) => msg.thread, { cascade: true })
+  messages: {{moduleName}}Message[];
+
+  @CreateDateColumn({ name: 'created_at' })
+  createdAt: Date;
+
+  @UpdateDateColumn({ name: 'updated_at' })
+  updatedAt: Date;
+}

@@ -1,0 +1,86 @@
+import { Router, type Request, type Response } from 'express';
+import type { IPushNotificationService } from './domain/push.port';
+import type { RegisterDeviceDto } from './dto/register-device.dto';
+import type { SendNotificationDto } from './dto/send-notification.dto';
+
+function authMiddleware(req: Request, res: Response, next: () => void): void {
+  // TODO: Replace with your auth check
+  next();
+}
+
+function getUser(req: Request): { id: string } {
+  return (req as any).user ?? { id: 'REPLACE_WITH_USER_ID' };
+}
+
+/** Create router with injected service. Use create{{moduleName}}Service(connection) to create the service. */
+export function createPushRouter(service: IPushNotificationService): Router {
+  const router = Router();
+
+  router.use(authMiddleware);
+
+  router.post('/subscribe', async (req, res) => {
+    try {
+      const user = getUser(req);
+      const result = await service.registerDevice(user.id, req.body as RegisterDeviceDto);
+      res.status(201).json(result);
+    } catch (err) {
+      res.status(500).json({ error: String(err) });
+    }
+  });
+
+  router.delete('/subscribe/:token', async (req, res) => {
+    try {
+      const user = getUser(req);
+      await service.unregisterDevice(user.id, req.params['token']!);
+      res.status(204).send();
+    } catch (err) {
+      res.status(500).json({ error: String(err) });
+    }
+  });
+
+  router.get('/subscriptions', async (req, res) => {
+    try {
+      const user = getUser(req);
+      const subs = await service.getSubscriptions(user.id);
+      res.json(subs);
+    } catch (err) {
+      res.status(500).json({ error: String(err) });
+    }
+  });
+
+  router.post('/send/device', async (req, res) => {
+    try {
+      const { token, payload } = req.body as { token: string; payload: SendNotificationDto };
+      const result = await service.sendToDevice(token, payload);
+      res.json(result);
+    } catch (err) {
+      res.status(500).json({ error: String(err) });
+    }
+  });
+
+  router.post('/send/user', async (req, res) => {
+    try {
+      const { userId, payload } = req.body as { userId: string; payload: SendNotificationDto };
+      const result = await service.sendToUser(userId, payload);
+      res.json(result);
+    } catch (err) {
+      res.status(500).json({ error: String(err) });
+    }
+  });
+
+  router.post('/send/topic', async (req, res) => {
+    try {
+      const { topic, payload } = req.body as { topic: string; payload: SendNotificationDto };
+      const result = await service.sendToTopic(topic, payload);
+      res.json(result);
+    } catch (err) {
+      res.status(500).json({ error: String(err) });
+    }
+  });
+
+  return router;
+}
+
+// Default export for FivFold middleware registration.
+// Update app.ts: const pushService = createPushService(AppDataSource); app.use('/api/push', createPushRouter(pushService));
+export default createPushRouter;

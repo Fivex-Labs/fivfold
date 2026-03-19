@@ -1,0 +1,79 @@
+{
+  "name": "kanban",
+  "version": "1.0.0",
+  "description": "Complete kanban backend with boards, columns, tasks, labels, and drag-order persistence.",
+  "domain": {
+    "files": [
+      { "template": "kanban/domain/kanban.port.ts.hbs", "output": "{{outputDir}}/{{kitName}}/domain/kanban.port.ts" },
+      { "template": "kanban/domain/dto/create-task.dto.ts.hbs", "output": "{{outputDir}}/{{kitName}}/dto/create-task.dto.ts" },
+      { "template": "kanban/domain/dto/update-task.dto.ts.hbs", "output": "{{outputDir}}/{{kitName}}/dto/update-task.dto.ts" }
+    ]
+  },
+  "framework": {
+    "express": {
+      "files": [
+        { "template": "kanban/framework/express/kanban.routes.ts.hbs", "output": "{{outputDir}}/{{kitName}}/kanban.routes.ts" },
+        { "template": "kanban/framework/express/kanban.service.ts.hbs", "output": "{{outputDir}}/{{kitName}}/kanban.service.ts" }
+      ],
+      "dependencies": ["class-validator", "class-transformer", "express", "uuid"],
+      "devDependencies": ["@types/express", "@types/uuid"]
+    },
+    "nestjs": {
+      "files": [
+        { "template": "kanban/framework/nestjs/kanban.module.ts.hbs", "output": "{{outputDir}}/{{kitName}}/kanban.module.ts" },
+        { "template": "kanban/framework/nestjs/kanban.controller.ts.hbs", "output": "{{outputDir}}/{{kitName}}/kanban.controller.ts" },
+        { "template": "kanban/framework/nestjs/kanban.service.ts.hbs", "output": "{{outputDir}}/{{kitName}}/kanban.service.ts" }
+      ],
+      "dependencies": ["class-validator", "class-transformer", "@nestjs/common", "@nestjs/core", "uuid"],
+      "devDependencies": ["@types/uuid"],
+      "astMutations": [
+        { "target": "src/app.module.ts", "action": "registerModule", "module": "KanbanModule", "importPath": "./modules/kanban/kanban.module" }
+      ]
+    }
+  },
+  "orm": {
+    "typeorm": {
+      "files": [
+        { "template": "kanban/orm/typeorm/board.entity.ts.hbs", "output": "{{outputDir}}/{{kitName}}/entities/board.entity.ts" },
+        { "template": "kanban/orm/typeorm/column.entity.ts.hbs", "output": "{{outputDir}}/{{kitName}}/entities/column.entity.ts" },
+        { "template": "kanban/orm/typeorm/task.entity.ts.hbs", "output": "{{outputDir}}/{{kitName}}/entities/task.entity.ts" },
+        { "template": "kanban/orm/typeorm/label.entity.ts.hbs", "output": "{{outputDir}}/{{kitName}}/entities/label.entity.ts" }
+      ],
+      "dependencies": ["typeorm", "pg", "reflect-metadata"],
+      "devDependencies": ["@types/pg"]
+    },
+    "prisma": {
+      "files": [
+        { "template": "kanban/orm/prisma/kanban-models.prisma.hbs", "output": "prisma/schema.prisma", "mode": "append" }
+      ],
+      "dependencies": ["@prisma/client"],
+      "devDependencies": ["prisma"]
+    },
+    "mongoose": {
+      "files": [
+        { "template": "kanban/orm/mongoose/board.schema.ts.hbs", "output": "{{outputDir}}/{{kitName}}/schemas/board.schema.ts" },
+        { "template": "kanban/orm/mongoose/column.schema.ts.hbs", "output": "{{outputDir}}/{{kitName}}/schemas/column.schema.ts" },
+        { "template": "kanban/orm/mongoose/task.schema.ts.hbs", "output": "{{outputDir}}/{{kitName}}/schemas/task.schema.ts" },
+        { "template": "kanban/orm/mongoose/label.schema.ts.hbs", "output": "{{outputDir}}/{{kitName}}/schemas/label.schema.ts" }
+      ],
+      "dependencies": ["mongoose"],
+      "devDependencies": []
+    },
+    "cosmos-sdk": {
+      "files": [
+        { "template": "kanban/orm/cosmos-sdk/kanban-containers.ts.hbs", "output": "{{outputDir}}/{{kitName}}/containers/kanban.containers.ts" }
+      ],
+      "dependencies": ["@azure/cosmos"],
+      "devDependencies": [],
+      "envVars": ["COSMOS_ENDPOINT", "COSMOS_KEY", "COSMOS_DATABASE_ID"]
+    },
+    "dynamodb-sdk": {
+      "files": [
+        { "template": "kanban/orm/dynamodb-sdk/kanban-tables.ts.hbs", "output": "{{outputDir}}/{{kitName}}/tables/kanban.tables.ts" }
+      ],
+      "dependencies": ["@aws-sdk/client-dynamodb", "@aws-sdk/lib-dynamodb"],
+      "devDependencies": [],
+      "envVars": ["AWS_REGION", "AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY"]
+    }
+  }
+}

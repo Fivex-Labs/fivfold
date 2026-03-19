@@ -1,0 +1,159 @@
+export type ConversationType = 'direct' | 'group';
+export type MessageType = 'text' | 'image' | 'video' | 'file' | 'poll' | 'location' | 'gif';
+export type MessageStatus = 'sending' | 'sent' | 'delivered' | 'read' | 'failed';
+export type ParticipantRole = 'admin' | 'member';
+export type AttachmentType = 'image' | 'video' | 'file' | 'audio';
+
+export interface FivFoldChatUser {
+  id: string;
+  name: string;
+  avatarUrl?: string;
+  online?: boolean;
+  lastSeen?: Date;
+}
+
+export interface FivFoldChatParticipant extends FivFoldChatUser {
+  role: ParticipantRole;
+  joinedAt?: Date;
+  lastReadAt?: Date;
+}
+
+export interface FivFoldChatAttachment {
+  id: string;
+  messageId: string;
+  type: AttachmentType;
+  url: string;
+  name: string;
+  size: number;
+  mimeType: string;
+  thumbnailUrl?: string;
+  durationSeconds?: number;
+}
+
+export interface FivFoldChatReaction {
+  emoji: string;
+  userIds: string[];
+  count: number;
+}
+
+export interface FivFoldChatPollOption {
+  text: string;
+  voteCount: number;
+  voterIds: string[];
+}
+
+export interface FivFoldChatPoll {
+  id: string;
+  messageId: string;
+  question: string;
+  options: FivFoldChatPollOption[];
+  allowMultipleAnswers: boolean;
+  expiresAt?: Date;
+  totalVotes: number;
+  currentUserVotedOptionIndices?: number[];
+}
+
+export interface FivFoldChatLocation {
+  latitude: number;
+  longitude: number;
+  label?: string;
+  mapImageUrl?: string;
+}
+
+export interface FivFoldChatGif {
+  id: string;
+  url: string;
+  previewUrl: string;
+  title: string;
+  width: number;
+  height: number;
+}
+
+export interface FivFoldChatMessage {
+  id: string;
+  conversationId: string;
+  senderId: string;
+  sender?: FivFoldChatUser;
+  content?: string;
+  type: MessageType;
+  attachments?: FivFoldChatAttachment[];
+  reactions?: FivFoldChatReaction[];
+  poll?: FivFoldChatPoll;
+  location?: FivFoldChatLocation;
+  gif?: FivFoldChatGif;
+  readBy?: string[];
+  replyToMessageId?: string;
+  replyToMessage?: Pick<FivFoldChatMessage, 'id' | 'content' | 'type' | 'senderId'>;
+  status: MessageStatus;
+  createdAt: Date;
+  updatedAt?: Date;
+  deletedAt?: Date;
+  isOwn?: boolean;
+}
+
+export interface FivFoldChatLastMessage {
+  content: string;
+  senderId: string;
+  createdAt: Date;
+  type: MessageType;
+}
+
+export interface FivFoldChatConversation {
+  id: string;
+  type: ConversationType;
+  name?: string;
+  avatarUrl?: string;
+  description?: string;
+  participants: FivFoldChatParticipant[];
+  lastMessage?: FivFoldChatLastMessage;
+  unreadCount: number;
+  isPinned?: boolean;
+  isMuted?: boolean;
+  mutedUntil?: Date;
+  online?: boolean;
+  createdAt: Date;
+  updatedAt?: Date;
+}
+
+export interface FivFoldChatTypingUser {
+  userId: string;
+  userName?: string;
+  avatarUrl?: string;
+}
+
+export interface FivFoldChatSearchResult {
+  conversations: FivFoldChatConversation[];
+  messages: FivFoldChatMessage[];
+}
+
+export type FivFoldChatSendMessagePayload =
+  | { type: 'text'; content: string; replyToMessageId?: string }
+  | { type: 'gif'; gif: FivFoldChatGif }
+  | { type: 'location'; location: FivFoldChatLocation }
+  | { type: 'poll'; poll: Pick<FivFoldChatPoll, 'question' | 'options' | 'allowMultipleAnswers' | 'expiresAt'> }
+  | { type: 'image' | 'video' | 'file' | 'audio'; attachment: Omit<FivFoldChatAttachment, 'id' | 'messageId'> };
+
+export interface FivFoldChatKitProps {
+  currentUser: FivFoldChatUser;
+  conversations: FivFoldChatConversation[];
+  messages: Record<string, FivFoldChatMessage[]>;
+  typingUsers?: Record<string, FivFoldChatTypingUser[]>;
+  gifApiKey?: string;
+  onSendMessage?: (conversationId: string, payload: FivFoldChatSendMessagePayload) => void | Promise<void>;
+  onCreateGroup?: (name: string, memberIds: string[], avatarUrl?: string) => void | Promise<void>;
+  onStartConversation?: (participantIds: string[]) => void | Promise<void>;
+  onLoadMoreMessages?: (conversationId: string, cursor?: string) => void | Promise<void>;
+  onSearchContacts?: (query: string) => Promise<FivFoldChatUser[]>;
+  onTypingStart?: (conversationId: string) => void;
+  onTypingStop?: (conversationId: string) => void;
+  onReaction?: (messageId: string, emoji: string, remove?: boolean) => void | Promise<void>;
+  onVotePoll?: (pollId: string, optionIndex: number) => void | Promise<void>;
+  onPinConversation?: (conversationId: string, pinned: boolean) => void | Promise<void>;
+  onMuteConversation?: (conversationId: string, mutedUntil: Date | null) => void | Promise<void>;
+  onDeleteMessage?: (messageId: string) => void | Promise<void>;
+  onAddMember?: (conversationId: string, userId: string) => void | Promise<void>;
+  onRemoveMember?: (conversationId: string, userId: string) => void | Promise<void>;
+  onLeaveGroup?: (conversationId: string) => void | Promise<void>;
+  onUpdateGroup?: (conversationId: string, updates: { name?: string; avatarUrl?: string; description?: string }) => void | Promise<void>;
+  className?: string;
+}

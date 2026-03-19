@@ -1,0 +1,134 @@
+'use client';
+
+import React, { useState } from 'react';
+import { Plus, X } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import type { FivFoldChatPoll } from './types';
+
+interface PollCreatorProps {
+  open: boolean;
+  onClose: () => void;
+  onCreate: (poll: Pick<FivFoldChatPoll, 'question' | 'options' | 'allowMultipleAnswers' | 'expiresAt'>) => void;
+}
+
+export function PollCreator({ open, onClose, onCreate }: PollCreatorProps) {
+  const [question, setQuestion] = useState('');
+  const [options, setOptions] = useState(['', '']);
+  const [allowMultiple, setAllowMultiple] = useState(false);
+
+  const handleAddOption = () => {
+    if (options.length < 10) setOptions([...options, '']);
+  };
+
+  const handleRemoveOption = (i: number) => {
+    if (options.length > 2) setOptions(options.filter((_, idx) => idx !== i));
+  };
+
+  const handleOptionChange = (i: number, value: string) => {
+    const updated = [...options];
+    updated[i] = value;
+    setOptions(updated);
+  };
+
+  const canCreate = question.trim() && options.filter((o) => o.trim()).length >= 2;
+
+  const handleCreate = () => {
+    if (!canCreate) return;
+    const pollOptions = options.filter((o) => o.trim()).map((text) => ({
+      text,
+      voteCount: 0,
+      voterIds: [],
+    }));
+    onCreate({ question: question.trim(), options: pollOptions, allowMultipleAnswers: allowMultiple, expiresAt: undefined });
+    setQuestion('');
+    setOptions(['', '']);
+    setAllowMultiple(false);
+    onClose();
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-w-sm">
+        <DialogHeader>
+          <DialogTitle>Create a Poll</DialogTitle>
+        </DialogHeader>
+
+        <div className="space-y-4">
+          <div>
+            <Label htmlFor="poll-question" className="text-sm">Question</Label>
+            <Input
+              id="poll-question"
+              value={question}
+              onChange={(e) => setQuestion(e.target.value)}
+              placeholder="Ask a question…"
+              className="mt-1"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-sm">Options</Label>
+            {options.map((opt, i) => (
+              <div key={i} className="flex items-center gap-2">
+                <Input
+                  value={opt}
+                  onChange={(e) => handleOptionChange(i, e.target.value)}
+                  placeholder={`Option ${i + 1}`}
+                  className="flex-1"
+                />
+                {options.length > 2 && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 shrink-0"
+                    onClick={() => handleRemoveOption(i)}
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </Button>
+                )}
+              </div>
+            ))}
+
+            {options.length < 10 && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full"
+                onClick={handleAddOption}
+              >
+                <Plus className="mr-1.5 h-3.5 w-3.5" />
+                Add Option
+              </Button>
+            )}
+          </div>
+
+          <div className="flex items-center justify-between">
+            <Label htmlFor="allow-multiple" className="text-sm">
+              Allow multiple answers
+            </Label>
+            <Switch
+              id="allow-multiple"
+              checked={allowMultiple}
+              onCheckedChange={setAllowMultiple}
+            />
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>Cancel</Button>
+          <Button disabled={!canCreate} onClick={handleCreate}>Create Poll</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}

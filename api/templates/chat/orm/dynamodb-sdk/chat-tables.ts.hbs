@@ -1,0 +1,97 @@
+import {
+  DynamoDBClient,
+  CreateTableCommand,
+  CreateTableCommandInput,
+} from '@aws-sdk/client-dynamodb';
+import { DynamoDBDocumentClient, PutCommand, GetCommand, QueryCommand, UpdateCommand, DeleteCommand } from '@aws-sdk/lib-dynamodb';
+
+const region = process.env.AWS_REGION ?? 'us-east-1';
+const rawClient = new DynamoDBClient({ region });
+export const dynamo = DynamoDBDocumentClient.from(rawClient);
+
+export const TABLE_NAMES = {
+  CONVERSATIONS: 'chat_conversations',
+  MESSAGES: 'chat_messages',
+  PARTICIPANTS: 'chat_participants',
+  REACTIONS: 'chat_reactions',
+  POLLS: 'chat_polls',
+} as const;
+
+export type ConversationType = 'direct' | 'group';
+export type MessageType = 'text' | 'image' | 'video' | 'file' | 'poll' | 'location' | 'gif';
+
+export interface ChatConversationItem {
+  PK: string;       // CONV#<id>
+  SK: string;       // METADATA
+  id: string;
+  type: ConversationType;
+  name?: string;
+  avatarUrl?: string;
+  description?: string;
+  pinnedByUserIds: string[];
+  mutedByUsers: Record<string, string>;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ChatMessageItem {
+  PK: string;       // CONV#<conversationId>
+  SK: string;       // MSG#<createdAt>#<id>
+  id: string;
+  conversationId: string;
+  senderId: string;
+  content?: string;
+  type: MessageType;
+  metadata?: Record<string, unknown>;
+  readByUserIds: string[];
+  replyToMessageId?: string;
+  status: string;
+  deletedAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  GSI1PK?: string;  // USER#<senderId> for user message queries
+  GSI1SK?: string;  // MSG#<createdAt>
+}
+
+export interface ChatParticipantItem {
+  PK: string;       // CONV#<conversationId>
+  SK: string;       // PARTICIPANT#<userId>
+  id: string;
+  conversationId: string;
+  userId: string;
+  role: 'admin' | 'member';
+  lastReadAt?: string | null;
+  joinedAt: string;
+  GSI1PK?: string;  // USER#<userId>
+  GSI1SK?: string;  // CONV#<conversationId>
+}
+
+/** Table definitions for provisioning (optional, use IaC in production) */
+export const TABLE_DEFINITIONS: CreateTableCommandInput[] = [
+  {
+    TableName: TABLE_NAMES.MESSAGES,
+    BillingMode: 'PAY_PER_REQUEST',
+    AttributeDefinitions: [
+      { AttributeName: 'PK', AttributeType: 'S' },
+      { AttributeName: 'SK', AttributeType: 'S' },
+      { AttributeName: 'GSI1PK', AttributeType: 'S' },
+      { AttributeName: 'GSI1SK', AttributeType: 'S' },
+    ],
+    KeySchema: [
+      { AttributeName: 'PK', KeyType: 'HASH' },
+      { AttributeName: 'SK', KeyType: 'RANGE' },
+    ],
+    GlobalSecondaryIndexes: [
+      {
+        IndexName: 'GSI1',
+        KeySchema: [
+          { AttributeName: 'GSI1PK', KeyType: 'HASH' },
+          { AttributeName: 'GSI1SK', KeyType: 'RANGE' },
+        ],
+        Projection: { ProjectionType: 'ALL' },
+      },
+    ],
+  },
+];
+
+export { PutCommand, GetCommand, QueryCommand, UpdateCommand, DeleteCommand };

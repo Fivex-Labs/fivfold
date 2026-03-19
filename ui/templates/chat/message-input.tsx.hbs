@@ -1,0 +1,236 @@
+'use client';
+
+import React, { useState, useRef, useCallback, useEffect } from 'react';
+import { Send, Paperclip, Smile, MapPin, BarChart2, Image } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { AttachmentPicker } from './attachment-picker';
+import { GifPicker } from './gif-picker';
+import { PollCreator } from './poll-creator';
+import { LocationPicker } from './location-picker';
+import type { FivFoldChatSendMessagePayload } from './types';
+
+interface MessageInputProps {
+  onSend: (payload: FivFoldChatSendMessagePayload) => void | Promise<void>;
+  onTypingStart?: () => void;
+  onTypingStop?: () => void;
+  gifApiKey?: string;
+  disabled?: boolean;
+  placeholder?: string;
+}
+
+export function MessageInput({
+  onSend,
+  onTypingStart,
+  onTypingStop,
+  gifApiKey,
+  disabled,
+  placeholder = 'Message…',
+}: MessageInputProps) {
+  const [text, setText] = useState('');
+  const [sending, setSending] = useState(false);
+  const [showAttachment, setShowAttachment] = useState(false);
+  const [showGif, setShowGif] = useState(false);
+  const [showPoll, setShowPoll] = useState(false);
+  const [showLocation, setShowLocation] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
+  const isTypingRef = useRef(false);
+
+  const handleTyping = useCallback(() => {
+    if (!isTypingRef.current) {
+      isTypingRef.current = true;
+      onTypingStart?.();
+    }
+    clearTimeout(typingTimeoutRef.current);
+    typingTimeoutRef.current = setTimeout(() => {
+      isTypingRef.current = false;
+      onTypingStop?.();
+    }, 2000);
+  }, [onTypingStart, onTypingStop]);
+
+  useEffect(() => () => clearTimeout(typingTimeoutRef.current), []);
+
+  const handleSend = useCallback(async () => {
+    const trimmed = text.trim();
+    if (!trimmed || sending || disabled) return;
+    setSending(true);
+    try {
+      await onSend({ type: 'text', content: trimmed });
+      setText('');
+      clearTimeout(typingTimeoutRef.current);
+      isTypingRef.current = false;
+      onTypingStop?.();
+      textareaRef.current?.focus();
+    } finally {
+      setSending(false);
+    }
+  }, [text, sending, disabled, onSend, onTypingStop]);
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      void handleSend();
+    }
+  };
+
+  const canSend = text.trim().length > 0 && !disabled && !sending;
+
+  return (
+    <div className="border-t border-border/50 bg-background/60 backdrop-blur-sm">
+      {/* Toolbar */}
+      <div className="flex items-center gap-0.5 border-b border-border/30 px-3 py-1.5">
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-muted-foreground hover:text-foreground"
+              onClick={() => setShowAttachment(true)}
+              disabled={disabled}
+            >
+              <Paperclip className="h-4 w-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Attachment</TooltipContent>
+        </Tooltip>
+
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-muted-foreground hover:text-foreground"
+              onClick={() => setShowGif(true)}
+              disabled={disabled}
+            >
+              <Image className="h-4 w-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>GIF</TooltipContent>
+        </Tooltip>
+
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-muted-foreground hover:text-foreground"
+              onClick={() => setShowPoll(true)}
+              disabled={disabled}
+            >
+              <BarChart2 className="h-4 w-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Poll</TooltipContent>
+        </Tooltip>
+
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-muted-foreground hover:text-foreground"
+              onClick={() => setShowLocation(true)}
+              disabled={disabled}
+            >
+              <MapPin className="h-4 w-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Location</TooltipContent>
+        </Tooltip>
+      </div>
+
+      {/* Text input + send */}
+      <div className="flex items-end gap-2 px-3 py-2">
+        <Textarea
+          ref={textareaRef}
+          value={text}
+          onChange={(e) => {
+            setText(e.target.value);
+            handleTyping();
+          }}
+          onKeyDown={handleKeyDown}
+          placeholder={placeholder}
+          disabled={disabled || sending}
+          rows={1}
+          className={cn(
+            'min-h-0 flex-1 resize-none rounded-2xl border-border/40 bg-muted/40',
+            'text-sm leading-relaxed backdrop-blur-sm',
+            'focus-visible:ring-1 focus-visible:ring-primary/50',
+            'max-h-32 overflow-y-auto'
+          )}
+          style={{ fieldSizing: 'content' } as React.CSSProperties}
+        />
+
+        <AnimatePresence mode="popLayout">
+          <motion.div
+            key={canSend ? 'send' : 'idle'}
+            initial={{ scale: 0.7, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.7, opacity: 0 }}
+            transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+          >
+            <Button
+              size="icon"
+              onClick={handleSend}
+              disabled={!canSend}
+              className={cn(
+                'h-9 w-9 shrink-0 rounded-full transition-all',
+                canSend ? 'bg-primary shadow-md shadow-primary/20' : 'bg-muted text-muted-foreground'
+              )}
+              aria-label="Send"
+            >
+              {sending ? (
+                <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+              ) : (
+                <Send className="h-4 w-4" />
+              )}
+            </Button>
+          </motion.div>
+        </AnimatePresence>
+      </div>
+
+      {/* Modals */}
+      <AttachmentPicker
+        open={showAttachment}
+        onClose={() => setShowAttachment(false)}
+        onSelect={(attachment) => {
+          onSend({ type: attachment.type as 'image', attachment: attachment as Parameters<typeof onSend>[0] extends { attachment: infer A } ? A : never });
+          setShowAttachment(false);
+        }}
+      />
+
+      <GifPicker
+        open={showGif}
+        apiKey={gifApiKey}
+        onClose={() => setShowGif(false)}
+        onSelect={(gif) => {
+          onSend({ type: 'gif', gif });
+          setShowGif(false);
+        }}
+      />
+
+      <PollCreator
+        open={showPoll}
+        onClose={() => setShowPoll(false)}
+        onCreate={(poll) => {
+          onSend({ type: 'poll', poll: poll as Parameters<typeof onSend>[0] extends { poll: infer P } ? P : never });
+          setShowPoll(false);
+        }}
+      />
+
+      <LocationPicker
+        open={showLocation}
+        onClose={() => setShowLocation(false)}
+        onShare={(location) => {
+          onSend({ type: 'location', location });
+          setShowLocation(false);
+        }}
+      />
+    </div>
+  );
+}
