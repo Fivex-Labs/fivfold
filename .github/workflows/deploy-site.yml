@@ -19,10 +19,11 @@ jobs:
 
       - uses: pnpm/action-setup@v4
 
+      # No cache:pnpm — this job never runs pnpm install (Vercel builds remotely).
+      # setup-node would error on post-job cache save when no pnpm store exists.
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-          cache: 'pnpm'
 
       - run: npm install -g vercel@latest
 
