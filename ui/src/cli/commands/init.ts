@@ -1,21 +1,40 @@
 import { writeFileSync, mkdirSync, existsSync, readFileSync } from 'fs';
 import { join, dirname } from 'path';
-import { execSync } from 'child_process';
 import * as p from '@clack/prompts';
-import type { FivFoldConfig, StylePreset, BaseColor, IconLibrary, ThemeSource } from '../../lib/schemas.js';
-import { DEFAULT_CONFIG, STYLE_RADIUS } from '../../lib/schemas.js';
+import type { FivFoldConfig, IconLibrary } from '../../lib/schemas.js';
+import { DEFAULT_CONFIG } from '../../lib/schemas.js';
 import { detectWorkspace, resolveCssPath } from '../../lib/workspace.js';
-import { detectShadcnUi, applyFivFoldTheme, patchExistingCss } from '../../lib/theme.js';
-import { parseGlobalFlags, detectPackageManager, type CliFlags } from '@fivfold/core';
+import { applyFivFoldTheme, patchExistingCss } from '../../lib/theme.js';
+import { parseGlobalFlags, type CliFlags } from '@fivfold/core';
+import {
+  checkUiInitPrerequisites,
+  readShadcnComponentsJson,
+  inferBaseColorFromShadcn,
+  defaultGlobalCssFromShadcn,
+  warnIfGlobalsMissingTailwindImport,
+  shadcnThemeStatusMessage,
+} from '../../lib/init-requirements.js';
 
 export async function initProject(flags: CliFlags = {}): Promise<void> {
   const workspace = detectWorkspace();
-  const hasShadcn = detectShadcnUi(workspace.root);
   const hasExistingConfig = existsSync(join(workspace.root, 'fivfold.json'));
   const parsedFlags = parseGlobalFlags(process.argv.slice(2));
   const effectiveFlags = { ...flags, ...parsedFlags };
 
   p.intro('FivFold -- Full-Stack Kits');
+
+  const prereq = checkUiInitPrerequisites(workspace.root);
+  if (!prereq.ok) {
+    for (const line of prereq.lines) {
+      console.log(line);
+    }
+    p.cancel('Prerequisites not met.');
+    return;
+  }
+
+  const components = readShadcnComponentsJson(workspace.root);
+  const inferredBase = inferBaseColorFromShadcn(components);
+  p.log.message(shadcnThemeStatusMessage(components));
 
   if (hasExistingConfig && !effectiveFlags.yes) {
     const overwrite = await p.confirm({
@@ -35,64 +54,16 @@ export async function initProject(flags: CliFlags = {}): Promise<void> {
   let config: FivFoldConfig;
 
   if (effectiveFlags.yes || effectiveFlags.dryRun) {
-    config = { ...DEFAULT_CONFIG };
+    config = {
+      ...DEFAULT_CONFIG,
+      theme: {
+        ...DEFAULT_CONFIG.theme,
+        css: defaultGlobalCssFromShadcn(components),
+        baseColor: inferredBase,
+        source: 'shadcn',
+      },
+    };
   } else {
-    if (hasShadcn) {
-      p.log.message('shadcn/ui detected (components.json found).');
-    } else {
-      p.log.message('shadcn/ui not detected. FivFold kits require shadcn/ui components.');
-      p.log.message('We will set up shadcn/ui for you after configuration.');
-    }
-
-    const baseColor = await p.select({
-      message: 'Choose a shadcn/ui base color:',
-      options: [
-        { value: 'neutral', label: 'Neutral (recommended)' },
-        { value: 'slate', label: 'Slate' },
-        { value: 'gray', label: 'Gray' },
-        { value: 'zinc', label: 'Zinc' },
-        { value: 'stone', label: 'Stone' },
-      ],
-      initialValue: 'neutral',
-    });
-    if (p.isCancel(baseColor)) {
-      p.cancel('Setup cancelled.');
-      return;
-    }
-
-    const style = await p.select({
-      message: 'Choose a style preset:',
-      options: [
-        { value: 'mesa', label: 'Mesa  -- classic, balanced' },
-        { value: 'ridge', label: 'Ridge -- compact' },
-        { value: 'dune', label: 'Dune  -- soft, rounded' },
-        { value: 'slate', label: 'Slate -- sharp, boxy' },
-        { value: 'forge', label: 'Forge -- dense' },
-      ],
-      initialValue: 'mesa',
-    });
-    if (p.isCancel(style)) {
-      p.cancel('Setup cancelled.');
-      return;
-    }
-
-    let themeSource: ThemeSource = 'fivfold';
-    if (hasShadcn) {
-      const ts = await p.select({
-        message: 'shadcn/ui theme detected. How would you like to handle theming?',
-        options: [
-          { value: 'shadcn', label: 'Keep my existing shadcn/ui theme' },
-          { value: 'fivfold', label: 'Apply shadcn/ui theme (base color + style)' },
-        ],
-        initialValue: 'fivfold',
-      });
-      if (p.isCancel(ts)) {
-        p.cancel('Setup cancelled.');
-        return;
-      }
-      themeSource = ts as ThemeSource;
-    }
-
     const font = await p.select({
       message: 'Choose a font:',
       options: [
@@ -128,7 +99,7 @@ export async function initProject(flags: CliFlags = {}): Promise<void> {
 
     const globalCss = await p.text({
       message: 'Where is your global CSS file?',
-      initialValue: 'src/styles/globals.css',
+      initialValue: defaultGlobalCssFromShadcn(components),
       validate: (v) => ((v ?? '').trim() ? undefined : 'Please enter a valid path'),
     });
     if (p.isCancel(globalCss)) {
@@ -156,14 +127,13 @@ export async function initProject(flags: CliFlags = {}): Promise<void> {
 
     config = {
       ...DEFAULT_CONFIG,
-      style: style as StylePreset,
       font: font as string,
       iconLibrary: iconLibrary as IconLibrary,
       rsc: rsc as boolean,
       theme: {
         css: globalCss as string,
-        baseColor: baseColor as BaseColor,
-        source: themeSource,
+        baseColor: inferredBase,
+        source: 'shadcn',
         cssVariables: true,
       },
       aliases: {
@@ -175,23 +145,23 @@ export async function initProject(flags: CliFlags = {}): Promise<void> {
 
   if (effectiveFlags.dryRun) {
     p.note(
-      `Would write fivfold.json with:\n  Base color: ${config.theme.baseColor}\n  Style: ${config.style}\n  Theme: ${config.theme.source}\n  Font: ${config.font}\n  Global CSS: ${config.theme.css}\n  Kits alias: ${config.aliases.kits}`,
+      `Would write fivfold.json with:\n  Theme source: shadcn (existing theme)\n  Base color (metadata): ${config.theme.baseColor}\n  Style (default): ${config.style}\n  Font: ${config.font}\n  Global CSS: ${config.theme.css}\n  Kits alias: ${config.aliases.kits}`,
       'Dry run'
     );
     return;
   }
 
   p.log.message('Configuration summary:');
-  console.log(`  Base color  : ${config.theme.baseColor}`);
-  console.log(`  Style       : ${config.style}  (--radius: ${STYLE_RADIUS[config.style]})`);
-  console.log(`  Theme source: ${config.theme.source}`);
-  console.log(`  Font        : ${config.font}`);
-  console.log(`  Icon library: ${config.iconLibrary}`);
-  console.log(`  Global CSS  : ${config.theme.css}`);
+  console.log(`  Theme source: shadcn (your existing shadcn/ui CSS variables)`);
+  console.log(`  Base color   : ${config.theme.baseColor} (for FivFold metadata)`);
+  console.log(`  Style        : ${config.style}  (--radius when using FivFold theme generation)`);
+  console.log(`  Font         : ${config.font}`);
+  console.log(`  Icon library : ${config.iconLibrary}`);
+  console.log(`  Global CSS   : ${config.theme.css}`);
 
   if (!effectiveFlags.yes) {
     const proceed = await p.confirm({
-      message: 'Write fivfold.json and set up CSS?',
+      message: 'Write fivfold.json and patch global CSS?',
       initialValue: true,
     });
     if (p.isCancel(proceed) || !proceed) {
@@ -200,11 +170,13 @@ export async function initProject(flags: CliFlags = {}): Promise<void> {
     }
   }
 
+  const cssPath = resolveCssPath(config, workspace);
+  warnIfGlobalsMissingTailwindImport(cssPath);
+
   const configPath = join(workspace.root, 'fivfold.json');
   writeFileSync(configPath, JSON.stringify(config, null, 2), 'utf8');
   p.log.success('Created fivfold.json');
 
-  const cssPath = resolveCssPath(config, workspace);
   const cssDir = dirname(cssPath);
   if (!existsSync(cssDir)) mkdirSync(cssDir, { recursive: true });
 
@@ -213,19 +185,7 @@ export async function initProject(flags: CliFlags = {}): Promise<void> {
     p.log.success(`Updated ${config.theme.css} with FivFold theme`);
   } else {
     patchExistingCss(cssPath, config);
-    p.log.success(`Added FivFold Kit variables to ${config.theme.css}`);
-  }
-
-  if (!hasShadcn) {
-    p.log.message('Setting up shadcn/ui...');
-    try {
-      const pm = detectPackageManager(workspace.root);
-      const npxCmd = pm === 'pnpm' ? 'pnpm dlx' : pm === 'yarn' ? 'yarn dlx' : 'npx';
-      execSync(`${npxCmd} shadcn@latest init --yes`, { stdio: 'inherit', cwd: workspace.root });
-      p.log.success('shadcn/ui initialized.');
-    } catch {
-      p.log.message('Could not auto-initialize shadcn/ui. Run: npx shadcn@latest init');
-    }
+    p.log.success(`Left ${config.theme.css} unchanged — kits use your existing shadcn/ui CSS variables.`);
   }
 
   p.outro('FivFold is ready!');

@@ -4,6 +4,7 @@ import { Image, FileUp, MapPin } from "lucide-react";
 import { useStack } from "../../../components/stack-context";
 import { CodeBlock } from "../../../components/code-block";
 import { DocTabs } from "../../../components/doc-tabs";
+import { ChatUserIntegrationSection } from "./chat-user-integration";
 
 const API_ENDPOINTS_TABLE = (
   <div className="overflow-x-auto">
@@ -143,6 +144,8 @@ httpServer.listen(3000);`;
         </h4>
         <CodeBlock code={fileTree} language="text" label="File tree" />
       </div>
+
+      <ChatUserIntegrationSection framework={stack.framework} orm={stack.orm} />
 
       {/* Step 3 – Data layer setup (only for relational / Mongoose) */}
       {(isTypeORM || isPrisma || isMongoose) && (

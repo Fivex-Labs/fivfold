@@ -7,9 +7,19 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Version
 
 ## [Unreleased]
 
+## [0.13.2] - 2026-03-20
+
+### Fixed
+- `@fivfold/ui`: Chat kit manifest template paths use `templates/chat/...` so `npx @fivfold/ui add chat` finds all `.hbs` templates (paths previously omitted the `templates/` prefix).
+
+### Added
+- `@fivfold/ui`: `src/lib/init-requirements.ts` — Tailwind CSS v4 and shadcn/ui (`components.json`) checks, `components.json` theme path/baseColor helpers, optional globals CSS warning for `@import "tailwindcss"`.
+- `fivfold-site`: Chat kit backend docs — “Connect chat to your existing users” (User id alignment, 1:1 and groups, chat search vs user directory, auth wiring) scoped to the **stack configurator** ORM + framework selection.
+
 ### Changed
-- Documentation: removed root `OVERVIEW.md` (overlap with `README.md`); consolidated structure/manifest notes into README and CONTRIBUTING.
-- README, AGENTS, `skills.md`, and `site/README.md` generalized so shipped Kits are discovered via CLI `list` and manifest dirs, not static tables.
+- `@fivfold/ui`: `init` gates on Tailwind v4 + shadcn before prompts; removes FivFold theme wizard; uses existing shadcn theme (`theme.source: shadcn`, metadata from `components.json`); drops auto `shadcn init`; `--yes` / `--dry-run` use the same prerequisites.
+- `@fivfold/ui`: `setup` and `ui/README.md` document prerequisites (Tailwind v4 + shadcn before `init`).
+- `@fivfold/ui`: `agents.ts` — remove unused import (TypeScript clean build).
 
 ## [0.13.0] - 2026-03-19
 

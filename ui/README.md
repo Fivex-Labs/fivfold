@@ -12,7 +12,7 @@ CLI for adding frontend Kits to React, Next.js, Vite projects for now, more comi
 
 | Command | Description | Options / Examples |
 |---------|-------------|--------------------|
-| `init` | Initialize FivFold in your project | Creates `fivfold.json`, sets up aliases |
+| `init` | Initialize FivFold in your project | Requires **Tailwind v4** + **shadcn/ui** first; creates `fivfold.json`, uses your existing theme |
 | `add <kit> [kit...]` | Add one or more Kits | `npx @fivfold/ui add auth`, `add auth kanban` |
 | `list` | List all available Kits | Shows name, description |
 | `agents` | Generate AGENTS.md for AI assistant compatibility | Outputs agent instructions |
@@ -55,10 +55,17 @@ Example manifest structure:
 
 **Structure:** Directories per Kit (`auth/`, `kanban/`, `email/`) plus `themes/` for CSS.
 
-Templates are **not** Handlebars. They are copied as-is with two substitutions:
+Most templates are plain files copied as-is; some kits use a `.hbs` extension with the same substitutions. All templates get:
 
 1. **`__KITS_ALIAS__`** → replaced with `config.aliases.kits` (e.g., `@/components/kits`)
 2. **`"use client"`** → removed if `config.rsc === false`
+
+## Prerequisites
+
+1. **Tailwind CSS v4** — e.g. `tailwindcss@^4` or `@tailwindcss/postcss` / `@tailwindcss/vite` in `package.json`, and `@import "tailwindcss";` in your global CSS.
+2. **shadcn/ui** — `components.json` at the project root (`npx shadcn@latest init`).
+
+Then run `npx @fivfold/ui init`. Init does not install Tailwind or shadcn for you.
 
 ## Flow
 

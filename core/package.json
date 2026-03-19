@@ -1,6 +1,6 @@
 {
   "name": "@fivfold/core",
-  "version": "0.13.1",
+  "version": "0.13.2",
   "description": "FivFold Core -- shared engine for VFS, AST, manifests, strategies",
   "type": "module",
   "main": "dist/index.js",

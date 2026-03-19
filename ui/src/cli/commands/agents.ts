@@ -1,4 +1,4 @@
-import { existsSync, readdirSync, writeFileSync, readFileSync } from 'fs';
+import { existsSync, readdirSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import { detectWorkspace, findConfig, loadConfig, resolveKitsPath } from '../../lib/workspace.js';
 

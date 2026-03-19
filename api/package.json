@@ -1,6 +1,6 @@
 {
   "name": "@fivfold/api",
-  "version": "0.13.1",
+  "version": "0.13.2",
   "description": "FivFold API -- backend scaffolding for FivFold Kits (Express/NestJS + TypeORM + PostgreSQL)",
   "type": "module",
   "engines": {
