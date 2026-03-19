@@ -1,6 +1,6 @@
 {
   "name": "@fivfold/ui",
-  "version": "0.13.3",
+  "version": "0.13.4",
   "description": "FivFold UI -- full-stack Kits for React & Next.js, built on shadcn/ui",
   "type": "module",
   "engines": {

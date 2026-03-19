@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { DocPage } from "../../components/doc-page";
 import {
   DocStep,
@@ -32,6 +33,7 @@ const headings = [
   { id: "prerequisites", text: "Prerequisites", level: 2 },
   { id: "ui-package", text: "UI package", level: 2 },
   { id: "api-package", text: "API package", level: 2 },
+  { id: "connecting-ui-and-api", text: "Connecting UI and API", level: 2 },
   { id: "verification", text: "Verification", level: 2 },
 ];
 
@@ -95,6 +97,25 @@ export default function InstallationPage() {
       <DocCallout title="Shared config" variant="tip">
         <p>
           Both UI and API CLIs read from the same <code>fivfold.json</code>. Run <code>@fivfold/ui init</code> first if you use both; the API init will merge its config into the existing file in a monorepo setup.
+        </p>
+      </DocCallout>
+
+      <h2 id="connecting-ui-and-api" className="mt-10 font-semibold text-2xl scroll-mt-24">
+        Connecting UI and API
+      </h2>
+      <p className="text-white/80 leading-relaxed mb-4 mt-2">
+        Kits ship as source in your repo. Browser code typically calls same-origin paths (e.g. <code className="rounded bg-white/10 px-1 py-0.5 text-brand-secondary">/api/…</code>) that your dev server proxies to the backend, and you enable CORS on the API for your web origin. Realtime (e.g. Socket.IO) needs the same treatment: proxy WebSocket upgrades or point the client at the API host.
+      </p>
+      <DocCallout title="Chat kit" variant="info">
+        <p>
+          For <strong>Chat</strong>, use the ordered checklist in{" "}
+          <Link
+            href="/docs/kits/chat#fullstack-checklist"
+            className="text-brand-primary underline-offset-2 hover:underline"
+          >
+            Chat → Full-stack integration
+          </Link>{" "}
+          (dev user middleware, <code>Vite</code> <code>/socket.io</code> proxy, <code>X-User-Id</code>, integration host). The generic patterns on this page apply to other kits too.
         </p>
       </DocCallout>
 

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { CodeBlock } from "../../../components/code-block";
 import { DocCallout } from "../../../components/doc-blocks";
 import { useStack } from "../../../components/stack-context";
@@ -63,6 +64,43 @@ export function ChatFullstackUiGuide({ embedded }: { embedded?: boolean }) {
       }
     >
       <KitIntegrationDisclaimer />
+
+      <div id="fullstack-checklist" className="scroll-mt-28">
+        <DocCallout variant="info" title="After you add Chat UI + Chat API — checklist">
+          <p className="text-white/70 text-sm mb-3">
+            Scaffolding aligns routes and dependencies; your app still needs a thin integration layer. Work through these in order for local dev:
+          </p>
+          <ol className="list-decimal space-y-2 pl-4 text-sm text-white/75">
+            <li>
+              <strong className="text-white/85">Identity on the API:</strong> Nest registers <code className="rounded bg-white/10 px-1">ChatModule</code> but does not auto-wire{" "}
+              <code className="rounded bg-white/10 px-1">ChatDevUserMiddleware</code> in <code className="rounded bg-white/10 px-1">main.ts</code>. Either register it (see below) or use real auth so{" "}
+              <code className="rounded bg-white/10 px-1">req.user.id</code> exists — otherwise REST handlers throw at runtime.
+            </li>
+            <li>
+              <strong className="text-white/85">Socket.IO through the dev server:</strong>{" "}
+              {isNext ? (
+                <>Add a rewrite for <code className="rounded bg-white/10 px-1">/socket.io</code> to your API (same idea as REST), or point <code className="rounded bg-white/10 px-1">socket.io-client</code> at the API origin.</>
+              ) : (
+                <>Proxy <code className="rounded bg-white/10 px-1">/socket.io</code> with <code className="rounded bg-white/10 px-1">ws: true</code> in <code className="rounded bg-white/10 px-1">vite.config</code>, or connect the client directly to your API URL (e.g. env).</>
+              )}
+            </li>
+            <li>
+              <strong className="text-white/85">Same user id everywhere:</strong> send <code className="rounded bg-white/10 px-1">X-User-Id</code> on fetch (or JWT) matching <code className="rounded bg-white/10 px-1">currentUser.id</code> in the kit and the server&apos;s dev default / env (<code className="rounded bg-white/10 px-1">DEV_USER_ID</code>).
+            </li>
+            <li>
+              <strong className="text-white/85">Integration host:</strong> <code className="rounded bg-white/10 px-1">ChatKit</code> is presentational — add a page or module that loads conversations/messages from your API, maps DTOs to <code className="rounded bg-white/10 px-1">FivFoldChat*</code> types, and implements{" "}
+              <code className="rounded bg-white/10 px-1">onSendMessage</code>, search, and socket listeners (see examples below).
+            </li>
+            <li>
+              Generic FE ↔ BE patterns (proxy, CORS) also apply — see{" "}
+              <Link href="/docs/getting-started/installation#connecting-ui-and-api" className="text-brand-primary underline-offset-2 hover:underline">
+                Installation → Connecting UI and API
+              </Link>
+              .
+            </li>
+          </ol>
+        </DocCallout>
+      </div>
 
       <div>
         <h3 className="text-lg font-semibold text-white mb-2">Full-stack local dev (your app code)</h3>

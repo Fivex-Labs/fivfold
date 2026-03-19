@@ -1,5 +1,23 @@
 import { readFileSync, existsSync } from 'fs';
 import { join, dirname, resolve } from 'path';
+
+const VITE_CONFIG_NAMES = ['vite.config.ts', 'vite.config.mts', 'vite.config.js', 'vite.config.mjs'] as const;
+
+function projectHasViteConfig(root: string): boolean {
+  return VITE_CONFIG_NAMES.some((n) => existsSync(join(root, n)));
+}
+
+function printChatKitPostAddNotes(root: string): void {
+  console.log('\n  Next steps for Chat (not auto-generated):');
+  console.log('    • Add an integration host: map your API to ChatKit props and wire onSendMessage / search / sockets.');
+  console.log('    • Send X-User-Id (or JWT) on fetch so the API can set req.user — match currentUser.id in the kit.');
+  if (projectHasViteConfig(root)) {
+    console.log('    • Vite: proxy /socket.io with ws: true, or point socket.io-client at your API origin.');
+  } else {
+    console.log('    • Dev server: expose Socket.IO (e.g. rewrite /socket.io) or point socket.io-client at your API origin.');
+  }
+  console.log('    • Docs: https://fold.fivexlabs.com/docs/kits/chat#fullstack-checklist\n');
+}
 import { fileURLToPath } from 'url';
 import { execSync } from 'child_process';
 import type { FivFoldConfig, BaseColor } from '../../lib/schemas.js';
@@ -139,6 +157,9 @@ export function addKit(names: string[], themeOverride?: BaseColor, flags: CliFla
   console.log(`\n  Usage:`);
   console.log(`    import { ${exportName} } from "${kitAlias}"`);
   console.log('');
+  if (names.includes('chat')) {
+    printChatKitPostAddNotes(workspace.root);
+  }
 }
 
 function installKitToVfs(

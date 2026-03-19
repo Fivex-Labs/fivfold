@@ -61,6 +61,17 @@ function manifestExists(name: string): boolean {
   return existsSync(join(getManifestsDir(), `${name}.kit.json`));
 }
 
+function printChatApiPostAddNotes(framework: string): void {
+  console.log('\n  Next steps for Chat API (not auto-wired):');
+  if (framework === 'nestjs') {
+    console.log('    • Register ChatDevUserMiddleware in main.ts so req.user.id exists for REST handlers, or replace with JWT/guards.');
+  } else {
+    console.log('    • Wire auth so chat handlers receive a stable user id (e.g. session / JWT) matching your UI.');
+  }
+  console.log('    • Pair with the UI: X-User-Id header (or token) should match the client currentUser.id in dev.');
+  console.log('    • Docs: https://fold.fivexlabs.com/docs/kits/chat#fullstack-checklist\n');
+}
+
 function stageCopyDir(vfs: VirtualFileSystem, src: string, destRoot: string, destRel: string): void {
   if (!existsSync(src)) return;
 
@@ -213,6 +224,9 @@ export async function addApiModule(names: string[], flags: CliFlags = {}): Promi
     console.log(`  Created ${displayPath}`);
   }
   console.log(`\n  API module(s) scaffolded successfully!\n`);
+  if (names.includes('chat')) {
+    printChatApiPostAddNotes(framework);
+  }
 }
 
 async function scaffoldWithManifest(

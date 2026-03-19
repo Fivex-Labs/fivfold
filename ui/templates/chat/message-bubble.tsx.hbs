@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { format } from 'date-fns';
-import { Check, CheckCheck, Trash2, Reply } from 'lucide-react';
+import { Check, CheckCheck, Trash2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import {
@@ -170,7 +170,6 @@ export function MessageBubble({
                   {message.type === 'poll' && message.poll && (
                     <PollDisplay
                       poll={message.poll}
-                      currentUserId={currentUserId}
                       onVote={(optionIndex) => onVotePoll?.(message.poll!.id, optionIndex)}
                       isOwn={isOwn}
                     />

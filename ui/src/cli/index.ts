@@ -13,7 +13,7 @@ const program = new Command();
 program
   .name('fivfold')
   .description('FivFold -- Full-stack Kits built on shadcn/ui')
-  .version('0.13.3');
+  .version('0.13.4');
 
 program
   .command('init')

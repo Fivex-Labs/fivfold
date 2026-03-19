@@ -7,6 +7,20 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Version
 
 ## [Unreleased]
 
+## [0.13.4] - 2026-03-20
+
+### Fixed
+- `@fivfold/ui`: Chat kit templates — remove unused imports/locals so strict TypeScript (`noUnusedLocals` / `noUnusedParameters`) passes on `npm run build`.
+
+### Added
+- `fivfold-site`: Chat full-stack **checklist** (`#fullstack-checklist`) and **Installation → Connecting UI and API** section with link to Chat docs; `KitFeBeConnectionGuide` cross-links Chat checklist for non-Chat kits.
+- `fivfold-site`: Header badge + homepage use `FIVFOLD_MARKETING_VERSION` (`app/lib/fivfold-version.ts`) for the current release label.
+- `@fivfold/ui` / `@fivfold/api`: Post-add **CLI reminders** for Chat (dev middleware / identity, Vite Socket.IO proxy or API origin, integration host, doc link).
+
+### Changed
+- `@fivfold/ui` / `@fivfold/api`: CLI `--version` strings set to `0.13.4`.
+- Workspace `package.json` versions set to `0.13.4` for root, `core`, `ui`, `api`, and `fivfold-site`.
+
 ## [0.13.3] - 2026-03-20
 
 ### Added

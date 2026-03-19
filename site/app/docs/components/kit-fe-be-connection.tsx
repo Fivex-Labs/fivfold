@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useStack } from "./stack-context";
 import { CodeBlock } from "./code-block";
 import { DocCallout } from "./doc-blocks";
@@ -41,6 +42,18 @@ export function KitFeBeConnectionGuide({
           <strong className="text-white/85">{fe === "nextjs" ? "Next.js" : "Vite"}</strong>). Your mount paths may differ;
           adjust prefixes to match how you register routes and proxies.
         </p>
+        {kitTitle !== "Chat" && (
+          <p className="text-white/55 text-xs mt-3">
+            <strong className="text-white/70">Chat kit:</strong> follow the ordered{" "}
+            <Link
+              href="/docs/kits/chat#fullstack-checklist"
+              className="text-brand-primary underline-offset-2 hover:underline"
+            >
+              full-stack checklist
+            </Link>{" "}
+            for dev user middleware, <code className="rounded bg-white/10 px-1">/socket.io</code> proxying, headers, and the integration host.
+          </p>
+        )}
       </div>
 
       {fe === "nextjs" ? (

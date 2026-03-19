@@ -8,6 +8,7 @@ import { Menu, X, Search, Github } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSearchDocs } from "@/context/search-docs-context";
+import { formatMarketingVersionLabel } from "@/lib/fivfold-version";
 
 export const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -34,10 +35,10 @@ export const Header = () => {
         {/* Equal 1fr | auto | 1fr columns on md+ so the search sits in the true horizontal center */}
         <div className="mx-auto grid h-full max-w-7xl grid-cols-[auto_1fr_auto] items-center gap-3 px-4 md:grid-cols-[1fr_auto_1fr] md:gap-4">
           {/* Logo */}
-          <div className="flex min-w-0 justify-start">
+          <div className="flex min-w-0 items-center justify-start gap-2">
             <Link
               href="/"
-              className="flex shrink-0 items-center"
+              className="flex shrink-0 items-center gap-2"
               aria-label="FivFold - Home"
             >
               <Image
@@ -47,6 +48,12 @@ export const Header = () => {
                 height={100}
                 className="h-10 w-auto"
               />
+              <span
+                className="rounded-md border border-brand-primary/35 bg-brand-primary/10 px-2 py-0.5 text-[11px] font-semibold tabular-nums text-brand-primary"
+                title={`Latest release ${formatMarketingVersionLabel()}`}
+              >
+                {formatMarketingVersionLabel()}
+              </span>
             </Link>
           </div>
 

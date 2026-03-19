@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { Github } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { formatMarketingVersionLabel } from "@/lib/fivfold-version";
 
 const fadeUp = {
   initial: { opacity: 0, y: 20 },
@@ -121,7 +122,7 @@ export function Hero() {
               transition={stagger(0)}
               className="inline-block rounded-full border border-brand-accent/40 bg-brand-accent/10 px-4 py-1.5 text-xs font-medium text-brand-accent"
             >
-              Pre-Alpha · v0.13
+              Pre-Alpha · {formatMarketingVersionLabel()}
             </motion.span>
 
             <motion.h1
