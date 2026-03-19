@@ -118,7 +118,7 @@ export function FeatureBento() {
           {/* Pre-Alpha */}
           <div className="rounded-2xl border border-brand-accent/30 bg-brand-accent/5 p-6 transition-all duration-300 hover:bg-white/[0.07] hover:border-white/20">
             <p className="text-sm text-brand-accent/90">
-              v0.12 · Pre-Alpha · Feedback welcome
+              v0.13 · Pre-Alpha · Feedback welcome
             </p>
           </div>
         </div>

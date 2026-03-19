@@ -140,16 +140,15 @@ export const Footer = () => {
               href="https://www.fivexlabs.com"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-1.5 text-white/40 hover:text-white/70 transition-colors text-sm"
+              className="flex items-center gap-1.5 transition-colors text-sm"
             >
-              Built with love by
+              Built with 💛 by
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src="https://www.fivexlabs.com/logos/fx-1024.png"
+                src="https://www.fivexlabs.com/logos/fivex-transparent.png"
                 alt="Fivex Labs"
                 className="h-4 w-auto inline"
               />
-              <span>Fivex Labs</span>
             </a>
             <div className="flex items-center gap-6 text-sm">
               <Link

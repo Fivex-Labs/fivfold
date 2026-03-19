@@ -93,7 +93,7 @@ function MarqueeRow({
 
 export function Hero() {
   return (
-    <section className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden bg-gradient-to-b from-[#030303] to-[var(--section-hero-end)]">
+    <section className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden">
       <div className="relative flex min-w-0 w-full flex-1 items-stretch gap-0 overflow-x-hidden">
         {/* Left marquee: slides left-to-right */}
         <div className="relative hidden min-w-0 flex-1 overflow-hidden md:block">
@@ -121,7 +121,7 @@ export function Hero() {
               transition={stagger(0)}
               className="inline-block rounded-full border border-brand-accent/40 bg-brand-accent/10 px-4 py-1.5 text-xs font-medium text-brand-accent"
             >
-              Pre-Alpha · v0.12.0
+              Pre-Alpha · v0.13
             </motion.span>
 
             <motion.h1

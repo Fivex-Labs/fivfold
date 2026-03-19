@@ -18,7 +18,7 @@ const stagger = (i: number) => ({ delay: i * 0.1 });
 
 export function ScaffoldingLandscape() {
   return (
-    <section className="relative py-32 px-4 overflow-hidden bg-gradient-to-b from-[var(--section-hero-end)] to-[var(--section-scaffold-end)]">
+    <section className="relative py-32 px-4 overflow-hidden bg-gradient-to-b from-black to-[var(--section-scaffold-end)]">
       {/* Subtle gradient mesh overlay */}
       <div
         className="absolute inset-0 pointer-events-none opacity-60"

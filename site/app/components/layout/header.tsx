@@ -31,100 +31,107 @@ export const Header = () => {
   return (
     <>
       <header className="fixed left-0 right-0 top-0 z-50 h-14 bg-black/50 backdrop-blur-sm">
-        <div className="mx-auto flex h-full max-w-7xl items-center justify-between gap-4 px-4">
+        {/* Equal 1fr | auto | 1fr columns on md+ so the search sits in the true horizontal center */}
+        <div className="mx-auto grid h-full max-w-7xl grid-cols-[auto_1fr_auto] items-center gap-3 px-4 md:grid-cols-[1fr_auto_1fr] md:gap-4">
           {/* Logo */}
-          <Link
-            href="/"
-            className="flex shrink-0 items-center gap p-4 bg"
-            aria-label="FivFold - Home"
-          >
-            <Image
-              src="/logos/logomark_dark_transparent.png"
-              alt="FivFold - Logo"
-              width={100}
-              height={100}
-              className="h-10 w-auto"
-            />
-          </Link>
-
-          {/* Search - opens command palette */}
-          <button
-            type="button"
-            onClick={openSearch}
-            className="relative hidden w-full max-w-md flex-1 md:flex items-center gap-2 rounded-full border border-white/10 bg-white/5 py-2 pl-9 pr-4 text-left text-sm text-white/80 hover:border-white/20 hover:bg-white/10 transition-colors"
-            aria-label="Search documentation (⌘ K)"
-          >
-            <Search
-              className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40"
-              aria-hidden
-            />
-            <span className="text-white/40">Search docs...</span>
-            <kbd className="ml-auto hidden rounded bg-white/10 px-2 py-0.5 text-xs text-white/50 sm:inline-block">
-              ⌘ K
-            </kbd>
-          </button>
-
-          {/* Desktop Nav */}
-          <nav className="hidden items-center gap-1 md:flex">
-            {navItems.map((item) => (
-              <Link
-                key={item.name}
-                href={item.href}
-                className={cn(
-                  "rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                  pathname.startsWith(item.href)
-                    ? "text-brand-primary"
-                    : "text-white/80 hover:bg-white/5 hover:text-white",
-                )}
-              >
-                {item.name}
-              </Link>
-            ))}
-            {externalNavItems.map((item) => (
-              <a
-                key={item.name}
-                href={item.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="rounded-lg px-3 py-2 text-sm font-medium text-white/80 transition-colors hover:bg-white/5 hover:text-white"
-              >
-                {item.name}
-              </a>
-            ))}
-            <a
-              href="https://github.com/Fivex-Labs/fivfold"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="View on GitHub"
-              className="rounded-lg p-2 text-white/80 transition-colors hover:bg-white/5 hover:text-white"
+          <div className="flex min-w-0 justify-start">
+            <Link
+              href="/"
+              className="flex shrink-0 items-center"
+              aria-label="FivFold - Home"
             >
-              <Github className="h-5 w-5" />
-            </a>
-          </nav>
+              <Image
+                src="/logos/logomark_dark_transparent.png"
+                alt="FivFold - Logo"
+                width={100}
+                height={100}
+                className="h-10 w-auto"
+              />
+            </Link>
+          </div>
 
-          {/* Mobile: Search + Menu */}
-          <div className="flex items-center gap-2 md:hidden">
+          {/* Search — centered in the middle column (desktop only) */}
+          <div className="hidden min-w-0 w-72 justify-center md:flex">
             <button
               type="button"
               onClick={openSearch}
-              className="rounded-lg p-2 text-white/80 hover:bg-white/5 hover:text-white"
-              aria-label="Search docs"
+              className="relative flex w-full max-w-md items-center gap-2 rounded-full border border-white/10 bg-white/5 py-2 pl-9 pr-4 text-left text-sm text-white/80 transition-colors hover:border-white/20 hover:bg-white/10"
+              aria-label="Search documentation (⌘ K)"
             >
-              <Search className="h-5 w-5" />
+              <Search
+                className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40"
+                aria-hidden
+              />
+              <span className="text-white/40">Search docs...</span>
+              <kbd className="ml-auto hidden rounded bg-white/10 px-2 py-0.5 text-xs text-white/50 sm:inline-block">
+                ⌘ K
+              </kbd>
             </button>
-            <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
-              aria-expanded={mobileMenuOpen}
-              aria-controls="mobile-menu"
-              className="rounded-lg p-2 text-white/80 hover:bg-white/5 hover:text-white"
-            >
-              {mobileMenuOpen ? (
-                <X className="h-5 w-5" />
-              ) : (
-                <Menu className="h-5 w-5" />
-              )}
-            </button>
+          </div>
+
+          {/* Desktop nav + mobile actions */}
+          <div className="flex min-w-0 items-center justify-end gap-2">
+            <nav className="hidden items-center gap-1 md:flex">
+              {navItems.map((item) => (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  className={cn(
+                    "rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                    pathname.startsWith(item.href)
+                      ? "text-brand-primary"
+                      : "text-white/80 hover:bg-white/5 hover:text-white",
+                  )}
+                >
+                  {item.name}
+                </Link>
+              ))}
+              {externalNavItems.map((item) => (
+                <a
+                  key={item.name}
+                  href={item.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="rounded-lg px-3 py-2 text-sm font-medium text-white/80 transition-colors hover:bg-white/5 hover:text-white"
+                >
+                  {item.name}
+                </a>
+              ))}
+              <a
+                href="https://github.com/Fivex-Labs/fivfold"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="View on GitHub"
+                className="rounded-lg p-2 text-white/80 transition-colors hover:bg-white/5 hover:text-white"
+              >
+                <Github className="h-5 w-5" />
+              </a>
+            </nav>
+
+            {/* Mobile: Search + Menu */}
+            <div className="flex items-center gap-2 md:hidden">
+              <button
+                type="button"
+                onClick={openSearch}
+                className="rounded-lg p-2 text-white/80 hover:bg-white/5 hover:text-white"
+                aria-label="Search docs"
+              >
+                <Search className="h-5 w-5" />
+              </button>
+              <button
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+                aria-expanded={mobileMenuOpen}
+                aria-controls="mobile-menu"
+                className="rounded-lg p-2 text-white/80 hover:bg-white/5 hover:text-white"
+              >
+                {mobileMenuOpen ? (
+                  <X className="h-5 w-5" />
+                ) : (
+                  <Menu className="h-5 w-5" />
+                )}
+              </button>
+            </div>
           </div>
         </div>
       </header>

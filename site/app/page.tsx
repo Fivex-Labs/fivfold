@@ -4,7 +4,6 @@ import { Hero } from "@/components/home/hero";
 import { ScaffoldingLandscape } from "@/components/home/scaffolding-landscape";
 import { FeatureBento } from "@/components/home/feature-bento";
 import { ToolkitBenefits } from "@/components/home/toolkit-benefits";
-import { WhyWeBuiltIt } from "@/components/home/why-we-built-it";
 import { CallForContributions } from "@/components/home/call-for-contributions";
 import { HowItWorks } from "@/components/home/how-it-works";
 import { CtaBanner } from "@/components/home/cta-banner";
@@ -51,7 +50,6 @@ export default function HomePage() {
       <ToolkitBenefits />
       <HowItWorks />
       <FeatureBento />
-      {/* <WhyWeBuiltIt /> */}
       <CallForContributions />
       <CtaBanner />
       <Footer />

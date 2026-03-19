@@ -11,6 +11,7 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 
 const viewport = { once: true, amount: 0.2 };
 const fadeInUp = {
@@ -125,7 +126,8 @@ export function ToolkitBenefits() {
             >
               <div className="flex items-center gap-3 mb-4">
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-primary/20 ring-2 ring-brand-primary/40">
-                  <Zap className="h-5 w-5 text-brand-primary" />
+                  {/* <Zap className="h-5 w-5 text-brand-primary" /> */}
+                  <Image src="/logos/logomark_dark_transparent.png" alt="Fivex Labs" width={24} height={24} />
                 </div>
                 <h3 className="text-xl font-semibold text-white">
                   With FivFold

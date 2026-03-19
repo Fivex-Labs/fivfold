@@ -2,7 +2,7 @@
   "name": "fivfold-site",
   "version": "1.0.0",
   "private": true,
-  "packageManager": "pnpm@9.0.0",
+  "packageManager": "pnpm@10.12.0",
   "author": "Fivex Labs",
   "license": "MIT",
   "repository": {
