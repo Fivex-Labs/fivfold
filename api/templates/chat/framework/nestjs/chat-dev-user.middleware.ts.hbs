@@ -1,0 +1,32 @@
+import { Injectable, NestMiddleware } from '@nestjs/common';
+import type { Request, Response, NextFunction } from 'express';
+
+/**
+ * LOCAL / STAGING ONLY — sets `req.user.id` when you do not have JWT auth yet.
+ *
+ * Resolution order:
+ * 1. `X-User-Id` header (trimmed)
+ * 2. `process.env.DEV_USER_ID`
+ * 3. `dev-user-local`
+ *
+ * In production, remove this middleware and use a real auth guard (e.g. JWT) that populates `req.user`.
+ * Wire in `main.ts` after `NestFactory.create` on the Express instance:
+ *
+ *   import { ChatDevUserMiddleware } from './modules/chat/chat-dev-user.middleware';
+ *   const app = await NestFactory.create<NestExpressApplication>(AppModule);
+ *   app.use(new ChatDevUserMiddleware().use.bind(new ChatDevUserMiddleware()));
+ */
+@Injectable()
+export class ChatDevUserMiddleware implements NestMiddleware {
+  use(req: Request, _res: Response, next: NextFunction): void {
+    const existing = (req as Request & { user?: { id: string } }).user;
+    if (existing?.id) {
+      next();
+      return;
+    }
+    const header = typeof req.headers['x-user-id'] === 'string' ? req.headers['x-user-id'].trim() : '';
+    const env = process.env.DEV_USER_ID?.trim();
+    (req as Request & { user: { id: string } }).user = { id: header || env || 'dev-user-local' };
+    next();
+  }
+}

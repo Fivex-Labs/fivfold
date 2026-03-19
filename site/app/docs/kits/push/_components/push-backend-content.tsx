@@ -2,6 +2,10 @@
 
 import { useStack } from "../../../components/stack-context";
 import { CodeBlock } from "../../../components/code-block";
+import { KitIntegrationDisclaimer } from "../../../components/kit-integration-disclaimer";
+import { KitApiFeBePlaybook } from "../../../components/kit-api-fe-be-playbook";
+import { KitUserModelIntegration } from "../../../components/kit-user-model-integration";
+import { KitDocStepHeading } from "../../../components/kit-doc-step-heading";
 
 const API_ENDPOINTS_TABLE = (
   <div className="overflow-x-auto">
@@ -54,8 +58,7 @@ export function PushBackendContent() {
   const expressTypeORM = (
     <>
       <div>
-        <h4 className="font-semibold text-white mb-3 flex items-center gap-2">
-          <span className="flex w-6 h-6 items-center justify-center rounded-md bg-brand-secondary/20 text-brand-secondary text-xs font-bold">2</span>
+        <h4 className="font-semibold text-white mb-3">
           Generated file tree
         </h4>
         <CodeBlock
@@ -78,8 +81,7 @@ export function PushBackendContent() {
         />
       </div>
       <div>
-        <h4 className="font-semibold text-white mb-3 flex items-center gap-2">
-          <span className="flex w-6 h-6 items-center justify-center rounded-md bg-brand-secondary/20 text-brand-secondary text-xs font-bold">3</span>
+        <h4 className="font-semibold text-white mb-3">
           Register entities in TypeORM DataSource
         </h4>
         <CodeBlock
@@ -102,8 +104,7 @@ export const AppDataSource = new DataSource({
         />
       </div>
       <div>
-        <h4 className="font-semibold text-white mb-3 flex items-center gap-2">
-          <span className="flex w-6 h-6 items-center justify-center rounded-md bg-brand-secondary/20 text-brand-secondary text-xs font-bold">4</span>
+        <h4 className="font-semibold text-white mb-3">
           Mount the router in your Express app
         </h4>
         <CodeBlock
@@ -120,8 +121,7 @@ app.use('/api/push', createPushRouter(pushService));`}
         />
       </div>
       <div>
-        <h4 className="font-semibold text-white mb-3 flex items-center gap-2">
-          <span className="flex w-6 h-6 items-center justify-center rounded-md bg-brand-secondary/20 text-brand-secondary text-xs font-bold">5</span>
+        <h4 className="font-semibold text-white mb-3">
           Replace auth placeholder with your JWT middleware
         </h4>
         <p className="text-white/80 text-sm mb-2">
@@ -140,8 +140,7 @@ app.use('/api/push', createPushRouter(pushService));`}
         />
       </div>
       <div>
-        <h4 className="font-semibold text-white mb-3 flex items-center gap-2">
-          <span className="flex w-6 h-6 items-center justify-center rounded-md bg-brand-secondary/20 text-brand-secondary text-xs font-bold">6</span>
+        <h4 className="font-semibold text-white mb-3">
           Run migrations (production)
         </h4>
         <CodeBlock
@@ -157,8 +156,7 @@ npx typeorm migration:run`}
   const nestjsTypeORM = (
     <>
       <div>
-        <h4 className="font-semibold text-white mb-3 flex items-center gap-2">
-          <span className="flex w-6 h-6 items-center justify-center rounded-md bg-brand-secondary/20 text-brand-secondary text-xs font-bold">2</span>
+        <h4 className="font-semibold text-white mb-3">
           Generated file tree
         </h4>
         <CodeBlock
@@ -182,8 +180,7 @@ npx typeorm migration:run`}
         />
       </div>
       <div>
-        <h4 className="font-semibold text-white mb-3 flex items-center gap-2">
-          <span className="flex w-6 h-6 items-center justify-center rounded-md bg-brand-secondary/20 text-brand-secondary text-xs font-bold">3</span>
+        <h4 className="font-semibold text-white mb-3">
           Import PushModule into AppModule
         </h4>
         <CodeBlock
@@ -207,8 +204,7 @@ export class AppModule {}`}
         />
       </div>
       <div>
-        <h4 className="font-semibold text-white mb-3 flex items-center gap-2">
-          <span className="flex w-6 h-6 items-center justify-center rounded-md bg-brand-secondary/20 text-brand-secondary text-xs font-bold">4</span>
+        <h4 className="font-semibold text-white mb-3">
           Add auth guard to the controller
         </h4>
         <p className="text-white/80 text-sm mb-2">
@@ -226,8 +222,7 @@ export class PushController { ... }`}
         />
       </div>
       <div>
-        <h4 className="font-semibold text-white mb-3 flex items-center gap-2">
-          <span className="flex w-6 h-6 items-center justify-center rounded-md bg-brand-secondary/20 text-brand-secondary text-xs font-bold">5</span>
+        <h4 className="font-semibold text-white mb-3">
           Run TypeORM migrations (production)
         </h4>
         <CodeBlock
@@ -243,8 +238,7 @@ npx typeorm migration:run -d src/data-source.ts`}
   const expressMongoose = (
     <>
       <div>
-        <h4 className="font-semibold text-white mb-3 flex items-center gap-2">
-          <span className="flex w-6 h-6 items-center justify-center rounded-md bg-brand-secondary/20 text-brand-secondary text-xs font-bold">2</span>
+        <h4 className="font-semibold text-white mb-3">
           Generated file tree
         </h4>
         <CodeBlock
@@ -263,8 +257,7 @@ npx typeorm migration:run -d src/data-source.ts`}
         />
       </div>
       <div>
-        <h4 className="font-semibold text-white mb-3 flex items-center gap-2">
-          <span className="flex w-6 h-6 items-center justify-center rounded-md bg-brand-secondary/20 text-brand-secondary text-xs font-bold">3</span>
+        <h4 className="font-semibold text-white mb-3">
           Register Mongoose schemas and mount router
         </h4>
         <CodeBlock
@@ -285,8 +278,7 @@ app.use('/api/push', createPushRouter(pushService));`}
   const expressCosmosDynamo = (
     <>
       <div>
-        <h4 className="font-semibold text-white mb-3 flex items-center gap-2">
-          <span className="flex w-6 h-6 items-center justify-center rounded-md bg-brand-secondary/20 text-brand-secondary text-xs font-bold">2</span>
+        <h4 className="font-semibold text-white mb-3">
           Generated file tree
         </h4>
         <CodeBlock
@@ -303,8 +295,7 @@ app.use('/api/push', createPushRouter(pushService));`}
         />
       </div>
       <div>
-        <h4 className="font-semibold text-white mb-3 flex items-center gap-2">
-          <span className="flex w-6 h-6 items-center justify-center rounded-md bg-brand-secondary/20 text-brand-secondary text-xs font-bold">3</span>
+        <h4 className="font-semibold text-white mb-3">
           Data layer setup
         </h4>
         <p className="text-white/80 text-sm mb-2">
@@ -319,8 +310,7 @@ app.use('/api/push', createPushRouter(pushService));`}
   const expressPrisma = (
     <>
       <div>
-        <h4 className="font-semibold text-white mb-3 flex items-center gap-2">
-          <span className="flex w-6 h-6 items-center justify-center rounded-md bg-brand-secondary/20 text-brand-secondary text-xs font-bold">2</span>
+        <h4 className="font-semibold text-white mb-3">
           Generated file tree
         </h4>
         <CodeBlock
@@ -337,8 +327,7 @@ app.use('/api/push', createPushRouter(pushService));`}
         />
       </div>
       <div>
-        <h4 className="font-semibold text-white mb-3 flex items-center gap-2">
-          <span className="flex w-6 h-6 items-center justify-center rounded-md bg-brand-secondary/20 text-brand-secondary text-xs font-bold">3</span>
+        <h4 className="font-semibold text-white mb-3">
           Mount the router
         </h4>
         <CodeBlock
@@ -351,8 +340,7 @@ app.use('/api/push', createPushRouter(pushService));`}
         />
       </div>
       <div>
-        <h4 className="font-semibold text-white mb-3 flex items-center gap-2">
-          <span className="flex w-6 h-6 items-center justify-center rounded-md bg-brand-secondary/20 text-brand-secondary text-xs font-bold">4</span>
+        <h4 className="font-semibold text-white mb-3">
           Run Prisma migrations
         </h4>
         <CodeBlock
@@ -367,8 +355,7 @@ app.use('/api/push', createPushRouter(pushService));`}
   const nestjsMongoose = (
     <>
       <div>
-        <h4 className="font-semibold text-white mb-3 flex items-center gap-2">
-          <span className="flex w-6 h-6 items-center justify-center rounded-md bg-brand-secondary/20 text-brand-secondary text-xs font-bold">2</span>
+        <h4 className="font-semibold text-white mb-3">
           Generated file tree
         </h4>
         <CodeBlock
@@ -388,8 +375,7 @@ app.use('/api/push', createPushRouter(pushService));`}
         />
       </div>
       <div>
-        <h4 className="font-semibold text-white mb-3 flex items-center gap-2">
-          <span className="flex w-6 h-6 items-center justify-center rounded-md bg-brand-secondary/20 text-brand-secondary text-xs font-bold">3</span>
+        <h4 className="font-semibold text-white mb-3">
           Import PushModule into AppModule
         </h4>
         <CodeBlock
@@ -405,8 +391,7 @@ app.use('/api/push', createPushRouter(pushService));`}
   const nestjsCosmosDynamo = (
     <>
       <div>
-        <h4 className="font-semibold text-white mb-3 flex items-center gap-2">
-          <span className="flex w-6 h-6 items-center justify-center rounded-md bg-brand-secondary/20 text-brand-secondary text-xs font-bold">2</span>
+        <h4 className="font-semibold text-white mb-3">
           Generated file tree
         </h4>
         <CodeBlock
@@ -424,8 +409,7 @@ app.use('/api/push', createPushRouter(pushService));`}
         />
       </div>
       <div>
-        <h4 className="font-semibold text-white mb-3 flex items-center gap-2">
-          <span className="flex w-6 h-6 items-center justify-center rounded-md bg-brand-secondary/20 text-brand-secondary text-xs font-bold">3</span>
+        <h4 className="font-semibold text-white mb-3">
           Data layer setup
         </h4>
         <p className="text-white/80 text-sm mb-2">
@@ -440,8 +424,7 @@ app.use('/api/push', createPushRouter(pushService));`}
   const nestjsPrisma = (
     <>
       <div>
-        <h4 className="font-semibold text-white mb-3 flex items-center gap-2">
-          <span className="flex w-6 h-6 items-center justify-center rounded-md bg-brand-secondary/20 text-brand-secondary text-xs font-bold">2</span>
+        <h4 className="font-semibold text-white mb-3">
           Generated file tree
         </h4>
         <CodeBlock
@@ -459,8 +442,7 @@ app.use('/api/push', createPushRouter(pushService));`}
         />
       </div>
       <div>
-        <h4 className="font-semibold text-white mb-3 flex items-center gap-2">
-          <span className="flex w-6 h-6 items-center justify-center rounded-md bg-brand-secondary/20 text-brand-secondary text-xs font-bold">3</span>
+        <h4 className="font-semibold text-white mb-3">
           Import PushModule into AppModule
         </h4>
         <CodeBlock
@@ -471,8 +453,7 @@ export class AppModule {}`}
         />
       </div>
       <div>
-        <h4 className="font-semibold text-white mb-3 flex items-center gap-2">
-          <span className="flex w-6 h-6 items-center justify-center rounded-md bg-brand-secondary/20 text-brand-secondary text-xs font-bold">4</span>
+        <h4 className="font-semibold text-white mb-3">
           Run Prisma migrations
         </h4>
         <CodeBlock
@@ -502,10 +483,7 @@ export class AppModule {}`}
   return (
     <div className="space-y-8">
       <div>
-        <h4 className="font-semibold text-white mb-3 flex items-center gap-2">
-          <span className="flex w-6 h-6 items-center justify-center rounded-md bg-brand-secondary/20 text-brand-secondary text-xs font-bold">1</span>
-          Scaffold the module
-        </h4>
+        <KitDocStepHeading step={1}>Install / scaffold the module</KitDocStepHeading>
         <p className="text-white/80 text-sm mb-3">
           Run <code>npx @fivfold/api init</code> first if you haven&apos;t. The push kit requires a <strong>provider</strong> (push notification service). Select your stack and provider above, then run:
         </p>
@@ -518,49 +496,18 @@ export class AppModule {}`}
           Without <code>--provider</code>, the CLI will prompt you to choose: FCM, OneSignal, AWS SNS, Pushy, or Pusher Beams.
         </p>
       </div>
-      {stackContent}
-      <div>
-        <h4 className="font-semibold text-white mb-3 flex items-center gap-2">
-          <span className="flex w-6 h-6 items-center justify-center rounded-md bg-brand-secondary/20 text-brand-secondary text-xs font-bold">7</span>
-          Set environment variables
-        </h4>
-        <p className="text-white/80 text-sm mb-2">
-          Database URL plus provider-specific credentials. For <strong>{provider}</strong>:
+      <div className="space-y-6">
+        <KitDocStepHeading step={2}>Generated file structure & wire into the app</KitDocStepHeading>
+        <p className="text-white/65 text-sm -mt-1 mb-2">
+          Subsections below follow the <strong className="text-white/85">framework</strong> and <strong className="text-white/85">ORM</strong> from the stack sidebar (see <code className="rounded bg-white/10 px-1">AGENTS.md</code> API tab §2–§3).
         </p>
-        <CodeBlock
-          code={`${
-            isTypeORM || isPrisma
-              ? `DATABASE_URL=postgresql://user:password@localhost:5432/yourdb`
-              : isMongoose
-              ? `MONGODB_URI=mongodb://localhost:27017/yourdb`
-              : isCosmosSdk
-              ? `COSMOS_ENDPOINT="https://your-account.documents.azure.com:443/"
-COSMOS_KEY="your-key"
-COSMOS_DATABASE_ID="pushdb"`
-              : isDynamoSdk
-              ? `AWS_REGION=us-east-1
-AWS_ACCESS_KEY_ID="..."
-AWS_SECRET_ACCESS_KEY="..."`
-              : `DATABASE_URL=postgresql://user:password@localhost:5432/yourdb`
-          }
-
-${PROVIDER_ENV_VARS[provider] ?? PROVIDER_ENV_VARS.fcm}`}
-          language="bash"
-          label=".env"
-        />
+        {stackContent}
       </div>
       <div>
-        <h4 className="font-semibold text-white mb-3 flex items-center gap-2">
-          <span className="flex w-6 h-6 items-center justify-center rounded-md bg-brand-secondary/20 text-brand-secondary text-xs font-bold">8</span>
-          API Endpoints
-        </h4>
+        <KitDocStepHeading step={3}>API reference</KitDocStepHeading>
+        <h4 className="font-semibold text-white mb-3">REST endpoints</h4>
         {API_ENDPOINTS_TABLE}
-      </div>
-      <div>
-        <h4 className="font-semibold text-white mb-3 flex items-center gap-2">
-          <span className="flex w-6 h-6 items-center justify-center rounded-md bg-brand-secondary/20 text-brand-secondary text-xs font-bold">9</span>
-          Request/Response examples
-        </h4>
+        <h4 className="font-semibold text-white mb-3 mt-8">Request / response examples</h4>
         <p className="text-white/80 text-sm mb-3">
           Register a device (mobile app or web client calls this after obtaining a push token):
         </p>
@@ -616,22 +563,83 @@ Authorization: Bearer <jwt>
           label="Send to topic"
         />
       </div>
+      <div className="space-y-6">
+        <KitDocStepHeading step={4}>Integration with frontend</KitDocStepHeading>
+        <KitIntegrationDisclaimer />
+        <KitApiFeBePlaybook
+          withDisclaimer={false}
+          useStackFrontendForCors={false}
+          kitTitle="Push"
+          apiControllerPath="push"
+        />
+        <KitUserModelIntegration
+          kitTitle="Push"
+          summary="PushSubscription (and related log rows) store a user id for each device token. That id must be the same stable identifier you use elsewhere when sending notifications after domain events."
+          bullets={[
+            "Open push-subscription entity or model: align userId (or equivalent) with your User table PK or the subject you derive from JWT when registering devices.",
+            "When calling send-to-user endpoints, the userId in the payload should resolve to the same keys stored on subscriptions.",
+            "If you partition data by organization, filter subscriptions in the service layer so one admin cannot target another tenant’s users.",
+          ]}
+        />
+        <div>
+          <h4 className="font-semibold text-white mb-3">Environment variables</h4>
+          <p className="text-white/55 text-xs mb-2">
+            Examples only—replace with real secrets and URLs after reading the disclaimer above.
+          </p>
+          <p className="text-white/80 text-sm mb-2">
+            Database URL plus provider-specific credentials. For <strong>{provider}</strong>:
+          </p>
+          <CodeBlock
+            code={`${
+              isTypeORM || isPrisma
+                ? `DATABASE_URL=postgresql://user:password@localhost:5432/yourdb`
+                : isMongoose
+                ? `MONGODB_URI=mongodb://localhost:27017/yourdb`
+                : isCosmosSdk
+                ? `COSMOS_ENDPOINT="https://your-account.documents.azure.com:443/"
+COSMOS_KEY="your-key"
+COSMOS_DATABASE_ID="pushdb"`
+                : isDynamoSdk
+                ? `AWS_REGION=us-east-1
+AWS_ACCESS_KEY_ID="..."
+AWS_SECRET_ACCESS_KEY="..."`
+                : `DATABASE_URL=postgresql://user:password@localhost:5432/yourdb`
+            }
+
+${PROVIDER_ENV_VARS[provider] ?? PROVIDER_ENV_VARS.fcm}`}
+            language="bash"
+            label=".env"
+          />
+        </div>
+        <div>
+          <h4 className="font-semibold text-white mb-3">Clients and the Push API</h4>
+          <p className="text-white/80 text-sm mb-4">
+            The Push Notifications Kit is backend-only. Your mobile app (React Native, Flutter, etc.) or web app (PWA with service worker) must implement the client side yourself:
+          </p>
+          <ol className="list-decimal list-inside text-white/80 text-sm space-y-2 mb-4">
+            <li>Request notification permission from the user</li>
+            <li>Obtain a device token from the platform (FCM, APNs, Web Push)</li>
+            <li>Call <code>POST /api/push/subscribe</code> with the token and platform</li>
+            <li>Handle incoming notifications (foreground/background handlers)</li>
+          </ol>
+          <p className="text-white/70 text-sm">
+            For web push, use the Web Push API and a service worker. For mobile, use the native SDK (e.g. <code>@react-native-firebase/messaging</code>) to get the token, then register it with your backend.
+          </p>
+        </div>
+      </div>
       <div>
-        <h4 className="font-semibold text-white mb-3 flex items-center gap-2">
-          <span className="flex w-6 h-6 items-center justify-center rounded-md bg-brand-secondary/20 text-brand-secondary text-xs font-bold">10</span>
-          Integrating with your frontend
-        </h4>
-        <p className="text-white/80 text-sm mb-4">
-          The Push Notifications Kit is backend-only. Your mobile app (React Native, Flutter, etc.) or web app (PWA with service worker) must:
+        <KitDocStepHeading step={5}>Third-party integrations</KitDocStepHeading>
+        <p className="text-white/80 text-sm">
+          Provider <strong className="text-white/90">{provider}</strong> uses the vendor SDK or REST client wired in{" "}
+          <code className="rounded bg-white/10 px-1">{provider}-push.adapter.ts</code> (e.g. <code className="rounded bg-white/10 px-1">firebase-admin</code> for FCM,{" "}
+          <code className="rounded bg-white/10 px-1">@aws-sdk/client-sns</code> for SNS, <code className="rounded bg-white/10 px-1">@pusher/push-notifications-server</code> for Pusher Beams). Inspect{" "}
+          <code className="rounded bg-white/10 px-1">api/manifests/push.kit.json</code> for the exact dependency set in this revision.
         </p>
-        <ol className="list-decimal list-inside text-white/80 text-sm space-y-2 mb-4">
-          <li>Request notification permission from the user</li>
-          <li>Obtain a device token from the platform (FCM, APNs, Web Push)</li>
-          <li>Call <code>POST /api/push/subscribe</code> with the token and platform</li>
-          <li>Handle incoming notifications (foreground/background handlers)</li>
-        </ol>
-        <p className="text-white/70 text-sm">
-          For web push, use the Web Push API and a service worker. For mobile, use the native SDK (e.g. <code>@react-native-firebase/messaging</code>) to get the token, then register it with your backend.
+      </div>
+      <div>
+        <KitDocStepHeading step={8}>Additional notes</KitDocStepHeading>
+        <p className="text-white/80 text-sm">
+          Restrict who may call <code className="rounded bg-white/10 px-1">POST /api/push/send/*</code>; validate <code className="rounded bg-white/10 px-1">userId</code> and topics against your authorization rules. Rotate provider API keys on the same schedule as database credentials.
         </p>
       </div>
     </div>

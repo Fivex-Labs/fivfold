@@ -3,6 +3,10 @@
 import { useStack } from "../../../components/stack-context"
 import { CodeBlock } from "../../../components/code-block"
 import { DocCallout } from "../../../components/doc-blocks"
+import { KitIntegrationDisclaimer } from "../../../components/kit-integration-disclaimer"
+import { KitApiFeBePlaybook } from "../../../components/kit-api-fe-be-playbook"
+import { KitUserModelIntegration } from "../../../components/kit-user-model-integration"
+import { KitDocStepHeading } from "../../../components/kit-doc-step-heading"
 import type { AuthProvider, Framework, Orm } from "../../../components/stack-context"
 
 const PROVIDER_LABELS: Record<AuthProvider, string> = {
@@ -236,12 +240,39 @@ export function AuthBackendContent() {
         </p>
       </div>
 
-      {/* 1. Architecture */}
       <div>
-        <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
-          <span className="flex w-7 h-7 items-center justify-center rounded-lg bg-brand-secondary/20 text-brand-secondary text-sm font-bold">1</span>
-          Architecture
-        </h3>
+        <KitDocStepHeading step={1}>Install / scaffold the module</KitDocStepHeading>
+        <p className="text-white/80 text-sm mb-3">
+          Run <code className="rounded bg-white/10 px-1.5 py-0.5">npx @fivfold/api init</code> first if you haven&apos;t. The CLI reads <code className="rounded bg-white/10 px-1.5 py-0.5">fivfold.json</code> for framework and ORM; pass <code className="rounded bg-white/10 px-1.5 py-0.5">--provider</code> to scaffold auth.
+        </p>
+        <CodeBlock
+          code={`npx @fivfold/api add auth --provider ${provider}`}
+          language="bash"
+          showTerminalIcon
+        />
+      </div>
+
+      <div>
+        <KitDocStepHeading step={2}>Generated file structure</KitDocStepHeading>
+        <p className="text-white/80 text-sm mb-3">
+          The scaffold creates a modular auth layer. Structure for <strong className="text-white">{frameworkLabel}</strong> + <strong className="text-white">{providerLabel}</strong>
+          {isJWT && <> + <strong className="text-white">{ormLabel}</strong></>}:
+        </p>
+        <CodeBlock
+          code={getBackendFileStructure(framework, provider, orm)}
+          language="text"
+          label="File tree"
+        />
+      </div>
+
+      <div className="space-y-10">
+        <KitDocStepHeading step={3}>Wire into the app</KitDocStepHeading>
+        <p className="text-white/65 text-sm -mt-1 mb-2">
+          Architecture, persistence, and bootstrap on <strong className="text-white/85">{frameworkLabel}</strong> (see <code className="rounded bg-white/10 px-1">AGENTS.md</code> API tab §3).
+        </p>
+
+      <div>
+        <h4 className="font-semibold text-white mb-3">Hexagonal architecture</h4>
         <p className="text-white/80 text-sm mb-4">
           The Auth module follows hexagonal (ports & adapters) architecture. The <code className="rounded bg-white/10 px-1.5 py-0.5">IAuthService</code> port defines
           framework-agnostic operations; the <code className="rounded bg-white/10 px-1.5 py-0.5">{providerLabel}AuthAdapter</code> implements them using the {providerLabel} SDK or custom logic.
@@ -263,85 +294,10 @@ export interface IAuthService {
         />
       </div>
 
-      {/* 2. Endpoints */}
-      <div>
-        <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
-          <span className="flex w-7 h-7 items-center justify-center rounded-lg bg-brand-secondary/20 text-brand-secondary text-sm font-bold">2</span>
-          API Endpoints
-        </h3>
-        <p className="text-white/80 text-sm mb-4">
-          {isJWT
-            ? "With JWT, the backend owns all auth logic. These endpoints are implemented by the scaffolded module."
-            : `With ${providerLabel}, the client uses the SDK for sign-in. The backend validates ID/access tokens and may proxy operations (e.g. password reset) to ${providerLabel}.`}
-        </p>
-        <div className="overflow-x-auto rounded-xl border border-white/10 mb-4">
-          <table className="w-full text-sm text-white/80 border-collapse">
-            <thead>
-              <tr className="border-b border-white/10">
-                <th className="text-left py-3 px-4 font-medium">Method</th>
-                <th className="text-left py-3 px-4 font-medium">Path</th>
-                <th className="text-left py-3 font-medium">Description</th>
-              </tr>
-            </thead>
-            <tbody>
-              {ENDPOINTS.map((e, i) => (
-                <tr key={i} className="border-b border-white/5">
-                  <td className="py-2 px-4 font-mono text-brand-secondary">{e.method}</td>
-                  <td className="py-2 px-4 font-mono">{e.path}</td>
-                  <td className="py-2">{e.desc}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        <h4 className="font-medium text-white mb-2 text-sm">Request / Response schemas</h4>
-        <CodeBlock
-          code={REQUEST_RESPONSE_SCHEMAS(provider)}
-          language="typescript"
-          label="Schemas"
-        />
-      </div>
-
-      {/* 3. Scaffolding */}
-      <div>
-        <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
-          <span className="flex w-7 h-7 items-center justify-center rounded-lg bg-brand-secondary/20 text-brand-secondary text-sm font-bold">3</span>
-          Scaffold the module
-        </h3>
-        <p className="text-white/80 text-sm mb-3">
-          Run <code className="rounded bg-white/10 px-1.5 py-0.5">npx @fivfold/api init</code> first if you haven&apos;t. The CLI reads <code className="rounded bg-white/10 px-1.5 py-0.5">fivfold.json</code> for framework and ORM; pass <code className="rounded bg-white/10 px-1.5 py-0.5">--provider</code> to scaffold auth.
-        </p>
-        <CodeBlock
-          code={`npx @fivfold/api add auth --provider ${provider}`}
-          language="bash"
-          showTerminalIcon
-        />
-      </div>
-
-      {/* 4. Generated file structure */}
-      <div>
-        <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
-          <span className="flex w-7 h-7 items-center justify-center rounded-lg bg-brand-secondary/20 text-brand-secondary text-sm font-bold">4</span>
-          Generated file structure
-        </h3>
-        <p className="text-white/80 text-sm mb-3">
-          The scaffold creates a modular auth layer. Structure for <strong className="text-white">{frameworkLabel}</strong> + <strong className="text-white">{providerLabel}</strong>
-          {isJWT && <> + <strong className="text-white">{ormLabel}</strong></>}:
-        </p>
-        <CodeBlock
-          code={getBackendFileStructure(framework, provider, orm)}
-          language="text"
-          label="File tree"
-        />
-      </div>
-
-      {/* 5. Database & Entities */}
+      {/* Database & entities (wire) */}
       {(isJWT || provider === "firebase" || provider === "cognito" || provider === "auth0") && (
         <div>
-          <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
-            <span className="flex w-7 h-7 items-center justify-center rounded-lg bg-brand-secondary/20 text-brand-secondary text-sm font-bold">5</span>
-            Database & Entities
-          </h3>
+          <h4 className="font-semibold text-white mb-3">Database & entities</h4>
           {isJWT ? (
             <>
               <p className="text-white/80 text-sm mb-4">
@@ -530,33 +486,9 @@ model AppUser {
         </div>
       )}
 
-      {/* 6. Environment variables */}
+      {/* Mount module (wire) */}
       <div>
-        <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
-          <span className="flex w-7 h-7 items-center justify-center rounded-lg bg-brand-secondary/20 text-brand-secondary text-sm font-bold">6</span>
-          Environment variables
-        </h3>
-        <p className="text-white/80 text-sm mb-3">
-          {envConfig.description}
-        </p>
-        <CodeBlock
-          code={envConfig.vars.map((v) => `${v}=`).join("\n")}
-          language="env"
-          label=".env"
-        />
-        {provider === "firebase" && (
-          <DocCallout title="Firebase private key" variant="warning" className="mt-4">
-            <p>For <code>FIREBASE_PRIVATE_KEY</code>, use the full key including <code>-----BEGIN PRIVATE KEY-----</code>. Escape newlines as <code>\n</code> in .env or use quotes.</p>
-          </DocCallout>
-        )}
-      </div>
-
-      {/* 7. Integration */}
-      <div>
-        <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
-          <span className="flex w-7 h-7 items-center justify-center rounded-lg bg-brand-secondary/20 text-brand-secondary text-sm font-bold">7</span>
-          Integration
-        </h3>
+        <h4 className="font-semibold text-white mb-3">Mount module, routes, and guards</h4>
         {isNestJS ? (
           <>
             <p className="text-white/80 text-sm mb-3">
@@ -608,77 +540,90 @@ app.use("/api", jwtMiddleware, apiRouter)  // Protected routes`}
           </>
         )}
       </div>
-
-      {/* 8. Provider-specific deep dive */}
-      <div>
-        <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
-          <span className="flex w-7 h-7 items-center justify-center rounded-lg bg-brand-secondary/20 text-brand-secondary text-sm font-bold">8</span>
-          {providerLabel}-specific details
-        </h3>
-        {provider === "firebase" && (
-          <div className="space-y-4 text-sm text-white/80">
-            <p>
-              <strong className="text-white">Token verification:</strong> Use Firebase Admin SDK <code className="rounded bg-white/10 px-1.5 py-0.5">auth().verifyIdToken(token)</code>.
-              The client sends the Firebase ID token in <code className="rounded bg-white/10 px-1.5 py-0.5">Authorization: Bearer</code>.
-            </p>
-            <p>
-              <strong className="text-white">Custom claims:</strong> Set claims via Admin SDK for role-based access. The decoded token includes <code className="rounded bg-white/10 px-1.5 py-0.5">claims</code>.
-            </p>
-            <p>
-              <strong className="text-white">Password reset:</strong> Use <code className="rounded bg-white/10 px-1.5 py-0.5">auth().generatePasswordResetLink(email)</code> and send the link via your email service.
-            </p>
-          </div>
-        )}
-        {provider === "cognito" && (
-          <div className="space-y-4 text-sm text-white/80">
-            <p>
-              <strong className="text-white">Admin APIs:</strong> Use <code className="rounded bg-white/10 px-1.5 py-0.5">@aws-sdk/client-cognito-identity-provider</code> for AdminInitiateAuth, AdminCreateUser, etc.
-            </p>
-            <p>
-              <strong className="text-white">Token verification:</strong> Cognito returns JWT access and ID tokens. Verify the JWT signature using the User Pool&apos;s JWKS endpoint.
-            </p>
-            <p>
-              <strong className="text-white">Hosted UI:</strong> For OAuth, redirect users to Cognito Hosted UI. The callback includes authorization code; exchange for tokens server-side.
-            </p>
-          </div>
-        )}
-        {provider === "auth0" && (
-          <div className="space-y-4 text-sm text-white/80">
-            <p>
-              <strong className="text-white">Token verification:</strong> Use <code className="rounded bg-white/10 px-1.5 py-0.5">jwks-rsa</code> + <code className="rounded bg-white/10 px-1.5 py-0.5">jsonwebtoken</code> to verify the JWT against Auth0&apos;s JWKS.
-            </p>
-            <p>
-              <strong className="text-white">Management API:</strong> For user CRUD, use Auth0 Management API with a Machine-to-Machine token.
-            </p>
-            <p>
-              <strong className="text-white">Rules & Hooks:</strong> Use Auth0 Rules (legacy) or Actions for custom logic (e.g. add claims, block login).
-            </p>
-          </div>
-        )}
-        {provider === "jwt" && (
-          <div className="space-y-4 text-sm text-white/80">
-            <p>
-              <strong className="text-white">User storage:</strong> With {ormLabel}, the adapter stores users in your database. The scaffold generates a User entity and repository.
-            </p>
-            <p>
-              <strong className="text-white">Password hashing:</strong> Use <code className="rounded bg-white/10 px-1.5 py-0.5">bcrypt</code> or <code className="rounded bg-white/10 px-1.5 py-0.5">argon2</code> for passwords. Never store plain text.
-            </p>
-            <p>
-              <strong className="text-white">Refresh tokens:</strong> Store refresh tokens in DB (or Redis) with user ID and expiry. Rotate on use; revoke on logout.
-            </p>
-            <p>
-              <strong className="text-white">OAuth with JWT:</strong> To support Google/GitHub/Apple, add OAuth routes that exchange the provider&apos;s code for tokens, create/find user, and issue your JWTs.
-            </p>
-          </div>
-        )}
       </div>
 
-      {/* 9. Connecting the Auth Kit UI with your API */}
       <div>
-        <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
-          <span className="flex w-7 h-7 items-center justify-center rounded-lg bg-brand-secondary/20 text-brand-secondary text-sm font-bold">9</span>
-          Connecting the Auth Kit UI with your API
-        </h3>
+        <KitDocStepHeading step={4}>API reference</KitDocStepHeading>
+        <p className="text-white/80 text-sm mb-4">
+          {isJWT
+            ? "With JWT, the backend owns all auth logic. These endpoints are implemented by the scaffolded module."
+            : `With ${providerLabel}, the client uses the SDK for sign-in. The backend validates ID/access tokens and may proxy operations (e.g. password reset) to ${providerLabel}.`}
+        </p>
+        <div className="overflow-x-auto rounded-xl border border-white/10 mb-4">
+          <table className="w-full text-sm text-white/80 border-collapse">
+            <thead>
+              <tr className="border-b border-white/10">
+                <th className="text-left py-3 px-4 font-medium">Method</th>
+                <th className="text-left py-3 px-4 font-medium">Path</th>
+                <th className="text-left py-3 font-medium">Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              {ENDPOINTS.map((e, i) => (
+                <tr key={i} className="border-b border-white/5">
+                  <td className="py-2 px-4 font-mono text-brand-secondary">{e.method}</td>
+                  <td className="py-2 px-4 font-mono">{e.path}</td>
+                  <td className="py-2">{e.desc}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <h4 className="font-medium text-white mb-2 text-sm">Request / Response schemas</h4>
+        <CodeBlock
+          code={REQUEST_RESPONSE_SCHEMAS(provider)}
+          language="typescript"
+          label="Schemas"
+        />
+      </div>
+
+      <div className="space-y-8">
+        <KitDocStepHeading step={5}>Integration with frontend</KitDocStepHeading>
+        <KitIntegrationDisclaimer />
+        <KitApiFeBePlaybook withDisclaimer={false} kitTitle="Auth" apiControllerPath="auth" />
+        <KitUserModelIntegration
+          kitTitle="Auth"
+          summary={
+            isJWT
+              ? "The JWT variant persists users and refresh tokens in your database. Those rows must align with any existing profile or membership tables you already have."
+              : `With ${providerLabel}, verified tokens carry a subject (e.g. sub claim) or equivalent. Decide whether that string is your canonical user id or whether you maintain a separate User row and map provider ids to it.`
+          }
+          bullets={
+            isJWT
+              ? [
+                  "Compare generated User entity fields (email, passwordHash, displayName) with your existing user model—merge columns or replace the entity carefully.",
+                  "If you already store OAuth identities elsewhere, consider a single users table and link provider ids in a separate column or table.",
+                  "Refresh tokens must be revocable; wire logout and rotation to your session policy.",
+                ]
+              : [
+                  "In guards or middleware, map the verified token’s subject to req.user.id consistently across all kits (Email, Kanban, Chat, Push).",
+                  "If you need local profile rows, upsert on first login and store the provider uid alongside your internal id.",
+                  "Keep JWT/IdP secrets and JWKS URLs in environment variables you control—examples in this doc are placeholders.",
+                ]
+          }
+        />
+        <div>
+          <h4 className="font-semibold text-white mb-3">Environment variables</h4>
+          <p className="text-white/55 text-xs mb-2">
+            Names below are a checklist only—set real values per environment after reading the disclaimer above.
+          </p>
+          <p className="text-white/80 text-sm mb-3">
+            {envConfig.description}
+          </p>
+          <CodeBlock
+            code={envConfig.vars.map((v) => `${v}=`).join("\n")}
+            language="env"
+            label=".env"
+          />
+          {provider === "firebase" && (
+            <DocCallout title="Firebase private key" variant="warning" className="mt-4">
+              <p>For <code>FIREBASE_PRIVATE_KEY</code>, use the full key including <code>-----BEGIN PRIVATE KEY-----</code>. Escape newlines as <code>\n</code> in .env or use quotes.</p>
+            </DocCallout>
+          )}
+        </div>
+
+        <div>
+        <h4 className="font-semibold text-white mb-3">Connecting the Auth Kit UI with your API</h4>
         <p className="text-white/80 text-sm mb-4">
           The Auth Kit UI uses <code className="rounded bg-white/10 px-1.5 py-0.5">AuthProvider</code> and form components (LoginForm, RegisterForm, etc.) that call <code className="rounded bg-white/10 px-1.5 py-0.5">useAuth()</code>.
           The provider wiring in <code className="rounded bg-white/10 px-1.5 py-0.5">auth-provider.tsx</code> and <code className="rounded bg-white/10 px-1.5 py-0.5">providers/{provider}-client.ts</code> connects to your backend.
@@ -779,29 +724,80 @@ fetch("/api/protected", {
         <p className="text-white/70 text-sm mt-4">
           For protected routes, wrap your app with <code className="rounded bg-white/10 px-1.5 py-0.5">AuthGuard</code> and pass the token in API fetch headers.
         </p>
+        </div>
       </div>
 
-      {/* 10. Security */}
       <div>
-        <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
-          <span className="flex w-7 h-7 items-center justify-center rounded-lg bg-brand-secondary/20 text-brand-secondary text-sm font-bold">10</span>
-          Security considerations
-        </h3>
-        <ul className="text-sm text-white/80 space-y-2 list-disc list-inside">
+        <KitDocStepHeading step={6}>Third-party integrations ({providerLabel})</KitDocStepHeading>
+        {provider === "firebase" && (
+          <div className="space-y-4 text-sm text-white/80">
+            <p>
+              <strong className="text-white">Token verification:</strong> Use Firebase Admin SDK <code className="rounded bg-white/10 px-1.5 py-0.5">auth().verifyIdToken(token)</code>.
+              The client sends the Firebase ID token in <code className="rounded bg-white/10 px-1.5 py-0.5">Authorization: Bearer</code>.
+            </p>
+            <p>
+              <strong className="text-white">Custom claims:</strong> Set claims via Admin SDK for role-based access. The decoded token includes <code className="rounded bg-white/10 px-1.5 py-0.5">claims</code>.
+            </p>
+            <p>
+              <strong className="text-white">Password reset:</strong> Use <code className="rounded bg-white/10 px-1.5 py-0.5">auth().generatePasswordResetLink(email)</code> and send the link via your email service.
+            </p>
+          </div>
+        )}
+        {provider === "cognito" && (
+          <div className="space-y-4 text-sm text-white/80">
+            <p>
+              <strong className="text-white">Admin APIs:</strong> Use <code className="rounded bg-white/10 px-1.5 py-0.5">@aws-sdk/client-cognito-identity-provider</code> for AdminInitiateAuth, AdminCreateUser, etc.
+            </p>
+            <p>
+              <strong className="text-white">Token verification:</strong> Cognito returns JWT access and ID tokens. Verify the JWT signature using the User Pool&apos;s JWKS endpoint.
+            </p>
+            <p>
+              <strong className="text-white">Hosted UI:</strong> For OAuth, redirect users to Cognito Hosted UI. The callback includes authorization code; exchange for tokens server-side.
+            </p>
+          </div>
+        )}
+        {provider === "auth0" && (
+          <div className="space-y-4 text-sm text-white/80">
+            <p>
+              <strong className="text-white">Token verification:</strong> Use <code className="rounded bg-white/10 px-1.5 py-0.5">jwks-rsa</code> + <code className="rounded bg-white/10 px-1.5 py-0.5">jsonwebtoken</code> to verify the JWT against Auth0&apos;s JWKS.
+            </p>
+            <p>
+              <strong className="text-white">Management API:</strong> For user CRUD, use Auth0 Management API with a Machine-to-Machine token.
+            </p>
+            <p>
+              <strong className="text-white">Rules & Hooks:</strong> Use Auth0 Rules (legacy) or Actions for custom logic (e.g. add claims, block login).
+            </p>
+          </div>
+        )}
+        {provider === "jwt" && (
+          <div className="space-y-4 text-sm text-white/80">
+            <p>
+              <strong className="text-white">User storage:</strong> With {ormLabel}, the adapter stores users in your database. The scaffold generates a User entity and repository.
+            </p>
+            <p>
+              <strong className="text-white">Password hashing:</strong> Use <code className="rounded bg-white/10 px-1.5 py-0.5">bcrypt</code> or <code className="rounded bg-white/10 px-1.5 py-0.5">argon2</code> for passwords. Never store plain text.
+            </p>
+            <p>
+              <strong className="text-white">Refresh tokens:</strong> Store refresh tokens in DB (or Redis) with user ID and expiry. Rotate on use; revoke on logout.
+            </p>
+            <p>
+              <strong className="text-white">OAuth with JWT:</strong> To support Google/GitHub/Apple, add OAuth routes that exchange the provider&apos;s code for tokens, create/find user, and issue your JWTs.
+            </p>
+          </div>
+        )}
+      </div>
+
+      <div>
+        <KitDocStepHeading step={8}>Additional notes</KitDocStepHeading>
+        <h4 className="font-semibold text-white mb-2 text-sm">Security</h4>
+        <ul className="text-sm text-white/80 space-y-2 list-disc list-inside mb-6">
           <li><strong className="text-white">CORS:</strong> Restrict origins to your frontend domain(s).</li>
           <li><strong className="text-white">Rate limiting:</strong> Apply to login, register, forgot-password to prevent brute force.</li>
           <li><strong className="text-white">Token storage:</strong> Access token in memory or short-lived cookie; refresh token in httpOnly cookie when possible.</li>
           <li><strong className="text-white">HTTPS:</strong> Always use HTTPS in production.</li>
           {isJWT && <li><strong className="text-white">Secrets:</strong> Rotate JWT secrets periodically; use different secrets per environment.</li>}
         </ul>
-      </div>
-
-      {/* 11. Error handling */}
-      <div>
-        <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
-          <span className="flex w-7 h-7 items-center justify-center rounded-lg bg-brand-secondary/20 text-brand-secondary text-sm font-bold">11</span>
-          Error handling
-        </h3>
+        <h4 className="font-semibold text-white mb-2 text-sm">HTTP errors (typical)</h4>
         <div className="overflow-x-auto rounded-xl border border-white/10">
           <table className="w-full text-sm border-collapse">
             <thead>

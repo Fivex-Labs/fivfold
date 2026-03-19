@@ -1,6 +1,6 @@
 {
   "name": "fivfold",
-  "version": "1.0.0",
+  "version": "0.13.3",
   "private": true,
   "workspaces": ["core", "ui", "api", "site"],
   "scripts": {

@@ -73,7 +73,7 @@ Then run `npx @fivfold/ui init`. Init does not install Tailwind or shadcn for yo
 2. **Load manifest:** `loadUiManifest(manifestsDir, name)` from `@fivfold/core`
 3. **Stage files:** For each `manifest.files`, read template, apply substitutions, `vfs.stageCreate()`
 4. **Commit:** `vfs.commit()` (or `vfs.preview()` if `--dry-run`)
-5. **Post-commit:** Install npm deps, shadcn deps, apply/patch theme CSS
+5. **Post-commit:** Install npm deps, run `shadcn add` (with `--yes`) for kit primitives, repair a stray `@/components` folder if the CLI mis-resolved aliases, then apply/patch theme CSS
 
 **No StrategyPipeline:** UI uses VFS + loadUiManifest + direct copy. API uses StrategyPipeline for backend scaffolding.
 

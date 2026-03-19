@@ -1,7 +1,9 @@
 import { Router, Request, Response } from 'express';
+import type { Namespace } from 'socket.io';
 import { ChatService } from './chat.service';
 
-export function createChatRouter(chatService: ChatService): Router {
+/** Pass the `/chat` Socket.IO namespace (return value of `initChatSocketHandlers`) so REST POST /messages also emits `message:new`. */
+export function createChatRouter(chatService: ChatService, chatNamespace?: Namespace): Router {
   const router = Router();
 
   // ── Conversations ──────────────────────────────────────────────────────────
@@ -51,6 +53,10 @@ export function createChatRouter(chatService: ChatService): Router {
   router.post('/messages', async (req: Request, res: Response) => {
     const userId = (req as Request & { user: { id: string } }).user.id;
     const result = await chatService.sendMessage(req.body, userId);
+    const conversationId = (req.body as { conversationId?: string }).conversationId;
+    if (chatNamespace && conversationId) {
+      chatNamespace.to(`conversation:${conversationId}`).emit('message:new', result);
+    }
     res.status(201).json(result);
   });
 

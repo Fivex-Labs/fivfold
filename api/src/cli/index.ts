@@ -9,7 +9,7 @@ const program = new Command();
 program
   .name('fivfold-api')
   .description('FivFold API -- backend scaffolding for FivFold Kits')
-  .version('0.13.2');
+  .version('0.13.3');
 
 program
   .command('init')

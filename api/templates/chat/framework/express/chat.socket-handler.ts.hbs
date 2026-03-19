@@ -1,7 +1,8 @@
-import { Server, Socket } from 'socket.io';
+import { Server, Socket, type Namespace } from 'socket.io';
 import { ChatService } from './chat.service';
 
-export function initChatSocketHandlers(io: Server, chatService: ChatService): void {
+/** Returns the `/chat` namespace so you can pass it to `createChatRouter` for REST → `message:new` broadcasts. */
+export function initChatSocketHandlers(io: Server, chatService: ChatService): Namespace {
   const chatNamespace = io.of('/chat');
 
   const userSocketMap = new Map<string, Set<string>>();
@@ -88,4 +89,6 @@ export function initChatSocketHandlers(io: Server, chatService: ChatService): vo
       console.log(`[ChatSocket] Disconnected: ${socket.id}`);
     });
   });
+
+  return chatNamespace;
 }

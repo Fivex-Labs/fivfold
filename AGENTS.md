@@ -108,6 +108,34 @@ The FivFold monorepo has four packages:
 - **Kit docs** (`site/app/docs/kits/`): Per-Kit pages may be detailed and stack-specific where needed.
 - **API docs** (`site/app/docs/api/`): Framework-specific content (e.g. Express vs NestJS) is appropriate.
 
+### Kit documentation page structure (mandatory)
+
+Kit pages under `site/app/docs/kits/<kit>/` use **UI** and **API** tabs (or a single tab for backend-only kits). **Always** present sections in this order. Use numbered headings (`KitDocStepHeading` in the site) so readers can scan consistently. **Skip** a step only when it truly does not apply (e.g. no third-party section).
+
+**UI tab**
+
+1. **Installation** — CLI command (`npx @fivfold/ui add …`), `init` prerequisite, output path.
+2. **Generated file structure** — tree of scaffolded files with short comments.
+3. **Import and usage** — minimal working example (import + render).
+4. **Props reference** — tables or grouped lists for main components.
+5. **Integration with backend** — disclaimers (wiring is yours), proxy/rewrites, env vars, CORS hints, user/session alignment; include `KitFeBeConnectionGuide` / full-stack helpers where used.
+6. **Third-party integrations** — only if the kit uses external APIs (e.g. Tenor, maps). Omit entirely if none.
+7. **shadcn/ui primitives** — table of components the kit installs or expects.
+8. **Additional** — extra npm deps, drag-and-drop libs, notes that do not fit above.
+
+**API tab**
+
+1. **Installation / scaffold** — `npx @fivfold/api add …` and flags.
+2. **Generated file structure** — tree per stack variant (domain, adapters, delivery).
+3. **Wire into the app** — register entities, mount routes/modules, middleware order (stack-specific substeps OK).
+4. **API reference** — endpoints table, DTOs, or key routes (analogous to “props” on the UI side).
+5. **Integration with frontend** — disclaimers, CORS, env vars, how the browser reaches the API, linking generated entities to your user model (`KitApiFeBePlaybook`, `KitUserModelIntegration` as appropriate).
+6. **Third-party** — provider SDKs (e.g. FCM, Firebase Admin) when not covered in §5.
+7. **shadcn** — omit on API tabs (not applicable).
+8. **Additional** — migrations-only notes, security checklist, error codes, etc.
+
+When editing kit docs, **reorder existing content** to match this sequence rather than appending new sections at the end.
+
 ## 9. Supported Databases, ORMs & Services
 
 ### Database Categories

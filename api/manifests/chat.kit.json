@@ -38,7 +38,8 @@
         { "template": "chat/framework/nestjs/chat.module.ts.hbs", "output": "{{outputDir}}/{{kitName}}/chat.module.ts" },
         { "template": "chat/framework/nestjs/chat.controller.ts.hbs", "output": "{{outputDir}}/{{kitName}}/chat.controller.ts" },
         { "template": "chat/framework/nestjs/chat.service.ts.hbs", "output": "{{outputDir}}/{{kitName}}/chat.service.ts" },
-        { "template": "chat/framework/nestjs/chat.gateway.ts.hbs", "output": "{{outputDir}}/{{kitName}}/chat.gateway.ts" }
+        { "template": "chat/framework/nestjs/chat.gateway.ts.hbs", "output": "{{outputDir}}/{{kitName}}/chat.gateway.ts" },
+        { "template": "chat/framework/nestjs/chat-dev-user.middleware.ts.hbs", "output": "{{outputDir}}/{{kitName}}/chat-dev-user.middleware.ts" }
       ],
       "dependencies": ["@nestjs/common", "@nestjs/core", "@nestjs/websockets", "@nestjs/platform-socket.io", "class-validator", "class-transformer", "uuid", "socket.io"],
       "devDependencies": ["@types/uuid"],

@@ -15,6 +15,8 @@ export type Orm =
   | "dynamodb-sdk"
 export type AuthProvider = "firebase" | "cognito" | "auth0" | "jwt"
 export type PushProvider = "fcm" | "onesignal" | "sns" | "pushy" | "pusher-beams"
+/** Frontend bundler / framework for docs (how the UI app reaches the API in dev). */
+export type FrontendBundler = "vite" | "nextjs"
 
 export interface StackSelection {
   runtime: Runtime
@@ -22,9 +24,16 @@ export interface StackSelection {
   dbCategory: DatabaseCategory
   database: Database
   orm: Orm
+  /** UI app tooling — drives proxy/rewrite examples in kit docs. */
+  frontend: FrontendBundler
   authProvider?: AuthProvider
   pushProvider?: PushProvider
 }
+
+export const FRONTEND_BUNDLER_OPTIONS: { value: FrontendBundler; label: string }[] = [
+  { value: "nextjs", label: "Next.js" },
+  { value: "vite", label: "Vite" },
+]
 
 export const DATABASE_OPTIONS: { value: Database; label: string }[] = [
   { value: "postgres", label: "PostgreSQL" },
@@ -74,6 +83,7 @@ const defaultStack: StackSelection = {
   dbCategory: "rds",
   database: "postgres",
   orm: "typeorm",
+  frontend: "nextjs",
   authProvider: "firebase",
   pushProvider: "fcm",
 }
@@ -92,6 +102,9 @@ function loadFromStorage(): StackSelection {
       dbCategory,
       database,
       orm: parsed.orm ?? defaultStack.orm,
+      frontend: (parsed.frontend === "vite" || parsed.frontend === "nextjs"
+        ? parsed.frontend
+        : defaultStack.frontend),
       authProvider: parsed.authProvider ?? defaultStack.authProvider,
       pushProvider: parsed.pushProvider ?? defaultStack.pushProvider,
     }

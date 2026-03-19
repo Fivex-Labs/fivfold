@@ -6,6 +6,10 @@ import { DocCallout } from "../../components/doc-blocks";
 import { CodeBlock } from "../../components/code-block";
 import { EmailDemo } from "./_components/email-demo";
 import { EmailBackendContent } from "./_components/email-backend-content";
+import { KitFeBeConnectionGuide } from "../../components/kit-fe-be-connection";
+import { KitIntegrationDisclaimer } from "../../components/kit-integration-disclaimer";
+import { KitUserModelIntegration } from "../../components/kit-user-model-integration";
+import { KitDocStepHeading } from "../../components/kit-doc-step-heading";
 
 const headings = [
   { id: "quick-reference", text: "Quick reference", level: 2 },
@@ -20,7 +24,7 @@ export default function EmailKitPage() {
       title="Email Kit"
       description="Full-featured email client with folders, threads, compose dialog, labels, and responsive layout. Includes both UI and backend scaffolding."
       headings={headings}
-      stackConfig={{ showDatabaseFields: true }}
+      stackConfig={{ showDatabaseFields: true, showFrontendBundler: true }}
     >
       <h2 id="quick-reference" className="scroll-mt-24 font-semibold text-2xl pt-2">
         Quick reference
@@ -98,7 +102,8 @@ npx @fivfold/api add email --dry-run`}
         Guide
       </h2>
       <p className="text-white/80 leading-relaxed mb-6 mt-4 text-sm">
-        Step-by-step guides for the frontend UI and backend API integration.
+        Step-by-step guides for the frontend UI and backend API integration. In the sidebar, choose{" "}
+        <strong className="text-white/90">Frontend</strong> first, then runtime through ORM, so proxy and CORS snippets match your app.
       </p>
       <DocTabs
         tabs={[
@@ -113,14 +118,9 @@ npx @fivfold/api add email --dry-run`}
                   below to install, integrate, and customize the UI.
                 </p>
 
-                {/* Step 1 */}
+                {/* 1. Installation */}
                 <div>
-                  <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
-                    <span className="flex w-7 h-7 items-center justify-center rounded-lg bg-brand-primary/20 text-brand-primary text-sm font-bold">
-                      1
-                    </span>
-                    Install the Email Kit
-                  </h3>
+                  <KitDocStepHeading step={1}>Install the Email Kit</KitDocStepHeading>
                   <p className="text-white/80 text-sm mb-3">
                     Run the FivFold UI CLI to add the Email Kit to your project. Ensure you have run{" "}
                     <code className="rounded bg-white/10 px-1.5 py-0.5 text-brand-secondary">
@@ -143,14 +143,9 @@ npx @fivfold/api add email --dry-run`}
                   </p>
                 </div>
 
-                {/* Step 2 */}
+                {/* 2. Generated file structure */}
                 <div>
-                  <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
-                    <span className="flex w-7 h-7 items-center justify-center rounded-lg bg-brand-primary/20 text-brand-primary text-sm font-bold">
-                      2
-                    </span>
-                    Generated file structure
-                  </h3>
+                  <KitDocStepHeading step={2}>Generated file structure</KitDocStepHeading>
                   <p className="text-white/80 text-sm mb-3">
                     The command creates a folder with multiple component files for easier development
                     and customization:
@@ -170,14 +165,9 @@ npx @fivfold/api add email --dry-run`}
                   />
                 </div>
 
-                {/* Step 3 */}
+                {/* 3. Import and usage */}
                 <div>
-                  <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
-                    <span className="flex w-7 h-7 items-center justify-center rounded-lg bg-brand-primary/20 text-brand-primary text-sm font-bold">
-                      3
-                    </span>
-                    Import and use in your app
-                  </h3>
+                  <KitDocStepHeading step={3}>Import and use in your app</KitDocStepHeading>
                   <p className="text-white/80 text-sm mb-3">
                     Import the main component and types from the kit folder:
                   </p>
@@ -209,14 +199,9 @@ export function EmailPage() {
                   />
                 </div>
 
-                {/* Step 4 - Component reference */}
+                {/* 4. Props reference */}
                 <div>
-                  <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
-                    <span className="flex w-7 h-7 items-center justify-center rounded-lg bg-brand-primary/20 text-brand-primary text-sm font-bold">
-                      4
-                    </span>
-                    Component reference
-                  </h3>
+                  <KitDocStepHeading step={4}>Props reference</KitDocStepHeading>
                   <p className="text-white/80 text-sm mb-4">
                     The Email Kit exposes a single <code>EmailKit</code> component. Props are grouped by the UI section they control.
                   </p>
@@ -323,9 +308,27 @@ export function EmailPage() {
                   </div>
                 </div>
 
-                {/* shadcn dependencies */}
+                {/* 5. Integration with backend */}
+                <div className="space-y-6">
+                  <KitDocStepHeading step={5}>Integration with backend</KitDocStepHeading>
+                  <KitIntegrationDisclaimer />
+                  <KitFeBeConnectionGuide withDisclaimer={false} kitTitle="Email" apiControllerPath="email" />
+                  <KitUserModelIntegration
+                    kitTitle="Email (UI layer)"
+                    summary="The kit components are presentational: they do not know your user id. Your fetch layer must attach the authenticated user (header, cookie, or token) so the API returns only that user’s mail."
+                    bullets={[
+                      "Pass Authorization or session cookies from the same auth system your API trusts.",
+                      "When mapping API JSON to FivFold types, keep thread ownership consistent with backend user scoping.",
+                      "If you use org-level mailboxes, include tenant context in your API client base URL or headers as you already do elsewhere.",
+                    ]}
+                  />
+                </div>
+
+                {/* 6. Third-party — not applicable for Email UI */}
+
+                {/* 7. shadcn/ui primitives */}
                 <div>
-                  <h3 className="text-lg font-semibold text-white mb-3">shadcn dependencies</h3>
+                  <KitDocStepHeading step={7}>shadcn/ui primitives</KitDocStepHeading>
                   <p className="text-white/80 text-sm mb-3">
                     Adding the Email Kit installs these shadcn/ui primitives if not already present:
                   </p>
@@ -365,9 +368,11 @@ export function EmailPage() {
             icon: "server",
             content: (
               <div className="space-y-6">
+                <h3 className="text-lg font-semibold text-white">Step-by-step: API integration</h3>
                 <p className="text-white/80 text-sm leading-relaxed">
                   The Email API module provides entities, DTOs, services, and controllers for a
-                  complete email backend. Select your stack in the sidebar for stack-specific integration steps.
+                  complete email backend. Select <strong className="text-white/90">Frontend</strong> first in the sidebar for
+                  matching dev-server and CORS examples, then framework, database, and ORM.
                 </p>
                 <EmailBackendContent />
               </div>

@@ -21,7 +21,10 @@ export default function PushKitPage() {
       title="Push Notifications Kit"
       description="Backend push notifications with device registration, sending, logging, and pluggable providers (FCM, OneSignal, AWS SNS, Pushy, Pusher Beams)."
       headings={headings}
-      stackConfig={{ showDatabaseFields: true, showPushProvider: true }}
+      stackConfig={{
+        showDatabaseFields: true,
+        showPushProvider: true,
+      }}
     >
       <h2 id="quick-reference" className="scroll-mt-24 font-semibold text-2xl pt-2">
         Quick reference
@@ -182,7 +185,8 @@ npx @fivfold/api add push --dry-run`}
         Guide
       </h2>
       <p className="text-white/80 leading-relaxed mb-6 mt-4 text-sm">
-        Step-by-step backend integration. Select your framework, ORM, and push provider in the sidebar for stack-specific instructions.
+        Step-by-step backend integration (clients obtain tokens and call your API—there is no FivFold UI kit for Push). Select
+        framework, ORM, and push provider in the sidebar for stack-specific instructions.
       </p>
       <div className="space-y-6">
         <p className="text-white/80 text-sm leading-relaxed">

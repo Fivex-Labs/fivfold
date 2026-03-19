@@ -7,6 +7,12 @@ import { DocCallout } from "../../components/doc-blocks";
 import { CodeBlock } from "../../components/code-block";
 import { ChatDemo } from "./_components/chat-demo";
 import { ChatBackendContent } from "./_components/chat-backend-content";
+import {
+  ChatFullstackUiGuide,
+  ChatKitShadcnPrimitivesSection,
+} from "./_components/chat-fullstack-docs";
+import { KitUserModelIntegration } from "../../components/kit-user-model-integration";
+import { KitDocStepHeading } from "../../components/kit-doc-step-heading";
 import Image from "next/image";
 
 const headings = [
@@ -23,7 +29,7 @@ export default function ChatKitPage() {
       title="Chat Kit"
       description="Full-featured iMessage/WhatsApp-inspired chat with 1-1 and group conversations, attachments, polls, GIFs, location sharing, reactions, and Socket.IO real-time transport."
       headings={headings}
-      stackConfig={{ showDatabaseFields: true }}
+      stackConfig={{ showDatabaseFields: true, showFrontendBundler: true }}
     >
       {/* Quick reference */}
       <h2 id="quick-reference" className="scroll-mt-24 font-semibold text-2xl pt-2">
@@ -143,8 +149,9 @@ npx @fivfold/api add chat --dry-run`}
         Guide
       </h2>
       <p className="text-white/80 leading-relaxed mb-6 mt-4 text-sm">
-        Step-by-step guides for the frontend UI and backend API integration. Select your stack in the
-        API tab to see stack-specific instructions.
+        Step-by-step guides for the frontend UI and backend API integration. In the sidebar, pick{" "}
+        <strong className="text-white/90">Frontend</strong> first (Next.js or Vite), then runtime through ORM; the API tab uses the same
+        selection for CORS and connection steps.
       </p>
       <DocTabs
         tabs={[
@@ -159,12 +166,8 @@ npx @fivfold/api add chat --dry-run`}
                   customizable and support light/dark mode via CSS variables.
                 </p>
 
-                {/* Step 1 */}
                 <div>
-                  <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
-                    <span className="flex w-7 h-7 items-center justify-center rounded-lg bg-brand-primary/20 text-brand-primary text-sm font-bold">1</span>
-                    Install the Chat Kit
-                  </h3>
+                  <KitDocStepHeading step={1}>Install the Chat Kit</KitDocStepHeading>
                   <p className="text-white/80 text-sm mb-3">
                     Run the FivFold UI CLI after initializing your project with{" "}
                     <code className="rounded bg-white/10 px-1.5 py-0.5 text-brand-secondary">npx @fivfold/ui init</code>.
@@ -175,16 +178,12 @@ npx @fivfold/api add chat --dry-run`}
                     <code className="rounded bg-white/10 px-1.5 py-0.5 text-brand-secondary">
                       @/components/ui/kits/chat/
                     </code>
-                    . Additional npm packages (<code>framer-motion</code>, <code>date-fns</code>, <code>emoji-mart</code>) are installed automatically.
+                    .
                   </p>
                 </div>
 
-                {/* Step 2 – File structure */}
                 <div>
-                  <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
-                    <span className="flex w-7 h-7 items-center justify-center rounded-lg bg-brand-primary/20 text-brand-primary text-sm font-bold">2</span>
-                    Generated file structure
-                  </h3>
+                  <KitDocStepHeading step={2}>Generated file structure</KitDocStepHeading>
                   <CodeBlock
                     code={`kits/chat/
   types.ts                   # All shared TypeScript types
@@ -212,12 +211,8 @@ npx @fivfold/api add chat --dry-run`}
                   />
                 </div>
 
-                {/* Step 3 – Usage */}
                 <div>
-                  <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
-                    <span className="flex w-7 h-7 items-center justify-center rounded-lg bg-brand-primary/20 text-brand-primary text-sm font-bold">3</span>
-                    Import and use in your app
-                  </h3>
+                  <KitDocStepHeading step={3}>Import and use in your app</KitDocStepHeading>
                   <CodeBlock
                     code={`import { ChatKit } from "@/components/ui/kits/chat";
 import type {
@@ -250,12 +245,8 @@ export default function ChatPage() {
                   />
                 </div>
 
-                {/* Step 4 – Component reference */}
                 <div>
-                  <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
-                    <span className="flex w-7 h-7 items-center justify-center rounded-lg bg-brand-primary/20 text-brand-primary text-sm font-bold">4</span>
-                    ChatKit props reference
-                  </h3>
+                  <KitDocStepHeading step={4}>Props reference (ChatKit)</KitDocStepHeading>
                   <div className="overflow-x-auto rounded-xl border border-white/10">
                     <table className="w-full text-sm border-collapse">
                       <thead>
@@ -283,42 +274,24 @@ export default function ChatPage() {
                   </div>
                 </div>
 
-                {/* shadcn dependencies */}
-                <div>
-                  <h3 className="text-lg font-semibold text-white mb-3">shadcn dependencies</h3>
-                  <div className="overflow-x-auto rounded-xl border border-white/10">
-                    <table className="w-full text-sm border-collapse">
-                      <thead>
-                        <tr className="border-b border-white/10">
-                          <th className="text-left py-2 px-4 font-medium text-white/80">Component</th>
-                          <th className="text-left py-2 px-4 font-medium text-white/80">Used in</th>
-                        </tr>
-                      </thead>
-                      <tbody className="text-white/70">
-                        <tr className="border-b border-white/5"><td className="py-2 px-4 font-mono text-brand-secondary">button</td><td className="py-2 px-4">Throughout</td></tr>
-                        <tr className="border-b border-white/5"><td className="py-2 px-4 font-mono text-brand-secondary">input</td><td className="py-2 px-4">Search, compose, group name edit</td></tr>
-                        <tr className="border-b border-white/5"><td className="py-2 px-4 font-mono text-brand-secondary">dialog</td><td className="py-2 px-4">GIF picker, poll creator, attachment picker, search, new chat</td></tr>
-                        <tr className="border-b border-white/5"><td className="py-2 px-4 font-mono text-brand-secondary">sheet</td><td className="py-2 px-4">Contact detail, group detail panels</td></tr>
-                        <tr className="border-b border-white/5"><td className="py-2 px-4 font-mono text-brand-secondary">scroll-area</td><td className="py-2 px-4">Thread list, message list, member list</td></tr>
-                        <tr className="border-b border-white/5"><td className="py-2 px-4 font-mono text-brand-secondary">context-menu</td><td className="py-2 px-4">Thread item actions, message actions</td></tr>
-                        <tr className="border-b border-white/5"><td className="py-2 px-4 font-mono text-brand-secondary">badge</td><td className="py-2 px-4">Unread count, admin role</td></tr>
-                        <tr className="border-b border-white/5"><td className="py-2 px-4 font-mono text-brand-secondary">separator</td><td className="py-2 px-4">Section dividers</td></tr>
-                        <tr className="border-b border-white/5"><td className="py-2 px-4 font-mono text-brand-secondary">tabs</td><td className="py-2 px-4">New chat dialog (DM / Group)</td></tr>
-                        <tr className="border-b border-white/5"><td className="py-2 px-4 font-mono text-brand-secondary">switch</td><td className="py-2 px-4">Poll allow-multiple-answers toggle</td></tr>
-                        <tr className="border-b border-white/5"><td className="py-2 px-4 font-mono text-brand-secondary">progress</td><td className="py-2 px-4">Poll vote percentage bars</td></tr>
-                        <tr className="border-b border-white/5"><td className="py-2 px-4 font-mono text-brand-secondary">alert-dialog</td><td className="py-2 px-4">Leave group confirmation</td></tr>
-                        <tr className="border-b border-white/5"><td className="py-2 px-4 font-mono text-brand-secondary">tooltip</td><td className="py-2 px-4">Reaction counts, action hints</td></tr>
-                      </tbody>
-                    </table>
-                  </div>
+                <div className="space-y-6">
+                  <KitDocStepHeading step={5}>Integration with backend</KitDocStepHeading>
+                  <KitUserModelIntegration
+                    kitTitle="Chat (UI layer)"
+                    summary="The kit needs a currentUser object and conversation data from your API. User ids in props, REST calls, and Socket.IO handshakes must all refer to the same identifiers your backend stores on participants and messages."
+                    bullets={[
+                      "Set currentUser.id to the same value the API uses for req.user.id (or your dev-user header during local testing).",
+                      "When rendering participants and avatars, map userId fields from DTOs to display names via your user directory.",
+                      "Socket.IO query userId and REST headers must stay in sync so typing and read receipts target the right participant.",
+                    ]}
+                  />
+                  <ChatFullstackUiGuide embedded />
                 </div>
 
-                {/* Third-party integrations */}
                 <div>
-                  <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                    <span className="flex w-7 h-7 items-center justify-center rounded-lg bg-brand-primary/20 text-brand-primary text-sm font-bold">5</span>
+                  <KitDocStepHeading step={6} className="mb-4">
                     Third-party integrations
-                  </h3>
+                  </KitDocStepHeading>
                   <p className="text-white/70 text-sm mb-4">
                     The Chat Kit UI integrates with external services for GIFs, file uploads, and location sharing. Configure these in your frontend; the API supports the corresponding message types (see API tab).
                   </p>
@@ -385,6 +358,32 @@ const data = await res.json();
                     </div>
                   </div>
                 </div>
+
+                <div>
+                  <KitDocStepHeading step={7}>Shadcn primitives dependencies</KitDocStepHeading>
+                  <ChatKitShadcnPrimitivesSection />
+                </div>
+
+                <div>
+                  <KitDocStepHeading step={8}>Additional dependencies</KitDocStepHeading>
+                  <p className="text-white/80 text-sm mb-3">
+                    Besides shadcn/ui primitives, <code className="rounded bg-white/10 px-1.5 py-0.5 text-brand-secondary">npx @fivfold/ui add chat</code> adds these npm packages (declared in the kit manifest <code className="rounded bg-white/10 px-1 py-0.5 text-brand-secondary">ui/manifests/chat.kit.json</code>):
+                  </p>
+                  <ul className="list-disc list-inside text-white/75 text-sm space-y-2">
+                    <li>
+                      <code className="rounded bg-white/10 px-1 py-0.5 font-mono text-brand-secondary">framer-motion</code> — layout animations (typing indicator, message transitions).
+                    </li>
+                    <li>
+                      <code className="rounded bg-white/10 px-1 py-0.5 font-mono text-brand-secondary">date-fns</code> — message timestamps and relative time.
+                    </li>
+                    <li>
+                      <code className="rounded bg-white/10 px-1 py-0.5 font-mono text-brand-secondary">emoji-mart</code> — emoji picker for reactions and compose.
+                    </li>
+                    <li>
+                      <code className="rounded bg-white/10 px-1 py-0.5 font-mono text-brand-secondary">socket.io-client</code> — optional real-time layer when you wire the kit to a Socket.IO backend (see integration section).
+                    </li>
+                  </ul>
+                </div>
               </div>
             ),
           },
@@ -394,9 +393,10 @@ const data = await res.json();
             icon: "server",
             content: (
               <div className="space-y-6">
+                <h3 className="text-lg font-semibold text-white">Step-by-step: API integration</h3>
                 <p className="text-white/80 text-sm leading-relaxed">
                   The Chat API module scaffolds a complete backend following Hexagonal Architecture.
-                  Select your stack in the sidebar for stack-specific integration steps.
+                  Use the sidebar in order: <strong className="text-white/90">Frontend</strong>, then runtime, framework, database, and ORM—the docs below follow those choices.
                 </p>
                 <ChatBackendContent />
               </div>

@@ -51,6 +51,11 @@ export default function KitsOverviewPage() {
         is copied into your project and is yours to customize.
       </p>
 
+      <DocCallout variant="tip" title="Full-stack wiring lives in your app">
+        Kits generate UI components and (when you use the API CLI) backend modules. You still add dev-server routing to your API, env vars, auth,
+        and a thin integration layer—especially for <strong className="text-white/90">Chat</strong> with Socket.IO. On each kit page (except Push, which is backend-only), pick <strong className="text-white/90">Frontend</strong> first in the stack sidebar—then runtime through ORM—so the docs show matching proxy/rewrite and CORS hints. See the Chat Kit docs (<strong className="text-white/90">UI</strong> and <strong className="text-white/90">API</strong> tabs) for the deepest playbook; Email, Kanban, and Auth follow the same pattern with less real-time wiring.
+      </DocCallout>
+
       <h2 id="how-kits-save-time" className="font-semibold text-2xl">How Kits save development time</h2>
       <p className="text-white/80 leading-relaxed mb-6 mt-2">
         Building full-featured modules from scratch—with proper layout, accessibility, responsive behavior, and

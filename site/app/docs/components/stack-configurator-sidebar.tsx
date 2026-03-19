@@ -2,10 +2,11 @@
 
 import * as React from "react"
 import { useStack } from "./stack-context"
-import type { Runtime, Framework, AuthProvider, PushProvider } from "./stack-context"
+import type { Runtime, Framework, AuthProvider, PushProvider, FrontendBundler } from "./stack-context"
 import {
   DATABASE_OPTIONS,
   ORM_OPTIONS_BY_DATABASE,
+  FRONTEND_BUNDLER_OPTIONS,
 } from "./stack-context"
 import {
   Sheet,
@@ -45,6 +46,8 @@ export interface StackConfiguratorSidebarProps {
   authOnly?: boolean
   showPushProvider?: boolean
   showDatabaseFields?: boolean
+  /** Show Frontend (Vite / Next.js) — drives kit docs for dev routing and CORS hints. */
+  showFrontendBundler?: boolean
 }
 
 function OptionCard<T extends string>({
@@ -114,6 +117,7 @@ export function StackConfiguratorSidebar({
   authOnly = false,
   showPushProvider = false,
   showDatabaseFields = false,
+  showFrontendBundler = false,
 }: StackConfiguratorSidebarProps) {
   const { stack, setStack } = useStack()
   const [openCategory, setOpenCategory] = React.useState<string | null>(null)
@@ -126,6 +130,8 @@ export function StackConfiguratorSidebar({
   const ormLabel = ormOptions.find((o) => o.value === stack.orm)?.label ?? stack.orm
   const authLabel = AUTH_OPTIONS.find((o) => o.value === (stack.authProvider ?? "firebase"))?.label ?? (stack.authProvider ?? "firebase")
   const pushLabel = PUSH_OPTIONS.find((o) => o.value === (stack.pushProvider ?? "fcm"))?.label ?? (stack.pushProvider ?? "fcm")
+  const frontendLabel =
+    FRONTEND_BUNDLER_OPTIONS.find((o) => o.value === stack.frontend)?.label ?? stack.frontend
 
   return (
     <>
@@ -136,6 +142,14 @@ export function StackConfiguratorSidebar({
         <div className="grid grid-cols-1 gap-2">
           {!authOnly && (
             <>
+              {showFrontendBundler && (
+                <StackCard
+                  label="Frontend"
+                  value={frontendLabel}
+                  platformKey={stack.frontend}
+                  onClick={() => setOpenCategory("frontend")}
+                />
+              )}
               <StackCard
                 label="Runtime"
                 value={runtimeLabel}
@@ -156,15 +170,21 @@ export function StackConfiguratorSidebar({
                   onClick={() => setOpenCategory("database")}
                 />
               )}
-              {!authOnly && (
-                <StackCard
-                  label="ORM / DAL"
-                  value={ormLabel}
-                  platformKey={stack.orm}
-                  onClick={() => setOpenCategory("orm")}
-                />
-              )}
+              <StackCard
+                label="ORM / DAL"
+                value={ormLabel}
+                platformKey={stack.orm}
+                onClick={() => setOpenCategory("orm")}
+              />
             </>
+          )}
+          {authOnly && showFrontendBundler && (
+            <StackCard
+              label="Frontend"
+              value={frontendLabel}
+              platformKey={stack.frontend}
+              onClick={() => setOpenCategory("frontend")}
+            />
           )}
           {(showAuthProvider || authOnly) && (
             <StackCard
@@ -184,6 +204,33 @@ export function StackConfiguratorSidebar({
           )}
         </div>
       </div>
+
+      {/* Frontend bundler Sheet — first in sidebar order when enabled */}
+      <Sheet open={openCategory === "frontend"} onOpenChange={(o) => !o && setOpenCategory(null)}>
+        <SheetContent side="right" className="overflow-y-auto rounded-t-xl border-white/10 bg-[#0a0a0a]">
+          <SheetHeader>
+            <SheetTitle className="text-white">Choose frontend</SheetTitle>
+          </SheetHeader>
+          <p className="px-4 text-xs text-white/50">
+            Used for kit documentation: how your UI dev server reaches the API (rewrites, env vars). Not a FivFold CLI flag.
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-4">
+            {FRONTEND_BUNDLER_OPTIONS.map((opt) => (
+              <OptionCard
+                key={opt.value}
+                value={opt.value}
+                label={opt.label}
+                platformKey={opt.value}
+                selected={stack.frontend === opt.value}
+                onClick={() => {
+                  setStack({ frontend: opt.value as FrontendBundler })
+                  setOpenCategory(null)
+                }}
+              />
+            ))}
+          </div>
+        </SheetContent>
+      </Sheet>
 
       {/* Runtime Sheet */}
       <Sheet open={openCategory === "runtime"} onOpenChange={(o) => !o && setOpenCategory(null)}>

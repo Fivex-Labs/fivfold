@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { type CSSProperties } from 'react';
 import { cn } from '@/lib/utils';
 
 interface ChatAvatarProps {
@@ -10,6 +10,7 @@ interface ChatAvatarProps {
   online?: boolean;
   showOnlineDot?: boolean;
   className?: string;
+  style?: CSSProperties;
 }
 
 const SIZE_CLASSES: Record<string, string> = {
@@ -52,6 +53,7 @@ export function ChatAvatar({
   online,
   showOnlineDot = true,
   className,
+  style,
 }: ChatAvatarProps) {
   const initials = getInitials(name);
   const bgColor = getColorFromName(name);
@@ -59,7 +61,7 @@ export function ChatAvatar({
   const dotSize = DOT_SIZES[size] ?? DOT_SIZES.md;
 
   return (
-    <div className={cn('relative inline-flex shrink-0', className)}>
+    <div className={cn('relative inline-flex shrink-0', className)} style={style}>
       {src ? (
         <img
           src={src}

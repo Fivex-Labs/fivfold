@@ -13,7 +13,9 @@ import {
   SiMariadb,
   SiSocketdotio,
   SiPostgresql,
-  SiMysql
+  SiMysql,
+  SiVite,
+  SiNextdotjs,
 } from 'react-icons/si';
 
 import
@@ -58,7 +60,9 @@ const platformConfig: Record<
   node: { Icon: SiNodedotjs, color: "#339933" },
   express: { Icon: SiExpress, color: "#FFFFFF" },
   nestjs: { Icon: SiNestjs, color: "#E0234E" },
-  
+  vite: { Icon: SiVite, color: "#646CFF" },
+  nextjs: { Icon: SiNextdotjs, color: "#FFFFFF" },
+
   // SQL ORMs
   typeorm: { Icon: SiTypeorm, color: "#FE0823" },
   prisma: { Icon: SiPrisma, color: "#2D3748" },

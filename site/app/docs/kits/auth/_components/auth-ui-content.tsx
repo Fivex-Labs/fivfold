@@ -3,6 +3,10 @@
 import { useStack } from "../../../components/stack-context"
 import { CodeBlock } from "../../../components/code-block"
 import { DocCallout } from "../../../components/doc-blocks"
+import { KitDocStepHeading } from "../../../components/kit-doc-step-heading"
+import { KitFeBeConnectionGuide } from "../../../components/kit-fe-be-connection"
+import { KitIntegrationDisclaimer } from "../../../components/kit-integration-disclaimer"
+import { KitUserModelIntegration } from "../../../components/kit-user-model-integration"
 import type { AuthProvider } from "../../../components/stack-context"
 
 const PROVIDER_LABELS: Record<AuthProvider, string> = {
@@ -245,17 +249,13 @@ export function AuthUIContent() {
   return (
     <div className="space-y-10">
       <p className="text-white/80 text-sm leading-relaxed">
-        The Auth Kit is built exclusively with shadcn/ui primitives. Follow the steps
-        below to install, integrate, and customize the UI for <strong className="text-white">{label}</strong>.
+        The Auth Kit is built on shadcn/ui. The steps below follow the standard kit doc order (see{" "}
+        <code className="rounded bg-white/10 px-1.5 py-0.5">AGENTS.md</code>
+        ). Stack sidebar: <strong className="text-white">{label}</strong> drives install command and integration notes.
       </p>
 
       <div>
-        <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
-          <span className="flex w-7 h-7 items-center justify-center rounded-lg bg-brand-primary/20 text-brand-primary text-sm font-bold">
-            1
-          </span>
-          Install the Auth Kit
-        </h3>
+        <KitDocStepHeading step={1}>Install the Auth Kit</KitDocStepHeading>
         <p className="text-white/80 text-sm mb-3">
           Run the FivFold UI CLI to add the Auth Kit. Pass <code className="rounded bg-white/10 px-1.5 py-0.5">--provider {provider}</code> to match your backend.
         </p>
@@ -275,54 +275,32 @@ export function AuthUIContent() {
       </div>
 
       <div>
-        <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
-          <span className="flex w-7 h-7 items-center justify-center rounded-lg bg-brand-primary/20 text-brand-primary text-sm font-bold">
-            2
-          </span>
-          {label} client setup
-        </h3>
-        <p className="text-white/80 text-sm mb-4">
-          {content.intro}
-        </p>
-        <div className="space-y-4 mb-4">
-          {content.setupSteps.map((step, i) => (
-            <div key={i}>
-              <h4 className="font-medium text-white text-sm mb-1">{step.title}</h4>
-              {step.content}
-            </div>
-          ))}
-        </div>
-        <p className="text-white/80 text-sm mb-2">
-          Environment variables required in <code className="rounded bg-white/10 px-1.5 py-0.5">.env.local</code>:
+        <KitDocStepHeading step={2}>Generated file structure</KitDocStepHeading>
+        <p className="text-white/80 text-sm mb-3">
+          The command creates a folder with screen components and {label}-specific wiring:
         </p>
         <CodeBlock
-          code={content.envVars.join("\n")}
+          code={`kits/auth/
+  types.ts             # AuthContextValue, LoginFormProps, etc.
+  auth-layout.tsx      # Shared layout: split-pane (form + branding)
+  auth-provider.tsx    # AuthProvider context + useAuth() (wired to ${label})
+  login.tsx            # LoginForm
+  register.tsx         # RegisterForm
+  forgot-password.tsx  # ForgotPasswordForm
+  reset-password.tsx   # ResetPasswordForm
+  email-verification.tsx # EmailVerification
+  oauth-buttons.tsx    # OAuthButtons (Google, GitHub, Apple icons)
+  auth-guard.tsx       # AuthGuard for protected routes
+  providers/           # Provider-specific client SDK wiring
+    ${provider}-client.ts
+  index.tsx            # Re-exports`}
           language="text"
-          label=".env.local"
-          className="mb-4"
+          label="File tree"
         />
-        <p className="text-white/80 text-sm mb-2">
-          Example provider wiring in <code className="rounded bg-white/10 px-1.5 py-0.5">providers/{provider}-client.ts</code>:
-        </p>
-        <CodeBlock
-          code={content.authProviderSnippet}
-          language="typescript"
-          filename={`providers/${provider}-client.ts`}
-        />
-        {content.oauthNote && (
-          <DocCallout title="OAuth" variant="tip" className="mt-4">
-            <p>{content.oauthNote}</p>
-          </DocCallout>
-        )}
       </div>
 
       <div>
-        <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
-          <span className="flex w-7 h-7 items-center justify-center rounded-lg bg-brand-primary/20 text-brand-primary text-sm font-bold">
-            3
-          </span>
-          Import and use in your app
-        </h3>
+        <KitDocStepHeading step={3}>Import and use in your app</KitDocStepHeading>
         <p className="text-white/80 text-sm mb-3">
           Wrap your app with <code className="rounded bg-white/10 px-1.5 py-0.5">AuthProvider</code> and use the screens in your routes:
         </p>
@@ -353,33 +331,277 @@ export function AuthLayout() {
       </div>
 
       <div>
-        <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
-          <span className="flex w-7 h-7 items-center justify-center rounded-lg bg-brand-primary/20 text-brand-primary text-sm font-bold">
-            4
-          </span>
-          Generated file structure
-        </h3>
-        <p className="text-white/80 text-sm mb-3">
-          The command creates a folder with screen components and {label}-specific wiring:
+        <KitDocStepHeading step={4}>Props reference</KitDocStepHeading>
+        <p className="text-white/80 text-sm mb-4">
+          The Auth Kit exposes form components and <code className="rounded bg-white/10 px-1">AuthProvider</code>. Props vary by screen.
         </p>
-        <CodeBlock
-          code={`kits/auth/
-  types.ts             # AuthContextValue, LoginFormProps, etc.
-  auth-layout.tsx      # Shared layout: split-pane (form + branding)
-  auth-provider.tsx    # AuthProvider context + useAuth() (wired to ${label})
-  login.tsx            # LoginForm
-  register.tsx         # RegisterForm
-  forgot-password.tsx  # ForgotPasswordForm
-  reset-password.tsx   # ResetPasswordForm
-  email-verification.tsx # EmailVerification
-  oauth-buttons.tsx    # OAuthButtons (Google, GitHub, Apple icons)
-  auth-guard.tsx       # AuthGuard for protected routes
-  providers/           # Provider-specific client SDK wiring
-    ${provider}-client.ts
-  index.tsx            # Re-exports`}
-          language="text"
-          label="File tree"
+
+        <div className="space-y-6">
+          <div className="rounded-xl border border-white/10 bg-black/20 overflow-hidden">
+            <h4 className="font-medium text-white p-4 pb-2">LoginForm</h4>
+            <p className="text-white/70 text-sm px-4 mb-3">
+              Email/password + OAuth buttons with branded logos. Uses AuthLayout, Input, Label, Button, Separator.
+            </p>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm border-collapse">
+                <thead>
+                  <tr className="border-y border-white/10">
+                    <th className="text-left py-2 px-4 font-medium text-white/80">Prop</th>
+                    <th className="text-left py-2 px-4 font-medium text-white/80">Type</th>
+                    <th className="text-left py-2 px-4 font-medium text-white/80">Purpose</th>
+                  </tr>
+                </thead>
+                <tbody className="text-white/70">
+                  <tr className="border-b border-white/5"><td className="py-2 px-4 font-mono text-brand-secondary">onSubmit</td><td className="py-2 px-4 font-mono text-white/50">(email, password) =&gt; Promise</td><td className="py-2 px-4">Called with credentials. Wire to useAuth().login().</td></tr>
+                  <tr className="border-b border-white/5"><td className="py-2 px-4 font-mono text-brand-secondary">onForgotPassword</td><td className="py-2 px-4 font-mono text-white/50">() =&gt; void</td><td className="py-2 px-4">Navigate to forgot-password screen.</td></tr>
+                  <tr className="border-b border-white/5"><td className="py-2 px-4 font-mono text-brand-secondary">oauthProviders</td><td className="py-2 px-4 font-mono text-white/50">(&quot;google&quot; | &quot;github&quot; | &quot;apple&quot;)[]</td><td className="py-2 px-4">OAuth buttons to show. Varies per AuthProvider.</td></tr>
+                  <tr className="border-b border-white/5"><td className="py-2 px-4 font-mono text-brand-secondary">logoSrc</td><td className="py-2 px-4 font-mono text-white/50">string</td><td className="py-2 px-4">Logo image URL for branding area.</td></tr>
+                  <tr className="border-b border-white/5"><td className="py-2 px-4 font-mono text-brand-secondary">appName</td><td className="py-2 px-4 font-mono text-white/50">string</td><td className="py-2 px-4">App name for subheading (e.g. &quot;Login to your Acme Inc account&quot;).</td></tr>
+                  <tr className="border-b border-white/5"><td className="py-2 px-4 font-mono text-brand-secondary">termsHref</td><td className="py-2 px-4 font-mono text-white/50">string</td><td className="py-2 px-4">Terms of Service URL for footer.</td></tr>
+                  <tr className="border-b border-white/5"><td className="py-2 px-4 font-mono text-brand-secondary">privacyHref</td><td className="py-2 px-4 font-mono text-white/50">string</td><td className="py-2 px-4">Privacy Policy URL for footer.</td></tr>
+                  <tr className="border-b border-white/5"><td className="py-2 px-4 font-mono text-brand-secondary">footerContent</td><td className="py-2 px-4 font-mono text-white/50">ReactNode</td><td className="py-2 px-4">Footer (e.g. &quot;Don&apos;t have an account? Sign up&quot; link).</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-white/10 bg-black/20 overflow-hidden">
+            <h4 className="font-medium text-white p-4 pb-2">RegisterForm</h4>
+            <p className="text-white/70 text-sm px-4 mb-3">
+              Registration with display name. Uses AuthLayout, Input, Label, Button, Separator. Inherits logoSrc, appName, termsHref, privacyHref from AuthLayoutFormProps.
+            </p>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm border-collapse">
+                <thead>
+                  <tr className="border-y border-white/10">
+                    <th className="text-left py-2 px-4 font-medium text-white/80">Prop</th>
+                    <th className="text-left py-2 px-4 font-medium text-white/80">Type</th>
+                    <th className="text-left py-2 px-4 font-medium text-white/80">Purpose</th>
+                  </tr>
+                </thead>
+                <tbody className="text-white/70">
+                  <tr className="border-b border-white/5"><td className="py-2 px-4 font-mono text-brand-secondary">onSubmit</td><td className="py-2 px-4 font-mono text-white/50">(email, password, displayName?) =&gt; Promise</td><td className="py-2 px-4">Wire to useAuth().register().</td></tr>
+                  <tr className="border-b border-white/5"><td className="py-2 px-4 font-mono text-brand-secondary">oauthProviders</td><td className="py-2 px-4 font-mono text-white/50">(&quot;google&quot; | &quot;github&quot; | &quot;apple&quot;)[]</td><td className="py-2 px-4">OAuth buttons to show.</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-white/10 bg-black/20 overflow-hidden">
+            <h4 className="font-medium text-white p-4 pb-2">ForgotPasswordForm, ResetPasswordForm, EmailVerification</h4>
+            <p className="text-white/70 text-sm px-4 mb-3">
+              ForgotPasswordForm: request reset link. ResetPasswordForm: new password (token from URL). EmailVerification: status + resend.
+            </p>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm border-collapse">
+                <thead>
+                  <tr className="border-y border-white/10">
+                    <th className="text-left py-2 px-4 font-medium text-white/80">Component</th>
+                    <th className="text-left py-2 px-4 font-medium text-white/80">Key props</th>
+                  </tr>
+                </thead>
+                <tbody className="text-white/70">
+                  <tr className="border-b border-white/5"><td className="py-2 px-4 font-mono text-brand-secondary">ForgotPasswordForm</td><td className="py-2 px-4">onSubmit(email), onBackToLogin</td></tr>
+                  <tr className="border-b border-white/5"><td className="py-2 px-4 font-mono text-brand-secondary">ResetPasswordForm</td><td className="py-2 px-4">token, onSubmit(token, newPassword), onBackToLogin</td></tr>
+                  <tr className="border-b border-white/5"><td className="py-2 px-4 font-mono text-brand-secondary">EmailVerification</td><td className="py-2 px-4">onResend, onBackToLogin</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-white/10 bg-black/20 overflow-hidden">
+            <h4 className="font-medium text-white p-4 pb-2">AuthLayout</h4>
+            <p className="text-white/70 text-sm px-4 mb-3">
+              Shared wrapper: responsive split-pane (form left, branding right on desktop), logo slot, Terms &amp; Privacy footer. All form components use it internally.
+            </p>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm border-collapse">
+                <thead>
+                  <tr className="border-y border-white/10">
+                    <th className="text-left py-2 px-4 font-medium text-white/80">Prop</th>
+                    <th className="text-left py-2 px-4 font-medium text-white/80">Type</th>
+                    <th className="text-left py-2 px-4 font-medium text-white/80">Purpose</th>
+                  </tr>
+                </thead>
+                <tbody className="text-white/70">
+                  <tr className="border-b border-white/5"><td className="py-2 px-4 font-mono text-brand-secondary">logoSrc</td><td className="py-2 px-4 font-mono text-white/50">string</td><td className="py-2 px-4">Logo image URL. Shown in branding pane (desktop) or above form (mobile).</td></tr>
+                  <tr className="border-b border-white/5"><td className="py-2 px-4 font-mono text-brand-secondary">appName</td><td className="py-2 px-4 font-mono text-white/50">string</td><td className="py-2 px-4">App name for subheading.</td></tr>
+                  <tr className="border-b border-white/5"><td className="py-2 px-4 font-mono text-brand-secondary">heading</td><td className="py-2 px-4 font-mono text-white/50">string</td><td className="py-2 px-4">Main heading (e.g. &quot;Welcome back&quot;).</td></tr>
+                  <tr className="border-b border-white/5"><td className="py-2 px-4 font-mono text-brand-secondary">subheading</td><td className="py-2 px-4 font-mono text-white/50">string</td><td className="py-2 px-4">Secondary text below heading.</td></tr>
+                  <tr className="border-b border-white/5"><td className="py-2 px-4 font-mono text-brand-secondary">termsHref</td><td className="py-2 px-4 font-mono text-white/50">string</td><td className="py-2 px-4">Terms of Service URL for footer link.</td></tr>
+                  <tr className="border-b border-white/5"><td className="py-2 px-4 font-mono text-brand-secondary">privacyHref</td><td className="py-2 px-4 font-mono text-white/50">string</td><td className="py-2 px-4">Privacy Policy URL for footer link.</td></tr>
+                  <tr className="border-b border-white/5"><td className="py-2 px-4 font-mono text-brand-secondary">footer</td><td className="py-2 px-4 font-mono text-white/50">ReactNode</td><td className="py-2 px-4">Optional footer content (e.g. sign up link).</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-white/10 bg-black/20 overflow-hidden">
+            <h4 className="font-medium text-white p-4 pb-2">AuthProvider &amp; AuthGuard</h4>
+            <p className="text-white/70 text-sm px-4 mb-3">
+              AuthProvider wraps the app and exposes useAuth(). AuthGuard protects routes.
+            </p>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm border-collapse">
+                <thead>
+                  <tr className="border-y border-white/10">
+                    <th className="text-left py-2 px-4 font-medium text-white/80">Prop</th>
+                    <th className="text-left py-2 px-4 font-medium text-white/80">Type</th>
+                    <th className="text-left py-2 px-4 font-medium text-white/80">Purpose</th>
+                  </tr>
+                </thead>
+                <tbody className="text-white/70">
+                  <tr className="border-b border-white/5"><td className="py-2 px-4 font-mono text-brand-secondary">AuthProvider children</td><td className="py-2 px-4 font-mono text-white/50">ReactNode</td><td className="py-2 px-4">App tree. useAuth() available in descendants.</td></tr>
+                  <tr className="border-b border-white/5"><td className="py-2 px-4 font-mono text-brand-secondary">AuthGuard children</td><td className="py-2 px-4 font-mono text-white/50">ReactNode</td><td className="py-2 px-4">Protected content. Redirects if unauthenticated.</td></tr>
+                  <tr className="border-b border-white/5"><td className="py-2 px-4 font-mono text-brand-secondary">AuthGuard redirectTo</td><td className="py-2 px-4 font-mono text-white/50">string</td><td className="py-2 px-4">Redirect path when unauthenticated.</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="space-y-6">
+        <KitDocStepHeading step={5}>Integration with backend</KitDocStepHeading>
+        <KitIntegrationDisclaimer />
+        <KitFeBeConnectionGuide
+          withDisclaimer={false}
+          kitTitle="Auth"
+          apiControllerPath="auth"
+          realtimeNote="Session refresh and OAuth callbacks often need absolute URLs aligned with your deployed web origin and API base."
         />
+        <KitUserModelIntegration
+          kitTitle="Auth (UI layer)"
+          summary="Screens call your chosen provider SDK or your JWT API. The user id the rest of your app uses must match what the backend puts in tokens or session."
+          bullets={[
+            "After login, persist or expose the same user identifier your Email, Kanban, Chat, or Push APIs expect in guards.",
+            "For JWT mode, point the Auth Kit’s client helpers at the real base URL of your auth module.",
+            "OAuth redirect URIs and authorized domains must include every environment where you test (localhost, preview, prod).",
+          ]}
+        />
+
+        <div>
+          <h4 className="text-base font-semibold text-white mb-2">{label} client, env, and proxy</h4>
+          <p className="text-white/80 text-sm mb-4">
+            {content.intro}
+          </p>
+          <div className="space-y-4 mb-4">
+            {content.setupSteps.map((step, i) => (
+              <div key={i}>
+                <h5 className="font-medium text-white text-sm mb-1">{step.title}</h5>
+                {step.content}
+              </div>
+            ))}
+          </div>
+          <p className="text-white/80 text-sm mb-2">
+            Environment variables required in <code className="rounded bg-white/10 px-1.5 py-0.5">.env.local</code>:
+          </p>
+          <CodeBlock
+            code={content.envVars.join("\n")}
+            language="text"
+            label=".env.local"
+            className="mb-4"
+          />
+          <p className="text-white/80 text-sm mb-2">
+            Example provider wiring in <code className="rounded bg-white/10 px-1.5 py-0.5">providers/{provider}-client.ts</code>:
+          </p>
+          <CodeBlock
+            code={content.authProviderSnippet}
+            language="typescript"
+            filename={`providers/${provider}-client.ts`}
+          />
+          {content.oauthNote && (
+            <DocCallout title="OAuth" variant="tip" className="mt-4">
+              <p>{content.oauthNote}</p>
+            </DocCallout>
+          )}
+        </div>
+      </div>
+
+      <div>
+        <KitDocStepHeading step={6}>Third-party integrations</KitDocStepHeading>
+        {provider === "jwt" ? (
+          <p className="text-white/80 text-sm">
+            JWT mode does not bundle a hosted identity vendor. Your Auth API (e.g. from{" "}
+            <code className="rounded bg-white/10 px-1">npx @fivfold/api add auth --provider jwt</code>
+            ) is the integration surface; add OAuth at the server if needed.
+          </p>
+        ) : (
+          <ul className="list-disc list-inside text-white/80 text-sm space-y-2">
+            {provider === "firebase" && (
+              <li>
+                <a href="https://firebase.google.com/docs/auth" target="_blank" rel="noopener noreferrer" className="text-brand-secondary hover:underline">
+                  Firebase Authentication
+                </a>{" "}
+                — client SDK used by the generated <code className="rounded bg-white/10 px-1">providers/firebase-client.ts</code>.
+              </li>
+            )}
+            {provider === "cognito" && (
+              <>
+                <li>
+                  <a href="https://docs.aws.amazon.com/cognito/latest/developerguide/" target="_blank" rel="noopener noreferrer" className="text-brand-secondary hover:underline">
+                    Amazon Cognito User Pools
+                  </a>
+                </li>
+                <li>
+                  <a href="https://docs.amplify.aws/react/build-a-backend/auth/" target="_blank" rel="noopener noreferrer" className="text-brand-secondary hover:underline">
+                    Amplify Auth (v6)
+                  </a>{" "}
+                  — typical client for the generated Cognito wiring.
+                </li>
+              </>
+            )}
+            {provider === "auth0" && (
+              <li>
+                <a href="https://auth0.com/docs/libraries/auth0-react" target="_blank" rel="noopener noreferrer" className="text-brand-secondary hover:underline">
+                  Auth0 React SDK
+                </a>{" "}
+                — wrap with <code className="rounded bg-white/10 px-1">Auth0Provider</code> as shown in integration above.
+              </li>
+            )}
+          </ul>
+        )}
+      </div>
+
+      <div>
+        <KitDocStepHeading step={7}>Shadcn primitives dependencies</KitDocStepHeading>
+        <p className="text-white/80 text-sm mb-3">
+          Adding the Auth Kit installs these shadcn/ui primitives if not already present:
+        </p>
+        <div className="overflow-x-auto rounded-xl border border-white/10">
+          <table className="w-full text-sm border-collapse">
+            <thead>
+              <tr className="border-b border-white/10">
+                <th className="text-left py-2 px-4 font-medium text-white/80">Component</th>
+                <th className="text-left py-2 px-4 font-medium text-white/80">Used in</th>
+              </tr>
+            </thead>
+            <tbody className="text-white/70">
+              <tr className="border-b border-white/5"><td className="py-2 px-4 font-mono text-brand-secondary">button</td><td className="py-2 px-4">Submit, OAuth (with logos), actions</td></tr>
+              <tr className="border-b border-white/5"><td className="py-2 px-4 font-mono text-brand-secondary">input</td><td className="py-2 px-4">Email, password fields</td></tr>
+              <tr className="border-b border-white/5"><td className="py-2 px-4 font-mono text-brand-secondary">label</td><td className="py-2 px-4">Form labels</td></tr>
+              <tr className="border-b border-white/5"><td className="py-2 px-4 font-mono text-brand-secondary">separator</td><td className="py-2 px-4">OAuth divider</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div>
+        <KitDocStepHeading step={8}>Additional dependencies</KitDocStepHeading>
+        <p className="text-white/80 text-sm mb-3">
+          Non-shadcn packages used by the kit:
+        </p>
+        <ul className="list-disc list-inside text-white/75 text-sm space-y-2">
+          <li>
+            <code className="rounded bg-white/10 px-1 font-mono text-brand-secondary">@icons-pack/react-simple-icons</code> — Apple, Google, GitHub logos in{" "}
+            <code className="rounded bg-white/10 px-1">oauth-buttons.tsx</code>.
+          </li>
+          <li>
+            <code className="rounded bg-white/10 px-1 font-mono text-brand-secondary">next/image</code> — logo in AuthLayout when you use Next.js (Vite projects swap for a regular{" "}
+            <code className="rounded bg-white/10 px-1">&lt;img&gt;</code>
+            ).
+          </li>
+        </ul>
       </div>
     </div>
   )

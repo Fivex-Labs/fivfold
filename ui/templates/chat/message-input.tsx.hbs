@@ -37,7 +37,7 @@ export function MessageInput({
   const [showPoll, setShowPoll] = useState(false);
   const [showLocation, setShowLocation] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
+  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const isTypingRef = useRef(false);
 
   const handleTyping = useCallback(() => {

@@ -11,6 +11,7 @@ import {
   resolveCssPath,
 } from '../../lib/workspace.js';
 import { applyFivFoldTheme, patchExistingCss } from '../../lib/theme.js';
+import { repairMisplacedShadcnComponents } from '../../lib/shadcn-output-repair.js';
 import {
   VirtualFileSystem,
   detectPackageManager,
@@ -50,12 +51,14 @@ function installShadcnDeps(deps: string[], pm: 'npm' | 'pnpm' | 'yarn', cwd: str
   const npxCmd = pm === 'pnpm' ? 'pnpm dlx' : pm === 'yarn' ? 'yarn dlx' : 'npx';
   console.log(`\n  Installing shadcn/ui dependencies...`);
   try {
-    execSync(`${npxCmd} shadcn@latest add ${deps.join(' ')} --overwrite`, {
+    execSync(`${npxCmd} shadcn@latest add ${deps.join(' ')} --overwrite --yes`, {
       stdio: 'inherit',
       cwd,
     });
   } catch {
-    console.log(`  shadcn/ui install failed. Run manually:\n    ${npxCmd} shadcn@latest add ${deps.join(' ')}`);
+    console.log(`  shadcn/ui install failed. Run manually:\n    ${npxCmd} shadcn@latest add ${deps.join(' ')} --yes`);
+  } finally {
+    repairMisplacedShadcnComponents(cwd);
   }
 }
 

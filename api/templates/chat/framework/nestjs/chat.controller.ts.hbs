@@ -15,10 +15,14 @@ import { ShareLocationDto } from './dto/share-location.dto';
 import { AddReactionDto } from './dto/add-reaction.dto';
 import { SearchChatDto } from './dto/search-chat.dto';
 import { PaginationDto } from './dto/pagination.dto';
+import { ChatGateway } from './chat.gateway';
 
 @Controller('chat')
 export class ChatController {
-  constructor(private readonly chatService: ChatService) {}
+  constructor(
+    private readonly chatService: ChatService,
+    private readonly chatGateway: ChatGateway,
+  ) {}
 
   // ── Conversations ──────────────────────────────────────────────────────────
 
@@ -69,8 +73,10 @@ export class ChatController {
   // ── Messages ───────────────────────────────────────────────────────────────
 
   @Post('messages')
-  sendMessage(@Body() dto: CreateMessageDto, @Request() req: { user: { id: string } }) {
-    return this.chatService.sendMessage(dto, req.user.id);
+  async sendMessage(@Body() dto: CreateMessageDto, @Request() req: { user: { id: string } }) {
+    const message = await this.chatService.sendMessage(dto, req.user.id);
+    this.chatGateway.emitToConversation(dto.conversationId, 'message:new', message);
+    return message;
   }
 
   @Get('conversations/:id/messages')

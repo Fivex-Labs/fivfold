@@ -5,6 +5,10 @@ import { DocTabs } from "../../components/doc-tabs"
 import { CodeBlock } from "../../components/code-block"
 import { KanbanDemo } from "./_components/kanban-demo"
 import { KanbanBackendContent } from "./_components/kanban-backend-content"
+import { KitFeBeConnectionGuide } from "../../components/kit-fe-be-connection"
+import { KitIntegrationDisclaimer } from "../../components/kit-integration-disclaimer"
+import { KitUserModelIntegration } from "../../components/kit-user-model-integration"
+import { KitDocStepHeading } from "../../components/kit-doc-step-heading"
 
 const headings = [
   { id: "quick-reference", text: "Quick reference", level: 2 },
@@ -19,7 +23,7 @@ export default function KanbanKitPage() {
       title="Kanban Kit"
       description="Drag-and-drop kanban board with columns, tasks, priorities, assignees, and labels. Includes both UI and backend scaffolding."
       headings={headings}
-      stackConfig={{ showDatabaseFields: true }}
+      stackConfig={{ showDatabaseFields: true, showFrontendBundler: true }}
     >
       <h2 id="quick-reference" className="scroll-mt-24 font-semibold text-2xl pt-2">
         Quick reference
@@ -97,7 +101,8 @@ npx @fivfold/api add kanban --dry-run`}
         Guide
       </h2>
       <p className="text-white/80 leading-relaxed mb-6 mt-4 text-sm">
-        Step-by-step guides for the frontend UI and backend API integration.
+        Step-by-step guides for the frontend UI and backend API integration. Pick{" "}
+        <strong className="text-white/90">Frontend</strong> first in the sidebar, then the rest of your stack, for aligned dev-server and API docs.
       </p>
       <DocTabs
         tabs={[
@@ -113,12 +118,7 @@ npx @fivfold/api add kanban --dry-run`}
                 </p>
 
                 <div>
-                  <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
-                    <span className="flex w-7 h-7 items-center justify-center rounded-lg bg-brand-primary/20 text-brand-primary text-sm font-bold">
-                      1
-                    </span>
-                    Install the Kanban Kit
-                  </h3>
+                  <KitDocStepHeading step={1}>Install the Kanban Kit</KitDocStepHeading>
                   <p className="text-white/80 text-sm mb-3">
                     Run the FivFold UI CLI to add the Kanban Kit to your project. Ensure you have run{" "}
                     <code className="rounded bg-white/10 px-1.5 py-0.5 text-brand-secondary">
@@ -142,12 +142,7 @@ npx @fivfold/api add kanban --dry-run`}
                 </div>
 
                 <div>
-                  <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
-                    <span className="flex w-7 h-7 items-center justify-center rounded-lg bg-brand-primary/20 text-brand-primary text-sm font-bold">
-                      2
-                    </span>
-                    Generated file structure
-                  </h3>
+                  <KitDocStepHeading step={2}>Generated file structure</KitDocStepHeading>
                   <p className="text-white/80 text-sm mb-3">
                     The command creates a folder with multiple component files for easier development
                     and customization:
@@ -171,12 +166,7 @@ npx @fivfold/api add kanban --dry-run`}
                 </div>
 
                 <div>
-                  <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
-                    <span className="flex w-7 h-7 items-center justify-center rounded-lg bg-brand-primary/20 text-brand-primary text-sm font-bold">
-                      3
-                    </span>
-                    Import and use in your app
-                  </h3>
+                  <KitDocStepHeading step={3}>Import and use in your app</KitDocStepHeading>
                   <p className="text-white/80 text-sm mb-3">
                     Import the main component and types from the kit folder:
                   </p>
@@ -214,12 +204,7 @@ export function KanbanPage() {
                 </div>
 
                 <div>
-                  <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
-                    <span className="flex w-7 h-7 items-center justify-center rounded-lg bg-brand-primary/20 text-brand-primary text-sm font-bold">
-                      4
-                    </span>
-                    Component reference
-                  </h3>
+                  <KitDocStepHeading step={4}>Props reference</KitDocStepHeading>
                   <p className="text-white/80 text-sm mb-4">
                     The Kanban Kit exposes a single <code>KanbanKit</code> component. Props control
                     board behavior and visibility of optional features.
@@ -310,8 +295,23 @@ export function KanbanPage() {
                   </div>
                 </div>
 
+                <div className="space-y-6">
+                  <KitDocStepHeading step={5}>Integration with backend</KitDocStepHeading>
+                  <KitIntegrationDisclaimer />
+                  <KitFeBeConnectionGuide withDisclaimer={false} kitTitle="Kanban" apiControllerPath="kanban" />
+                  <KitUserModelIntegration
+                    kitTitle="Kanban (UI layer)"
+                    summary="Board and task props are user-agnostic in the kit. Your data hooks must load boards for the signed-in user and send the same user context to the API when creating or moving tasks."
+                    bullets={[
+                      "Include auth headers on every mutating call (create task, move column) so the backend can enforce ownership.",
+                      "Map assignee display from your user directory if the API returns ids only.",
+                      "For multi-board apps, pass boardId from routing and keep it in sync with API paths.",
+                    ]}
+                  />
+                </div>
+
                 <div>
-                  <h3 className="text-lg font-semibold text-white mb-3">shadcn dependencies</h3>
+                  <KitDocStepHeading step={7}>shadcn/ui primitives</KitDocStepHeading>
                   <p className="text-white/80 text-sm mb-3">
                     Adding the Kanban Kit installs these shadcn/ui primitives if not already present:
                   </p>
@@ -340,6 +340,16 @@ export function KanbanPage() {
                     </table>
                   </div>
                 </div>
+
+                <div>
+                  <KitDocStepHeading step={8}>Additional dependencies</KitDocStepHeading>
+                  <p className="text-white/80 text-sm">
+                    The kit uses <code className="rounded bg-white/10 px-1">@dnd-kit/core</code>,{" "}
+                    <code className="rounded bg-white/10 px-1">@dnd-kit/sortable</code>, and{" "}
+                    <code className="rounded bg-white/10 px-1">@dnd-kit/utilities</code> for drag-and-drop. They are added when you run{" "}
+                    <code className="rounded bg-white/10 px-1">npx @fivfold/ui add kanban</code>.
+                  </p>
+                </div>
               </div>
             ),
           },
@@ -349,9 +359,11 @@ export function KanbanPage() {
             icon: "server",
             content: (
               <div className="space-y-6">
+                <h3 className="text-lg font-semibold text-white">Step-by-step: API integration</h3>
                 <p className="text-white/80 text-sm leading-relaxed">
                   The Kanban API module provides entities, DTOs, services, and controllers for boards,
-                  columns, tasks, and labels. Select your stack in the sidebar for stack-specific integration steps.
+                  columns, tasks, and labels. Pick <strong className="text-white/90">Frontend</strong> first in the sidebar for
+                  CORS and dev-proxy alignment, then the rest of your stack.
                 </p>
                 <KanbanBackendContent />
               </div>

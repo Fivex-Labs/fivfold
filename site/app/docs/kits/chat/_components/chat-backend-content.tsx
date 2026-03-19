@@ -5,6 +5,10 @@ import { useStack } from "../../../components/stack-context";
 import { CodeBlock } from "../../../components/code-block";
 import { DocTabs } from "../../../components/doc-tabs";
 import { ChatUserIntegrationSection } from "./chat-user-integration";
+import { ChatFullstackApiGuide } from "./chat-fullstack-docs";
+import { KitIntegrationDisclaimer } from "../../../components/kit-integration-disclaimer";
+import { KitApiFeBePlaybook } from "../../../components/kit-api-fe-be-playbook";
+import { KitDocStepHeading } from "../../../components/kit-doc-step-heading";
 
 const API_ENDPOINTS_TABLE = (
   <div className="overflow-x-auto">
@@ -37,6 +41,10 @@ const API_ENDPOINTS_TABLE = (
 
 export function ChatBackendContent() {
   const { stack } = useStack();
+  const corsDevOrigins =
+    stack.frontend === "nextjs"
+      ? "http://localhost:3000,http://127.0.0.1:3000"
+      : "http://localhost:5173,http://127.0.0.1:5173";
 
   const isNestJS = stack.framework === "nestjs";
   const isTypeORM = stack.orm === "typeorm";
@@ -116,42 +124,37 @@ app.useWebSocketAdapter(new IoAdapter(app));`
     : `// server.ts – attach Socket.IO to Express
 import { createServer } from 'http';
 import { Server } from 'socket.io';
-import { registerChatSocketHandlers } from './modules/chat/delivery/express/chat.socket-handler';
+import { initChatSocketHandlers } from './modules/chat/chat.socket-handler';
+import { createChatRouter } from './modules/chat/chat.routes';
 
 const httpServer = createServer(app);
 const io = new Server(httpServer, { cors: { origin: '*' } });
-registerChatSocketHandlers(io);
+const chatNs = initChatSocketHandlers(io, chatService);
+app.use('/chat', createChatRouter(chatService, chatNs));
 httpServer.listen(3000);`;
-
-  const stepOffset = isTypeORM || isPrisma || isMongoose ? 1 : 0;
 
   return (
     <div className="space-y-8">
-      {/* Step 1 – Install */}
       <div>
-        <h4 className="font-semibold text-white mb-3 flex items-center gap-2">
-          <span className="flex w-6 h-6 items-center justify-center rounded-md bg-brand-secondary/20 text-brand-secondary text-xs font-bold">1</span>
-          Install the Chat API module
-        </h4>
+        <KitDocStepHeading step={1}>Install the Chat API module</KitDocStepHeading>
         <CodeBlock code={installCmd} language="bash" showTerminalIcon />
       </div>
 
-      {/* Step 2 – File tree */}
       <div>
-        <h4 className="font-semibold text-white mb-3 flex items-center gap-2">
-          <span className="flex w-6 h-6 items-center justify-center rounded-md bg-brand-secondary/20 text-brand-secondary text-xs font-bold">2</span>
-          Generated file structure
-        </h4>
+        <KitDocStepHeading step={2}>Generated file structure</KitDocStepHeading>
         <CodeBlock code={fileTree} language="text" label="File tree" />
       </div>
 
-      <ChatUserIntegrationSection framework={stack.framework} orm={stack.orm} />
+      <div className="space-y-6">
+        <KitDocStepHeading step={3}>Wire into the app</KitDocStepHeading>
+        <p className="text-white/65 text-sm -mt-1 mb-2">
+          Align auth, persistence, and real-time transport with your stack (matches <code className="rounded bg-white/10 px-1">AGENTS.md</code> API tab §3).
+        </p>
+        <ChatUserIntegrationSection framework={stack.framework} orm={stack.orm} />
 
-      {/* Step 3 – Data layer setup (only for relational / Mongoose) */}
       {(isTypeORM || isPrisma || isMongoose) && (
         <div>
-          <h4 className="font-semibold text-white mb-3 flex items-center gap-2">
-            <span className="flex w-6 h-6 items-center justify-center rounded-md bg-brand-secondary/20 text-brand-secondary text-xs font-bold">3</span>
+          <h4 className="font-semibold text-white mb-3">
             {isTypeORM
               ? "Register entities in TypeORM DataSource"
               : isPrisma
@@ -204,14 +207,9 @@ mongoose.model('Conversation', ConversationSchema);
         </div>
       )}
 
-      {/* Step (3 or 4) – Socket.IO realtime setup — always Socket.IO */}
       <div>
-        <h4 className="font-semibold text-white mb-3 flex items-center gap-2">
-          <span className="flex w-6 h-6 items-center justify-center rounded-md bg-brand-secondary/20 text-brand-secondary text-xs font-bold">
-            {3 + stepOffset}
-          </span>
-          Configure real-time transport
-          <span className="ml-1 text-[11px] font-normal opacity-60">(Socket.IO)</span>
+        <h4 className="font-semibold text-white mb-3">
+          Configure real-time transport <span className="text-[11px] font-normal opacity-60">(Socket.IO)</span>
         </h4>
         <CodeBlock
           code={realtimeSetup}
@@ -219,9 +217,10 @@ mongoose.model('Conversation', ConversationSchema);
           filename={isNestJS ? "src/main.ts" : "src/server.ts"}
         />
       </div>
+      </div>
 
-      {/* Data entities — tab bar per entity */}
       <div>
+        <KitDocStepHeading step={4}>API reference</KitDocStepHeading>
         <h4 className="font-semibold text-white mb-3">Data entities</h4>
         <p className="text-white/60 text-sm mb-4">
           The Chat Kit creates seven core entities (or equivalent schemas/tables) that model conversations, messages, participants, attachments, polls, votes, and reactions. Each entity is designed for a specific responsibility with clear relationships.
@@ -461,15 +460,13 @@ mongoose.model('Conversation', ConversationSchema);
         />
       </div>
 
-      {/* API endpoints reference */}
       <div>
-        <h4 className="font-semibold text-white mb-3">REST API reference</h4>
+        <h4 className="font-semibold text-white mb-3">REST endpoints</h4>
         {API_ENDPOINTS_TABLE}
       </div>
 
-      {/* API support for rich messages (GIF, attachments, location) */}
       <div>
-        <h4 className="font-semibold text-white mb-3">API support for rich messages</h4>
+        <h4 className="font-semibold text-white mb-3">Rich message types (API contract)</h4>
         <p className="text-white/60 text-sm mb-4">
           The backend accepts GIF, attachment, and location messages. Integration setup (Tenor, file storage, geolocation) is documented in the <strong className="text-white/80">UI tab</strong>. Below is the API contract for each type.
         </p>
@@ -505,30 +502,52 @@ mongoose.model('Conversation', ConversationSchema);
         </div>
       </div>
 
-      {/* Environment variables */}
+      <div className="space-y-6">
+        <KitDocStepHeading step={5}>Integration with frontend</KitDocStepHeading>
+        <KitIntegrationDisclaimer />
+        <KitApiFeBePlaybook withDisclaimer={false} kitTitle="Chat" apiControllerPath="chat" />
+        <ChatFullstackApiGuide isNestJS={isNestJS} />
+        <div>
+          <h4 className="font-semibold text-white mb-3">Environment variables</h4>
+          <p className="text-white/55 text-xs mb-2">
+            Examples only—align with your own secrets policy (see the disclaimer above).
+          </p>
+          <CodeBlock
+            code={[
+              isTypeORM || isPrisma
+                ? `DATABASE_URL="postgresql://user:pass@localhost:5432/mydb"`
+                : null,
+              isMongoose
+                ? `MONGODB_URI="mongodb://localhost:27017/mydb"`
+                : null,
+              isCosmosSdk
+                ? `COSMOS_ENDPOINT="https://your-account.documents.azure.com:443/"\nCOSMOS_KEY="your-key"\nCOSMOS_DATABASE="chatdb"`
+                : null,
+              isDynamoSdk
+                ? `AWS_REGION="us-east-1"\nAWS_ACCESS_KEY_ID="..."\nAWS_SECRET_ACCESS_KEY="..."`
+                : null,
+              `CORS_ORIGIN="${corsDevOrigins}"`,
+              `DEV_USER_ID="dev-user-local"`,
+            ]
+              .filter(Boolean)
+              .join("\n")}
+            language="bash"
+            filename=".env"
+          />
+          <p className="text-white/50 text-xs mt-2">
+            <code className="rounded bg-white/10 px-1">DEV_USER_ID</code> pairs with the generated dev middleware and the UI dev-user env you choose (e.g.{" "}
+            <code className="rounded bg-white/10 px-1">VITE_DEV_USER_ID</code> or <code className="rounded bg-white/10 px-1">NEXT_PUBLIC_CHAT_DEV_USER_ID</code> — see UI tab, matching the stack{" "}
+            <strong className="text-white/70">Frontend</strong> selection).
+          </p>
+        </div>
+      </div>
+
       <div>
-        <h4 className="font-semibold text-white mb-3">Environment variables</h4>
-        <CodeBlock
-          code={[
-            isTypeORM || isPrisma
-              ? `DATABASE_URL="postgresql://user:pass@localhost:5432/mydb"`
-              : null,
-            isMongoose
-              ? `MONGODB_URI="mongodb://localhost:27017/mydb"`
-              : null,
-            isCosmosSdk
-              ? `COSMOS_ENDPOINT="https://your-account.documents.azure.com:443/"\nCOSMOS_KEY="your-key"\nCOSMOS_DATABASE="chatdb"`
-              : null,
-            isDynamoSdk
-              ? `AWS_REGION="us-east-1"\nAWS_ACCESS_KEY_ID="..."\nAWS_SECRET_ACCESS_KEY="..."`
-              : null,
-            `CORS_ORIGIN="http://localhost:3000"`,
-          ]
-            .filter(Boolean)
-            .join("\n")}
-          language="bash"
-          filename=".env"
-        />
+        <KitDocStepHeading step={6}>Third-party integrations</KitDocStepHeading>
+        <p className="text-white/80 text-sm">
+          Real-time: <code className="rounded bg-white/10 px-1">socket.io</code> on the server; NestJS uses{" "}
+          <code className="rounded bg-white/10 px-1">@nestjs/platform-socket.io</code> with <code className="rounded bg-white/10 px-1">@nestjs/websockets</code>. GIF/Tenor and object storage are frontend concerns (see UI tab); the REST contract for <code className="rounded bg-white/10 px-1">gif</code>, attachments, and <code className="rounded bg-white/10 px-1">location</code> messages is under §4 above.
+        </p>
       </div>
     </div>
   );

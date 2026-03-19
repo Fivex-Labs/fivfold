@@ -2,6 +2,10 @@
 
 import { useStack } from "../../../components/stack-context"
 import { CodeBlock } from "../../../components/code-block"
+import { KitIntegrationDisclaimer } from "../../../components/kit-integration-disclaimer"
+import { KitApiFeBePlaybook } from "../../../components/kit-api-fe-be-playbook"
+import { KitUserModelIntegration } from "../../../components/kit-user-model-integration"
+import { KitDocStepHeading } from "../../../components/kit-doc-step-heading"
 
 const API_ENDPOINTS_TABLE = (
   <div className="overflow-x-auto">
@@ -43,8 +47,7 @@ export function EmailBackendContent() {
   const expressTypeORM = (
     <>
       <div>
-        <h4 className="font-semibold text-white mb-3 flex items-center gap-2">
-          <span className="flex w-6 h-6 items-center justify-center rounded-md bg-brand-secondary/20 text-brand-secondary text-xs font-bold">2</span>
+        <h4 className="font-semibold text-white mb-3">
           Generated file tree
         </h4>
         <CodeBlock
@@ -68,8 +71,7 @@ export function EmailBackendContent() {
         />
       </div>
       <div>
-        <h4 className="font-semibold text-white mb-3 flex items-center gap-2">
-          <span className="flex w-6 h-6 items-center justify-center rounded-md bg-brand-secondary/20 text-brand-secondary text-xs font-bold">3</span>
+        <h4 className="font-semibold text-white mb-3">
           Register entities in TypeORM DataSource
         </h4>
         <CodeBlock
@@ -98,8 +100,7 @@ export const AppDataSource = new DataSource({
         />
       </div>
       <div>
-        <h4 className="font-semibold text-white mb-3 flex items-center gap-2">
-          <span className="flex w-6 h-6 items-center justify-center rounded-md bg-brand-secondary/20 text-brand-secondary text-xs font-bold">4</span>
+        <h4 className="font-semibold text-white mb-3">
           Mount the router in your Express app
         </h4>
         <CodeBlock
@@ -116,8 +117,7 @@ app.use('/api/email', createEmailRouter(emailService));`}
         />
       </div>
       <div>
-        <h4 className="font-semibold text-white mb-3 flex items-center gap-2">
-          <span className="flex w-6 h-6 items-center justify-center rounded-md bg-brand-secondary/20 text-brand-secondary text-xs font-bold">5</span>
+        <h4 className="font-semibold text-white mb-3">
           Replace auth placeholder with your JWT middleware
         </h4>
         <p className="text-white/80 text-sm mb-2">
@@ -136,8 +136,7 @@ app.use('/api/email', createEmailRouter(emailService));`}
         />
       </div>
       <div>
-        <h4 className="font-semibold text-white mb-3 flex items-center gap-2">
-          <span className="flex w-6 h-6 items-center justify-center rounded-md bg-brand-secondary/20 text-brand-secondary text-xs font-bold">6</span>
+        <h4 className="font-semibold text-white mb-3">
           Run migrations (production)
         </h4>
         <CodeBlock
@@ -153,8 +152,7 @@ npx typeorm migration:run`}
   const nestjsTypeORM = (
     <>
       <div>
-        <h4 className="font-semibold text-white mb-3 flex items-center gap-2">
-          <span className="flex w-6 h-6 items-center justify-center rounded-md bg-brand-secondary/20 text-brand-secondary text-xs font-bold">2</span>
+        <h4 className="font-semibold text-white mb-3">
           Generated file tree
         </h4>
         <CodeBlock
@@ -169,8 +167,7 @@ npx typeorm migration:run`}
         />
       </div>
       <div>
-        <h4 className="font-semibold text-white mb-3 flex items-center gap-2">
-          <span className="flex w-6 h-6 items-center justify-center rounded-md bg-brand-secondary/20 text-brand-secondary text-xs font-bold">3</span>
+        <h4 className="font-semibold text-white mb-3">
           Import EmailModule into AppModule
         </h4>
         <CodeBlock
@@ -194,8 +191,7 @@ export class AppModule {}`}
         />
       </div>
       <div>
-        <h4 className="font-semibold text-white mb-3 flex items-center gap-2">
-          <span className="flex w-6 h-6 items-center justify-center rounded-md bg-brand-secondary/20 text-brand-secondary text-xs font-bold">4</span>
+        <h4 className="font-semibold text-white mb-3">
           Enable ValidationPipe globally
         </h4>
         <CodeBlock
@@ -208,8 +204,7 @@ app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));`}
         />
       </div>
       <div>
-        <h4 className="font-semibold text-white mb-3 flex items-center gap-2">
-          <span className="flex w-6 h-6 items-center justify-center rounded-md bg-brand-secondary/20 text-brand-secondary text-xs font-bold">5</span>
+        <h4 className="font-semibold text-white mb-3">
           Add auth guard to the controller
         </h4>
         <p className="text-white/80 text-sm mb-2">
@@ -227,8 +222,7 @@ export class EmailController { ... }`}
         />
       </div>
       <div>
-        <h4 className="font-semibold text-white mb-3 flex items-center gap-2">
-          <span className="flex w-6 h-6 items-center justify-center rounded-md bg-brand-secondary/20 text-brand-secondary text-xs font-bold">6</span>
+        <h4 className="font-semibold text-white mb-3">
           Run TypeORM migrations (production)
         </h4>
         <CodeBlock
@@ -244,8 +238,7 @@ npx typeorm migration:run -d src/data-source.ts`}
   const expressMongoose = (
     <>
       <div>
-        <h4 className="font-semibold text-white mb-3 flex items-center gap-2">
-          <span className="flex w-6 h-6 items-center justify-center rounded-md bg-brand-secondary/20 text-brand-secondary text-xs font-bold">2</span>
+        <h4 className="font-semibold text-white mb-3">
           Generated file tree
         </h4>
         <CodeBlock
@@ -265,8 +258,7 @@ npx typeorm migration:run -d src/data-source.ts`}
         />
       </div>
       <div>
-        <h4 className="font-semibold text-white mb-3 flex items-center gap-2">
-          <span className="flex w-6 h-6 items-center justify-center rounded-md bg-brand-secondary/20 text-brand-secondary text-xs font-bold">3</span>
+        <h4 className="font-semibold text-white mb-3">
           Register Mongoose schemas and mount router
         </h4>
         <CodeBlock
@@ -288,8 +280,7 @@ app.use('/api/email', createEmailRouter(emailService));`}
   const expressCosmosDynamo = (
     <>
       <div>
-        <h4 className="font-semibold text-white mb-3 flex items-center gap-2">
-          <span className="flex w-6 h-6 items-center justify-center rounded-md bg-brand-secondary/20 text-brand-secondary text-xs font-bold">2</span>
+        <h4 className="font-semibold text-white mb-3">
           Generated file tree
         </h4>
         <CodeBlock
@@ -304,8 +295,7 @@ app.use('/api/email', createEmailRouter(emailService));`}
         />
       </div>
       <div>
-        <h4 className="font-semibold text-white mb-3 flex items-center gap-2">
-          <span className="flex w-6 h-6 items-center justify-center rounded-md bg-brand-secondary/20 text-brand-secondary text-xs font-bold">3</span>
+        <h4 className="font-semibold text-white mb-3">
           Data layer setup
         </h4>
         <p className="text-white/80 text-sm mb-2">
@@ -320,8 +310,7 @@ app.use('/api/email', createEmailRouter(emailService));`}
   const expressPrisma = (
     <>
       <div>
-        <h4 className="font-semibold text-white mb-3 flex items-center gap-2">
-          <span className="flex w-6 h-6 items-center justify-center rounded-md bg-brand-secondary/20 text-brand-secondary text-xs font-bold">2</span>
+        <h4 className="font-semibold text-white mb-3">
           Generated file tree
         </h4>
         <CodeBlock
@@ -336,8 +325,7 @@ app.use('/api/email', createEmailRouter(emailService));`}
         />
       </div>
       <div>
-        <h4 className="font-semibold text-white mb-3 flex items-center gap-2">
-          <span className="flex w-6 h-6 items-center justify-center rounded-md bg-brand-secondary/20 text-brand-secondary text-xs font-bold">3</span>
+        <h4 className="font-semibold text-white mb-3">
           Mount the router
         </h4>
         <CodeBlock
@@ -350,8 +338,7 @@ app.use('/api/email', createEmailRouter(emailService));`}
         />
       </div>
       <div>
-        <h4 className="font-semibold text-white mb-3 flex items-center gap-2">
-          <span className="flex w-6 h-6 items-center justify-center rounded-md bg-brand-secondary/20 text-brand-secondary text-xs font-bold">4</span>
+        <h4 className="font-semibold text-white mb-3">
           Run Prisma migrations
         </h4>
         <CodeBlock
@@ -366,8 +353,7 @@ app.use('/api/email', createEmailRouter(emailService));`}
   const nestjsMongoose = (
     <>
       <div>
-        <h4 className="font-semibold text-white mb-3 flex items-center gap-2">
-          <span className="flex w-6 h-6 items-center justify-center rounded-md bg-brand-secondary/20 text-brand-secondary text-xs font-bold">2</span>
+        <h4 className="font-semibold text-white mb-3">
           Generated file tree
         </h4>
         <CodeBlock
@@ -387,8 +373,7 @@ app.use('/api/email', createEmailRouter(emailService));`}
         />
       </div>
       <div>
-        <h4 className="font-semibold text-white mb-3 flex items-center gap-2">
-          <span className="flex w-6 h-6 items-center justify-center rounded-md bg-brand-secondary/20 text-brand-secondary text-xs font-bold">3</span>
+        <h4 className="font-semibold text-white mb-3">
           Import EmailModule into AppModule
         </h4>
         <CodeBlock
@@ -404,8 +389,7 @@ app.use('/api/email', createEmailRouter(emailService));`}
   const nestjsCosmosDynamo = (
     <>
       <div>
-        <h4 className="font-semibold text-white mb-3 flex items-center gap-2">
-          <span className="flex w-6 h-6 items-center justify-center rounded-md bg-brand-secondary/20 text-brand-secondary text-xs font-bold">2</span>
+        <h4 className="font-semibold text-white mb-3">
           Generated file tree
         </h4>
         <CodeBlock
@@ -420,8 +404,7 @@ app.use('/api/email', createEmailRouter(emailService));`}
         />
       </div>
       <div>
-        <h4 className="font-semibold text-white mb-3 flex items-center gap-2">
-          <span className="flex w-6 h-6 items-center justify-center rounded-md bg-brand-secondary/20 text-brand-secondary text-xs font-bold">3</span>
+        <h4 className="font-semibold text-white mb-3">
           Data layer setup
         </h4>
         <p className="text-white/80 text-sm mb-2">
@@ -436,8 +419,7 @@ app.use('/api/email', createEmailRouter(emailService));`}
   const nestjsPrisma = (
     <>
       <div>
-        <h4 className="font-semibold text-white mb-3 flex items-center gap-2">
-          <span className="flex w-6 h-6 items-center justify-center rounded-md bg-brand-secondary/20 text-brand-secondary text-xs font-bold">2</span>
+        <h4 className="font-semibold text-white mb-3">
           Generated file tree
         </h4>
         <CodeBlock
@@ -452,8 +434,7 @@ app.use('/api/email', createEmailRouter(emailService));`}
         />
       </div>
       <div>
-        <h4 className="font-semibold text-white mb-3 flex items-center gap-2">
-          <span className="flex w-6 h-6 items-center justify-center rounded-md bg-brand-secondary/20 text-brand-secondary text-xs font-bold">3</span>
+        <h4 className="font-semibold text-white mb-3">
           Import EmailModule into AppModule
         </h4>
         <CodeBlock
@@ -464,8 +445,7 @@ export class AppModule {}`}
         />
       </div>
       <div>
-        <h4 className="font-semibold text-white mb-3 flex items-center gap-2">
-          <span className="flex w-6 h-6 items-center justify-center rounded-md bg-brand-secondary/20 text-brand-secondary text-xs font-bold">4</span>
+        <h4 className="font-semibold text-white mb-3">
           Run Prisma migrations
         </h4>
         <CodeBlock
@@ -495,10 +475,7 @@ export class AppModule {}`}
   return (
     <div className="space-y-8">
       <div>
-        <h4 className="font-semibold text-white mb-3 flex items-center gap-2">
-          <span className="flex w-6 h-6 items-center justify-center rounded-md bg-brand-secondary/20 text-brand-secondary text-xs font-bold">1</span>
-          Scaffold the module
-        </h4>
+        <KitDocStepHeading step={1}>Install / scaffold the module</KitDocStepHeading>
         <p className="text-white/80 text-sm mb-3">
           Normally, when you run <code>npx @fivfold/api init</code>, it prompts for framework, ORM, database, and output directory. That config is saved to <code>fivfold.json</code>, so you can then run the basic command without flags.
         </p>
@@ -513,44 +490,57 @@ export class AppModule {}`}
           showTerminalIcon
         />
       </div>
-      {stackContent}
-      <div>
-        <h4 className="font-semibold text-white mb-3 flex items-center gap-2">
-          <span className="flex w-6 h-6 items-center justify-center rounded-md bg-brand-secondary/20 text-brand-secondary text-xs font-bold">7</span>
-          Set environment variables
-        </h4>
-        <CodeBlock
-          code={
-            isTypeORM || isPrisma
-              ? `DATABASE_URL=postgresql://user:password@localhost:5432/yourdb`
-              : isMongoose
-              ? `MONGODB_URI=mongodb://localhost:27017/yourdb`
-              : isCosmosSdk
-              ? `COSMOS_ENDPOINT="https://your-account.documents.azure.com:443/"
-COSMOS_KEY="your-key"
-COSMOS_DATABASE_ID="emaildb"`
-              : isDynamoSdk
-              ? `AWS_REGION=us-east-1
-AWS_ACCESS_KEY_ID="..."
-AWS_SECRET_ACCESS_KEY="..."`
-              : `DATABASE_URL=postgresql://user:password@localhost:5432/yourdb`
-          }
-          language="bash"
-          label=".env"
-        />
+      <div className="space-y-6">
+        <KitDocStepHeading step={2}>Generated file structure & wire into the app</KitDocStepHeading>
+        <p className="text-white/65 text-sm -mt-1 mb-2">
+          Subsections below follow the <strong className="text-white/85">framework</strong> and <strong className="text-white/85">ORM</strong> selected in the stack sidebar (covers <code className="rounded bg-white/10 px-1">AGENTS.md</code> API tab §2–§3).
+        </p>
+        {stackContent}
       </div>
       <div>
-        <h4 className="font-semibold text-white mb-3 flex items-center gap-2">
-          <span className="flex w-6 h-6 items-center justify-center rounded-md bg-brand-secondary/20 text-brand-secondary text-xs font-bold">8</span>
-          API Endpoints
-        </h4>
+        <KitDocStepHeading step={3}>API reference</KitDocStepHeading>
         {API_ENDPOINTS_TABLE}
       </div>
-      <div>
-        <h4 className="font-semibold text-white mb-3 flex items-center gap-2">
-          <span className="flex w-6 h-6 items-center justify-center rounded-md bg-brand-secondary/20 text-brand-secondary text-xs font-bold">9</span>
-          Connecting the Email Kit UI with your API
-        </h4>
+      <div className="space-y-6">
+        <KitDocStepHeading step={4}>Integration with frontend</KitDocStepHeading>
+        <KitIntegrationDisclaimer />
+        <KitApiFeBePlaybook withDisclaimer={false} kitTitle="Email" apiControllerPath="email" />
+        <KitUserModelIntegration
+          kitTitle="Email"
+          summary="Folders, threads, and messages generated by the kit are scoped to a user identifier (from your auth layer). That id must match how you already identify users in the database."
+          bullets={[
+            "Inspect thread/folder entities (or Prisma models) for fields such as userId, ownerId, or accountId and align them with your User primary key or IdP subject.",
+            "If you use workspaces or tenants, extend filters in EmailService so queries never cross tenant boundaries.",
+            "When merging into an existing schema, add foreign keys or unique constraints deliberately—generated code stays ORM-agnostic so relations to User may be missing until you add them.",
+          ]}
+        />
+        <div>
+          <h5 className="text-sm font-semibold text-white/90 mb-2">Environment variables</h5>
+          <p className="text-white/55 text-xs mb-2">
+            Examples only—tune for your environments after reading the disclaimer above.
+          </p>
+          <CodeBlock
+            code={
+              isTypeORM || isPrisma
+                ? `DATABASE_URL=postgresql://user:password@localhost:5432/yourdb`
+                : isMongoose
+                ? `MONGODB_URI=mongodb://localhost:27017/yourdb`
+                : isCosmosSdk
+                ? `COSMOS_ENDPOINT="https://your-account.documents.azure.com:443/"
+COSMOS_KEY="your-key"
+COSMOS_DATABASE_ID="emaildb"`
+                : isDynamoSdk
+                ? `AWS_REGION=us-east-1
+AWS_ACCESS_KEY_ID="..."
+AWS_SECRET_ACCESS_KEY="..."`
+                : `DATABASE_URL=postgresql://user:password@localhost:5432/yourdb`
+            }
+            language="bash"
+            label=".env"
+          />
+        </div>
+        <div>
+          <h5 className="text-sm font-semibold text-white/90 mb-2">Mapping API data to the Email UI</h5>
         <p className="text-white/80 text-sm mb-4">
           The Email Kit UI expects data in the <code>FivFoldEmailThread</code> and <code>FivFoldEmailFolder</code> shapes.
           Your API returns its own format—map the response in your data-fetching layer (e.g. React Query, SWR, or fetch).
@@ -612,6 +602,19 @@ export function EmailPage() {
         />
         <p className="text-white/70 text-sm mt-4">
           Ensure your API base URL and auth token are passed in fetch headers (e.g. <code>Authorization: Bearer ...</code>).
+        </p>
+        </div>
+      </div>
+      <div>
+        <KitDocStepHeading step={5}>Third-party integrations</KitDocStepHeading>
+        <p className="text-white/80 text-sm">
+          The core Email API module does not require external SaaS for threads and messages—only your database. If you add outbound SMTP (SendGrid, SES, etc.) or sync to Gmail/Graph, treat those as your own adapters outside the scaffolded kit.
+        </p>
+      </div>
+      <div>
+        <KitDocStepHeading step={8}>Additional notes</KitDocStepHeading>
+        <p className="text-white/80 text-sm">
+          Use proper migrations in production (<code className="rounded bg-white/10 px-1">synchronize: true</code> is dev-only). Extend DTO validation and rate limits to match your threat model.
         </p>
       </div>
     </div>

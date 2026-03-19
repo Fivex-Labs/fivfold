@@ -2,11 +2,12 @@
   "name": "chat",
   "version": "1.0.0",
   "description": "Complete iMessage/WhatsApp-inspired chat UI with threads, conversations, groups, attachments, polls, reactions, GIFs, location sharing, and real-time messaging. Built on shadcn/ui with glassmorphism design.",
-  "dependencies": ["framer-motion", "date-fns", "emoji-mart"],
+  "dependencies": ["framer-motion", "date-fns", "emoji-mart", "socket.io-client"],
   "shadcnDependencies": [
     "button",
     "input",
     "textarea",
+    "label",
     "dropdown-menu",
     "card",
     "dialog",
@@ -20,7 +21,10 @@
     "context-menu",
     "tabs",
     "toggle",
-    "sheet"
+    "sheet",
+    "alert-dialog",
+    "switch",
+    "progress"
   ],
   "files": [
     { "template": "templates/chat/types.ts.hbs", "output": "{{outputDir}}/{{kitName}}/types.ts" },

@@ -7,6 +7,22 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Version
 
 ## [Unreleased]
 
+## [0.13.3] - 2026-03-20
+
+### Added
+- `AGENTS.md`: **Kit documentation page structure (mandatory)** — fixed section order for **UI** and **API** kit tabs (installation → file structure → import/wire → props or API reference → integration with FE/BE → third-party → shadcn on UI only → additional).
+- `fivfold-site`: `KitDocStepHeading` component for numbered kit doc section titles.
+
+### Changed
+- `fivfold-site` **Chat** kit UI tab: sections reordered to match the standard (install, file tree, usage, props, backend integration + `ChatFullstackUiGuide`, third-party Tenor/storage/location, shadcn primitives via `ChatKitShadcnPrimitivesSection`, additional npm deps).
+- `fivfold-site` **Auth** kit UI tab: single `AuthUIContent` flow with the same 1–8 sequence (props, integration, third-party links, shadcn vs additional deps split).
+- `fivfold-site` **Chat** kit API tab (`chat-backend-content`): disclaimer/playbook moved after API reference; **§1–6** use `KitDocStepHeading` (install, file tree, wire, API entities/endpoints/rich messages, frontend integration + env, third-party Socket.IO note).
+- `fivfold-site` **Auth** kit API tab (`auth-backend-content`): **§1–8** aligned to API standard — scaffold and file tree first, wire (architecture + DB + mount), API reference, integration (disclaimer, playbook, user model, env, UI connection), third-party provider notes, additional security + HTTP errors.
+- `fivfold-site` **Email** & **Kanban** API tabs: `KitDocStepHeading` for install, combined file structure & wiring, API reference, integration, third-party stub, additional notes; removed conflicting inner step badges on stack-specific substeps.
+- `fivfold-site` **Push** guide (`push-backend-content`): same API-doc order (scaffold → file & wire → endpoints + examples → integration with env & client steps → third-party SDKs → additional hardening).
+- `@fivfold/ui` / `@fivfold/api`: CLI `--version` strings set to `0.13.3`.
+- Workspace `package.json` versions set to `0.13.3` for root, `core`, `ui`, `api`, and `fivfold-site`.
+
 ## [0.13.2] - 2026-03-20
 
 ### Fixed
