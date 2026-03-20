@@ -49,6 +49,18 @@ export function createChatRouter(chatService: ChatService, chatNamespace?: Names
     res.sendStatus(204);
   });
 
+  router.patch('/conversations/:id/unread', async (req: Request, res: Response) => {
+    const userId = (req as Request & { user: { id: string } }).user.id;
+    await chatService.markAsUnread(req.params.id, userId);
+    res.sendStatus(204);
+  });
+
+  router.delete('/conversations/:id/messages', async (req: Request, res: Response) => {
+    const userId = (req as Request & { user: { id: string } }).user.id;
+    await chatService.clearConversationMessages(req.params.id, userId);
+    res.sendStatus(204);
+  });
+
   // ── Messages ───────────────────────────────────────────────────────────────
   router.post('/messages', async (req: Request, res: Response) => {
     const userId = (req as Request & { user: { id: string } }).user.id;
@@ -145,7 +157,12 @@ export function createChatRouter(chatService: ChatService, chatNamespace?: Names
   // ── Search ─────────────────────────────────────────────────────────────────
   router.get('/search', async (req: Request, res: Response) => {
     const userId = (req as Request & { user: { id: string } }).user.id;
-    const result = await chatService.searchConversations({ query: req.query.q as string, includeMessages: req.query.messages !== 'false', includeConversations: req.query.conversations !== 'false' }, userId);
+    const result = await chatService.searchConversations({
+      query: req.query.q as string,
+      includeMessages: req.query.messages !== 'false',
+      includeConversations: req.query.conversations !== 'false',
+      conversationId: typeof req.query.conversationId === 'string' ? req.query.conversationId : undefined,
+    }, userId);
     res.json(result);
   });
 

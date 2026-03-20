@@ -155,5 +155,15 @@ export interface FivFoldChatKitProps {
   onRemoveMember?: (conversationId: string, userId: string) => void | Promise<void>;
   onLeaveGroup?: (conversationId: string) => void | Promise<void>;
   onUpdateGroup?: (conversationId: string, updates: { name?: string; avatarUrl?: string; description?: string }) => void | Promise<void>;
+  /** Remove the conversation for the current user (server should enforce membership). */
+  onDeleteConversation?: (conversationId: string) => void | Promise<void>;
+  /** Mark every message in the conversation as read (e.g. PATCH …/read). */
+  onMarkConversationRead?: (conversationId: string) => void | Promise<void>;
+  /** Mark the conversation unread for the current user (e.g. PATCH …/unread). */
+  onMarkConversationUnread?: (conversationId: string) => void | Promise<void>;
+  /** Clear message history in the conversation (e.g. DELETE …/messages). */
+  onClearConversationMessages?: (conversationId: string) => void | Promise<void>;
+  /** Direct chats only — block the other participant (app-specific). */
+  onBlockUser?: (userId: string) => void | Promise<void>;
   className?: string;
 }

@@ -26,7 +26,8 @@ const SHADCN_PRIMITIVES_TABLE = (
         <tr className="border-b border-white/5"><td className="py-2 px-3 font-mono text-brand-secondary">label</td><td className="py-2 px-3">Form labels</td></tr>
         <tr className="border-b border-white/5"><td className="py-2 px-3 font-mono text-brand-secondary">badge</td><td className="py-2 px-3">Thread metadata</td></tr>
         <tr className="border-b border-white/5"><td className="py-2 px-3 font-mono text-brand-secondary">tooltip</td><td className="py-2 px-3">Toolbar hints — wrap the app in <code className="rounded bg-white/10 px-1">TooltipProvider</code></td></tr>
-        <tr className="border-b border-white/5"><td className="py-2 px-3 font-mono text-brand-secondary">context-menu</td><td className="py-2 px-3">Thread / message actions</td></tr>
+        <tr className="border-b border-white/5"><td className="py-2 px-3 font-mono text-brand-secondary">dropdown-menu</td><td className="py-2 px-3">Thread row ⋯ menu, sidebar overflow, chat header ⋯ menu</td></tr>
+        <tr className="border-b border-white/5"><td className="py-2 px-3 font-mono text-brand-secondary">context-menu</td><td className="py-2 px-3">Thread / message actions (right-click)</td></tr>
         <tr className="border-b border-white/5"><td className="py-2 px-3 font-mono text-brand-secondary">alert-dialog</td><td className="py-2 px-3">Destructive confirms (e.g. leave group)</td></tr>
         <tr className="border-b border-white/5"><td className="py-2 px-3 font-mono text-brand-secondary">switch</td><td className="py-2 px-3">Poll options</td></tr>
         <tr className="border-b border-white/5"><td className="py-2 px-3 font-mono text-brand-secondary">progress</td><td className="py-2 px-3">Poll UI</td></tr>

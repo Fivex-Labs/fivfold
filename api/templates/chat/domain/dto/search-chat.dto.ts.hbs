@@ -10,4 +10,9 @@ export class SearchChatDto {
 
   @IsOptional()
   includeConversations?: boolean;
+
+  /** If set, only this conversation is searched (must be one the user participates in). */
+  @IsOptional()
+  @IsString()
+  conversationId?: string;
 }

@@ -16,7 +16,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { ChatAvatar } from './chat-avatar';
 import { PollDisplay } from './poll-display';
 import { LocationDisplay } from './location-display';
-import { ReactionPicker } from './reaction-picker';
+import { ReactionPicker, CHAT_QUICK_REACTION_EMOJIS } from './reaction-picker';
 import type { FivFoldChatMessage } from './types';
 
 interface MessageBubbleProps {
@@ -71,7 +71,7 @@ export function MessageBubble({
       exit={{ opacity: 0, scale: 0.9 }}
       transition={{ type: 'spring', stiffness: 400, damping: 35 }}
       className={cn(
-        'group flex gap-2',
+        'group/msg flex gap-2',
         isOwn ? 'flex-row-reverse' : 'flex-row',
         className
       )}
@@ -98,6 +98,28 @@ export function MessageBubble({
           <span className="ml-1 text-[11px] font-medium text-muted-foreground">
             {message.sender.name}
           </span>
+        )}
+
+        {onReaction && !isDeleted && (
+          <div
+            className={cn(
+              'z-[1] flex items-center gap-0.5 rounded-full border border-border bg-background/95 px-1.5 py-0.5 shadow-md backdrop-blur-sm transition-all duration-150',
+              isOwn ? 'self-end' : 'self-start',
+              'pointer-events-none scale-95 opacity-0',
+              'md:group-hover/msg:pointer-events-auto md:group-hover/msg:scale-100 md:group-hover/msg:opacity-100'
+            )}
+          >
+            {CHAT_QUICK_REACTION_EMOJIS.map((emoji) => (
+              <button
+                key={emoji}
+                type="button"
+                className="h-6 w-6 text-base transition-transform hover:scale-125 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                onClick={() => onReaction(message.id, emoji, hasReacted(emoji))}
+              >
+                {emoji}
+              </button>
+            ))}
+          </div>
         )}
 
         <ContextMenu>
@@ -176,7 +198,7 @@ export function MessageBubble({
                   )}
 
                   {message.type === 'location' && message.location && (
-                    <LocationDisplay location={message.location} />
+                    <LocationDisplay location={message.location} sentByMe={isOwn} />
                   )}
                 </>
               )}

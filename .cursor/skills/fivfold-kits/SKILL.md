@@ -54,5 +54,5 @@ npx @fivfold/ui add <name> --theme zinc  # add with specific theme
 |-----|-------------|
 | Email | Full-featured email client with folders, threads, compose |
 | Kanban | Drag-and-drop board with columns, tasks, priorities |
-| Chat | Real-time chat with threads and messages |
+| Chat | Threads, Socket.IO-ready kit: dropdown menus, inline composer (poll/emoji/GIF), search — wire optional `ChatKit` callbacks to your API |
 | Auth | Login, Register, ForgotPassword (Firebase, Cognito, Auth0, JWT) |

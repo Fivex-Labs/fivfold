@@ -1,45 +1,88 @@
 'use client';
 
 import { MapPin, ExternalLink } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import type { FivFoldChatLocation } from './types';
 
 interface LocationDisplayProps {
   location: FivFoldChatLocation;
+  /** Incoming bubble: primary styling; outgoing uses stronger primary tint (demo-style). */
+  sentByMe?: boolean;
 }
 
-export function LocationDisplay({ location }: LocationDisplayProps) {
-  const mapsUrl = `https://www.google.com/maps?q=${location.latitude},${location.longitude}`;
-  const staticMapUrl = `https://maps.geoapify.com/v1/staticmap?style=osm-bright-smooth&width=250&height=120&center=lonlat:${location.longitude},${location.latitude}&zoom=13&marker=lonlat:${location.longitude},${location.latitude};color:%23e11d48&apiKey=YOUR_GEOAPIFY_KEY`;
+export function LocationDisplay({ location, sentByMe }: LocationDisplayProps) {
+  const lat = location.latitude;
+  const lng = location.longitude;
+  const mapsUrl = `https://www.google.com/maps?q=${lat},${lng}`;
+  const osmEmbed = `https://www.openstreetmap.org/export/embed.html?bbox=${(lng - 0.005).toFixed(6)}%2C${(lat - 0.005).toFixed(6)}%2C${(lng + 0.005).toFixed(6)}%2C${(lat + 0.005).toFixed(6)}&layer=mapnik&marker=${lat}%2C${lng}`;
+
+  if (location.mapImageUrl) {
+    return (
+      <div className="space-y-1.5">
+        <div className="overflow-hidden rounded-lg">
+          <img
+            src={location.mapImageUrl}
+            alt={location.label ?? 'Location'}
+            className="w-full max-w-[220px] object-cover"
+          />
+        </div>
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-1.5 text-xs">
+            <MapPin className="h-3 w-3 shrink-0" />
+            <span className="line-clamp-1">
+              {location.label ?? `${lat.toFixed(4)}, ${lng.toFixed(4)}`}
+            </span>
+          </div>
+          <a
+            href={mapsUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 rounded text-[10px] underline underline-offset-2 hover:no-underline"
+          >
+            Open <ExternalLink className="h-2.5 w-2.5" />
+          </a>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-1.5">
-      <div className="overflow-hidden rounded-lg">
-        <img
-          src={staticMapUrl}
-          alt={location.label ?? 'Location'}
-          className="w-full max-w-[220px] object-cover"
-          onError={(e) => {
-            (e.target as HTMLImageElement).style.display = 'none';
-          }}
-        />
-      </div>
-
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-1.5 text-xs">
-          <MapPin className="h-3 w-3 shrink-0" />
-          <span className="line-clamp-1">
-            {location.label ?? `${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}`}
-          </span>
+    <a
+      href={mapsUrl}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="group/loc block w-[220px]"
+      onClick={(e) => e.stopPropagation()}
+    >
+      <div className="overflow-hidden rounded-xl border border-white/10">
+        <div className="relative h-[120px] w-full overflow-hidden bg-muted">
+          <iframe
+            src={osmEmbed}
+            width={220}
+            height={120}
+            className="pointer-events-none h-full w-full border-0"
+            title={location.label ? `Map: ${location.label}` : `Map location: ${lat}, ${lng}`}
+            loading="lazy"
+          />
         </div>
-        <a
-          href={mapsUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-1 rounded text-[10px] underline underline-offset-2 hover:no-underline"
+        <div
+          className={cn(
+            'flex items-center gap-1.5 px-2.5 py-2',
+            sentByMe ? 'bg-primary/80' : 'bg-muted'
+          )}
         >
-          Open <ExternalLink className="h-2.5 w-2.5" />
-        </a>
+          <MapPin className="h-3 w-3 shrink-0 text-rose-400" />
+          <span
+            className={cn(
+              'flex-1 text-[11px] font-medium tabular-nums',
+              sentByMe ? 'text-primary-foreground' : 'text-foreground'
+            )}
+          >
+            {location.label ?? `${lat.toFixed(4)}, ${lng.toFixed(4)}`}
+          </span>
+          <ExternalLink className="h-2.5 w-2.5 shrink-0 opacity-50 transition-opacity group-hover/loc:opacity-100" />
+        </div>
       </div>
-    </div>
+    </a>
   );
 }

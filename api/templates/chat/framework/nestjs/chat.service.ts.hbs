@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ForbiddenException, ConflictException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 {{#if (eq orm "typeorm")}}
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In } from 'typeorm';
@@ -22,10 +22,6 @@ import type { IReaction } from './schemas/reaction.schema';
 {{/if}}
 {{#if (eq orm "prisma")}}
 import { PrismaService } from '../prisma/prisma.service';
-{{/if}}
-{{#if (eq orm "firebase-admin")}}
-import { ChatCollections } from './collections/chat.collections';
-import * as admin from 'firebase-admin';
 {{/if}}
 import type { IChatService } from './domain/chat.port';
 import type { CreateMessageDto } from './dto/create-message.dto';
@@ -103,19 +99,6 @@ export class ChatService implements IChatService {
       include: { participants: true },
     });
     {{/if}}
-    {{#if (eq orm "firebase-admin")}}
-    const ref = ChatCollections.conversations().doc();
-    const now = admin.firestore.Timestamp.now();
-    const participantIds = [...new Set([userId, ...dto.participantIds])];
-    await ref.set({ type: 'direct', pinnedByUserIds: [], mutedByUsers: {}, createdAt: now, updatedAt: now });
-    const batch = admin.firestore().batch();
-    participantIds.forEach((uid) => {
-      const pRef = ChatCollections.participants(ref.id).doc(uid);
-      batch.set(pRef, { conversationId: ref.id, userId: uid, role: uid === userId ? 'admin' : 'member', joinedAt: now });
-    });
-    await batch.commit();
-    return { id: ref.id, type: 'direct' };
-    {{/if}}
   }
 
   async getConversations(userId: string, pagination: PaginationDto): Promise<{ items: unknown[]; total: number; nextCursor?: string }> {
@@ -141,10 +124,6 @@ export class ChatService implements IChatService {
     const hasMore = conversations.length > limit;
     return { items: conversations.slice(0, limit), total: conversations.length };
     {{/if}}
-    {{#if (eq orm "firebase-admin")}}
-    const participationsSnap = await ChatCollections.participants('').parent.where('userId', '==', userId).limit(limit).get();
-    return { items: [], total: participationsSnap.size };
-    {{/if}}
   }
 
   async getConversation(id: string, userId: string): Promise<unknown> {
@@ -163,11 +142,6 @@ export class ChatService implements IChatService {
     if (!participant) throw new NotFoundException('Conversation not found');
     return this.prisma.chatConversation.findUnique({ where: { id } });
     {{/if}}
-    {{#if (eq orm "firebase-admin")}}
-    const doc = await ChatCollections.conversations().doc(id).get();
-    if (!doc.exists) throw new NotFoundException('Conversation not found');
-    return { id: doc.id, ...doc.data() };
-    {{/if}}
   }
 
   async deleteConversation(id: string, userId: string): Promise<void> {
@@ -180,9 +154,6 @@ export class ChatService implements IChatService {
     {{/if}}
     {{#if (eq orm "prisma")}}
     await this.prisma.chatConversation.delete({ where: { id } });
-    {{/if}}
-    {{#if (eq orm "firebase-admin")}}
-    await ChatCollections.conversations().doc(id).delete();
     {{/if}}
   }
 
@@ -203,10 +174,6 @@ export class ChatService implements IChatService {
     if (!conv) throw new NotFoundException();
     const current = (conv.pinnedByUserIds as string[]) ?? [];
     await this.prisma.chatConversation.update({ where: { id: conversationId }, data: { pinnedByUserIds: pinned ? [...new Set([...current, userId])] : current.filter((id) => id !== userId) } });
-    {{/if}}
-    {{#if (eq orm "firebase-admin")}}
-    const ref = ChatCollections.conversations().doc(conversationId);
-    await ref.update({ pinnedByUserIds: pinned ? admin.firestore.FieldValue.arrayUnion(userId) : admin.firestore.FieldValue.arrayRemove(userId) });
     {{/if}}
   }
 
@@ -231,14 +198,6 @@ export class ChatService implements IChatService {
     if (mutedUntil) muted[userId] = mutedUntil.toISOString(); else delete muted[userId];
     await this.prisma.chatConversation.update({ where: { id: conversationId }, data: { mutedByUsers: muted } });
     {{/if}}
-    {{#if (eq orm "firebase-admin")}}
-    const ref = ChatCollections.conversations().doc(conversationId);
-    if (mutedUntil) {
-      await ref.update({ [`mutedByUsers.${userId}`]: mutedUntil.toISOString() });
-    } else {
-      await ref.update({ [`mutedByUsers.${userId}`]: admin.firestore.FieldValue.delete() });
-    }
-    {{/if}}
   }
 
   async markAsRead(conversationId: string, userId: string): Promise<void> {
@@ -251,8 +210,23 @@ export class ChatService implements IChatService {
     {{#if (eq orm "prisma")}}
     await this.prisma.chatParticipant.update({ where: { conversationId_userId: { conversationId, userId } }, data: { lastReadAt: new Date() } });
     {{/if}}
-    {{#if (eq orm "firebase-admin")}}
-    await ChatCollections.participants(conversationId).doc(userId).update({ lastReadAt: admin.firestore.Timestamp.now() });
+  }
+
+  async markAsUnread(conversationId: string, userId: string): Promise<void> {
+    await this.getConversation(conversationId, userId);
+    {{#if (eq orm "typeorm")}}
+    await this.participantRepo
+      .createQueryBuilder()
+      .update(ParticipantEntity)
+      .set({ lastReadAt: null as unknown as Date })
+      .where('conversationId = :conversationId AND userId = :userId', { conversationId, userId })
+      .execute();
+    {{/if}}
+    {{#if (eq orm "mongoose")}}
+    await this.participantModel.updateOne({ conversationId, userId }, { $unset: { lastReadAt: 1 } });
+    {{/if}}
+    {{#if (eq orm "prisma")}}
+    await this.prisma.chatParticipant.update({ where: { conversationId_userId: { conversationId, userId } }, data: { lastReadAt: null } });
     {{/if}}
   }
 
@@ -266,12 +240,6 @@ export class ChatService implements IChatService {
     {{/if}}
     {{#if (eq orm "prisma")}}
     return this.prisma.chatMessage.create({ data: { conversationId: dto.conversationId, senderId, content: dto.content, type: dto.type, metadata: dto.metadata ?? {}, readByUserIds: [senderId], status: 'sent' } });
-    {{/if}}
-    {{#if (eq orm "firebase-admin")}}
-    const ref = ChatCollections.messages(dto.conversationId).doc();
-    const now = admin.firestore.Timestamp.now();
-    await ref.set({ conversationId: dto.conversationId, senderId, content: dto.content, type: dto.type, metadata: dto.metadata ?? {}, readByUserIds: [senderId], status: 'sent', createdAt: now, updatedAt: now });
-    return { id: ref.id, ...dto };
     {{/if}}
   }
 
@@ -289,10 +257,6 @@ export class ChatService implements IChatService {
     const items = await this.prisma.chatMessage.findMany({ where: { conversationId, deletedAt: null }, orderBy: { createdAt: 'desc' }, take: limit });
     return { items: items.reverse(), total: items.length };
     {{/if}}
-    {{#if (eq orm "firebase-admin")}}
-    const snap = await ChatCollections.messages(conversationId).orderBy('createdAt', 'desc').limit(limit).get();
-    return { items: snap.docs.map((d) => ({ id: d.id, ...d.data() })).reverse(), total: snap.size };
-    {{/if}}
   }
 
   async deleteMessage(messageId: string, userId: string): Promise<void> {
@@ -305,8 +269,30 @@ export class ChatService implements IChatService {
     {{#if (eq orm "prisma")}}
     await this.prisma.chatMessage.updateMany({ where: { id: messageId, senderId: userId }, data: { deletedAt: new Date() } });
     {{/if}}
-    {{#if (eq orm "firebase-admin")}}
-    throw new Error('Not implemented for Firebase - requires conversation context');
+  }
+
+  async clearConversationMessages(conversationId: string, userId: string): Promise<void> {
+    await this.getConversation(conversationId, userId);
+    {{#if (eq orm "typeorm")}}
+    const conv = await this.conversationRepo.findOneBy({ id: conversationId });
+    const me = await this.participantRepo.findOneBy({ conversationId, userId });
+    if (!conv || !me) throw new NotFoundException();
+    if (conv.type === 'group' && me.role !== 'admin') throw new ForbiddenException('Only admins can clear group history');
+    await this.messageRepo.softDelete({ conversationId });
+    {{/if}}
+    {{#if (eq orm "mongoose")}}
+    const conv = await this.conversationModel.findById(conversationId);
+    const me = await this.participantModel.findOne({ conversationId, userId });
+    if (!conv || !me) throw new NotFoundException();
+    if (conv.type === 'group' && me.role !== 'admin') throw new ForbiddenException('Only admins can clear group history');
+    await this.messageModel.updateMany({ conversationId, deletedAt: null }, { deletedAt: new Date() });
+    {{/if}}
+    {{#if (eq orm "prisma")}}
+    const conv = await this.prisma.chatConversation.findUnique({ where: { id: conversationId } });
+    const me = await this.prisma.chatParticipant.findUnique({ where: { conversationId_userId: { conversationId, userId } } });
+    if (!conv || !me) throw new NotFoundException();
+    if (conv.type === 'group' && me.role !== 'admin') throw new ForbiddenException('Only admins can clear group history');
+    await this.prisma.chatMessage.updateMany({ where: { conversationId, deletedAt: null }, data: { deletedAt: new Date() } });
     {{/if}}
   }
 
@@ -328,16 +314,6 @@ export class ChatService implements IChatService {
     const memberIds = [...new Set([creatorId, ...dto.memberIds])];
     return this.prisma.chatConversation.create({ data: { type: 'group', name: dto.name, avatarUrl: dto.avatarUrl, description: dto.description, pinnedByUserIds: [], participants: { create: memberIds.map((uid) => ({ userId: uid, role: uid === creatorId ? 'admin' : 'member' })) } }, include: { participants: true } });
     {{/if}}
-    {{#if (eq orm "firebase-admin")}}
-    const ref = ChatCollections.conversations().doc();
-    const now = admin.firestore.Timestamp.now();
-    const memberIds = [...new Set([creatorId, ...dto.memberIds])];
-    await ref.set({ type: 'group', name: dto.name, avatarUrl: dto.avatarUrl ?? null, description: dto.description ?? null, pinnedByUserIds: [], mutedByUsers: {}, createdAt: now, updatedAt: now });
-    const batch = admin.firestore().batch();
-    memberIds.forEach((uid) => { batch.set(ChatCollections.participants(ref.id).doc(uid), { conversationId: ref.id, userId: uid, role: uid === creatorId ? 'admin' : 'member', joinedAt: now }); });
-    await batch.commit();
-    return { id: ref.id, type: 'group' };
-    {{/if}}
   }
 
   async updateGroup(groupId: string, dto: UpdateGroupDto, requesterId: string): Promise<unknown> {
@@ -357,11 +333,6 @@ export class ChatService implements IChatService {
     if (!requester || requester.role !== 'admin') throw new ForbiddenException();
     return this.prisma.chatConversation.update({ where: { id: groupId }, data: { ...(dto.name && { name: dto.name }), ...(dto.avatarUrl && { avatarUrl: dto.avatarUrl }), ...(dto.description && { description: dto.description }) } });
     {{/if}}
-    {{#if (eq orm "firebase-admin")}}
-    const ref = ChatCollections.conversations().doc(groupId);
-    await ref.update({ ...(dto.name && { name: dto.name }), ...(dto.avatarUrl && { avatarUrl: dto.avatarUrl }), updatedAt: admin.firestore.Timestamp.now() });
-    return { id: groupId, ...dto };
-    {{/if}}
   }
 
   async addMember(dto: AddMemberDto, requesterId: string): Promise<void> {
@@ -380,9 +351,6 @@ export class ChatService implements IChatService {
     if (!requester || requester.role !== 'admin') throw new ForbiddenException();
     await this.prisma.chatParticipant.create({ data: { conversationId: dto.conversationId, userId: dto.userId, role: dto.role ?? 'member' } });
     {{/if}}
-    {{#if (eq orm "firebase-admin")}}
-    await ChatCollections.participants(dto.conversationId).doc(dto.userId).set({ conversationId: dto.conversationId, userId: dto.userId, role: dto.role ?? 'member', joinedAt: admin.firestore.Timestamp.now() });
-    {{/if}}
   }
 
   async removeMember(dto: RemoveMemberDto, requesterId: string): Promise<void> {
@@ -397,9 +365,6 @@ export class ChatService implements IChatService {
     {{#if (eq orm "prisma")}}
     await this.prisma.chatParticipant.delete({ where: { conversationId_userId: { conversationId: dto.conversationId, userId: dto.userId } } });
     {{/if}}
-    {{#if (eq orm "firebase-admin")}}
-    await ChatCollections.participants(dto.conversationId).doc(dto.userId).delete();
-    {{/if}}
   }
 
   async updateMemberRole(conversationId: string, targetUserId: string, role: 'admin' | 'member', requesterId: string): Promise<void> {
@@ -413,9 +378,6 @@ export class ChatService implements IChatService {
     {{/if}}
     {{#if (eq orm "prisma")}}
     await this.prisma.chatParticipant.update({ where: { conversationId_userId: { conversationId, userId: targetUserId } }, data: { role } });
-    {{/if}}
-    {{#if (eq orm "firebase-admin")}}
-    await ChatCollections.participants(conversationId).doc(targetUserId).update({ role });
     {{/if}}
   }
 
@@ -451,9 +413,6 @@ export class ChatService implements IChatService {
     {{#if (eq orm "prisma")}}
     await this.prisma.chatPollVote.upsert({ where: { pollId_userId_optionIndex: { pollId: dto.pollId, userId, optionIndex: dto.optionIndex } }, create: { pollId: dto.pollId, userId, optionIndex: dto.optionIndex }, update: {} });
     {{/if}}
-    {{#if (eq orm "firebase-admin")}}
-    await ChatCollections.polls().doc(dto.pollId).update({ votes: admin.firestore.FieldValue.arrayUnion({ userId, optionIndex: dto.optionIndex }) });
-    {{/if}}
   }
 
   async shareLocation(dto: ShareLocationDto, senderId: string): Promise<unknown> {
@@ -470,9 +429,6 @@ export class ChatService implements IChatService {
     {{#if (eq orm "prisma")}}
     await this.prisma.chatReaction.upsert({ where: { messageId_userId_emoji: { messageId: dto.messageId, userId, emoji: dto.emoji } }, create: { messageId: dto.messageId, userId, emoji: dto.emoji }, update: {} });
     {{/if}}
-    {{#if (eq orm "firebase-admin")}}
-    throw new Error('Requires conversation context to add reaction in Firebase');
-    {{/if}}
   }
 
   async removeReaction(messageId: string, emoji: string, userId: string): Promise<void> {
@@ -485,30 +441,93 @@ export class ChatService implements IChatService {
     {{#if (eq orm "prisma")}}
     await this.prisma.chatReaction.deleteMany({ where: { messageId, userId, emoji } });
     {{/if}}
-    {{#if (eq orm "firebase-admin")}}
-    throw new Error('Requires conversation context');
-    {{/if}}
   }
 
   async searchConversations(dto: SearchChatDto, userId: string): Promise<{ conversations: unknown[]; messages: unknown[] }> {
     {{#if (eq orm "typeorm")}}
-    const conversations = dto.includeConversations !== false ? await this.conversationRepo.createQueryBuilder('c').where('LOWER(c.name) LIKE :q', { q: `%${dto.query.toLowerCase()}%` }).take(20).getMany() : [];
-    const messages = dto.includeMessages !== false ? await this.messageRepo.createQueryBuilder('m').where('LOWER(m.content) LIKE :q', { q: `%${dto.query.toLowerCase()}%` }).take(20).getMany() : [];
+    const memberships = await this.participantRepo.find({ where: { userId }, select: ['conversationId'] });
+    let allowedIds = memberships.map((m) => m.conversationId);
+    if (dto.conversationId) {
+      if (!allowedIds.includes(dto.conversationId)) return { conversations: [], messages: [] };
+      allowedIds = [dto.conversationId];
+    }
+    if (!allowedIds.length) return { conversations: [], messages: [] };
+    const like = `%${dto.query.toLowerCase()}%`;
+    let conversations: ConversationEntity[] = [];
+    let messages: MessageEntity[] = [];
+    if (dto.includeConversations !== false) {
+      conversations = await this.conversationRepo
+        .createQueryBuilder('c')
+        .where('c.id IN (:...ids)', { ids: allowedIds })
+        .andWhere('c.name IS NOT NULL')
+        .andWhere('LOWER(c.name) LIKE :q', { q: like })
+        .take(20)
+        .getMany();
+    }
+    if (dto.includeMessages !== false) {
+      messages = await this.messageRepo
+        .createQueryBuilder('m')
+        .where('m.conversationId IN (:...ids)', { ids: allowedIds })
+        .andWhere('m.content IS NOT NULL')
+        .andWhere('LOWER(m.content) LIKE :q', { q: like })
+        .take(20)
+        .getMany();
+    }
     return { conversations, messages };
     {{/if}}
     {{#if (eq orm "mongoose")}}
-    const q = new RegExp(dto.query, 'i');
-    const conversations = dto.includeConversations !== false ? await this.conversationModel.find({ name: q }).limit(20) : [];
-    const messages = dto.includeMessages !== false ? await this.messageModel.find({ content: q }).limit(20) : [];
+    const memberships = await this.participantModel.find({ userId }).select('conversationId');
+    let allowedIds = memberships.map((m) => m.conversationId);
+    if (dto.conversationId) {
+      if (!allowedIds.includes(dto.conversationId)) return { conversations: [], messages: [] };
+      allowedIds = [dto.conversationId];
+    }
+    if (!allowedIds.length) return { conversations: [], messages: [] };
+    const rx = new RegExp(dto.query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+    let conversations: unknown[] = [];
+    let messages: unknown[] = [];
+    if (dto.includeConversations !== false) {
+      conversations = await this.conversationModel
+        .find({ _id: { $in: allowedIds }, name: { $regex: rx } })
+        .limit(20);
+    }
+    if (dto.includeMessages !== false) {
+      messages = await this.messageModel
+        .find({ conversationId: { $in: allowedIds }, content: { $regex: rx }, deletedAt: null })
+        .limit(20);
+    }
     return { conversations, messages };
     {{/if}}
     {{#if (eq orm "prisma")}}
-    const conversations = dto.includeConversations !== false ? await this.prisma.chatConversation.findMany({ where: { name: { contains: dto.query, mode: 'insensitive' } }, take: 20 }) : [];
-    const messages = dto.includeMessages !== false ? await this.prisma.chatMessage.findMany({ where: { content: { contains: dto.query, mode: 'insensitive' } }, take: 20 }) : [];
+    const memberships = await this.prisma.chatParticipant.findMany({ where: { userId }, select: { conversationId: true } });
+    let allowedIds = memberships.map((m) => m.conversationId);
+    if (dto.conversationId) {
+      if (!allowedIds.includes(dto.conversationId)) return { conversations: [], messages: [] };
+      allowedIds = [dto.conversationId];
+    }
+    if (!allowedIds.length) return { conversations: [], messages: [] };
+    let conversations: unknown[] = [];
+    let messages: unknown[] = [];
+    if (dto.includeConversations !== false) {
+      conversations = await this.prisma.chatConversation.findMany({
+        where: {
+          id: { in: allowedIds },
+          name: { contains: dto.query, mode: 'insensitive' },
+        },
+        take: 20,
+      });
+    }
+    if (dto.includeMessages !== false) {
+      messages = await this.prisma.chatMessage.findMany({
+        where: {
+          conversationId: { in: allowedIds },
+          deletedAt: null,
+          content: { contains: dto.query, mode: 'insensitive' },
+        },
+        take: 20,
+      });
+    }
     return { conversations, messages };
-    {{/if}}
-    {{#if (eq orm "firebase-admin")}}
-    return { conversations: [], messages: [] };
     {{/if}}
   }
 }

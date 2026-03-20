@@ -20,3 +20,5 @@
 ## Kits
 
 Shipped Kits change over time. Use `npx @fivfold/ui list` / `npx @fivfold/api list` in a project, or inspect `ui/manifests/` and `api/manifests/` in this repo—do not maintain a duplicate inventory table here.
+
+**Chat kit (recent surface area):** UI templates use `dropdown-menu` for thread and header actions, demo-style sidebar search toggle, inline poll/emoji/GIF composer panels, hover quick-reactions on desktop, and OSM embeds for locations (optional `mapImageUrl` still supported). `ChatKit` accepts optional handlers: `onDeleteConversation`, `onMarkConversationRead`, `onMarkConversationUnread`, `onClearConversationMessages`, `onBlockUser`. API templates expose `PATCH /chat/conversations/:id/unread`, `DELETE /chat/conversations/:id/messages`, and participant-scoped `GET /chat/search` with optional `conversationId` query param (Nest: `SearchChatDto`; Express: `q`, `conversationId`, etc.).

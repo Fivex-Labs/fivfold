@@ -35,6 +35,11 @@ export function ChatKit({
   onPinConversation,
   onMuteConversation,
   onDeleteMessage,
+  onDeleteConversation,
+  onMarkConversationRead,
+  onMarkConversationUnread,
+  onClearConversationMessages,
+  onBlockUser,
   onAddMember,
   onRemoveMember,
   onLeaveGroup,
@@ -43,6 +48,7 @@ export function ChatKit({
 }: FivFoldChatKitProps) {
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
   const [showSearch, setShowSearch] = useState(false);
+  const [searchConversationId, setSearchConversationId] = useState<string | null>(null);
   const [showNewChat, setShowNewChat] = useState(false);
   const [detailPanel, setDetailPanel] = useState<DetailPanel>(null);
   const [isMobile, setIsMobile] = useState(false);
@@ -110,13 +116,20 @@ export function ChatKit({
           >
             <ThreadsList
               conversations={conversations}
+              messages={messages}
               currentUserId={currentUser.id}
               selectedConversationId={selectedConversationId}
               onSelectConversation={handleSelectConversation}
               onNewChat={() => setShowNewChat(true)}
-              onSearch={() => setShowSearch(true)}
+              onOpenGlobalSearch={() => {
+                setSearchConversationId(null);
+                setShowSearch(true);
+              }}
               onPin={onPinConversation}
               onMute={onMuteConversation}
+              onDeleteConversation={onDeleteConversation}
+              onMarkConversationRead={onMarkConversationRead}
+              onMarkConversationUnread={onMarkConversationUnread}
             />
           </motion.aside>
         )}
@@ -149,6 +162,14 @@ export function ChatKit({
                 onTypingStop={() => onTypingStop?.(selectedConversation.id)}
                 onHeaderClick={handleHeaderClick}
                 onBack={isMobile ? handleBackToList : undefined}
+                onSearchInConversation={() => {
+                  setSearchConversationId(selectedConversation.id);
+                  setShowSearch(true);
+                }}
+                onMuteConversation={onMuteConversation}
+                onClearConversationMessages={onClearConversationMessages}
+                onLeaveGroup={onLeaveGroup}
+                onBlockUser={onBlockUser}
               />
             ) : (
               <div className="flex flex-1 items-center justify-center text-muted-foreground">
@@ -200,12 +221,17 @@ export function ChatKit({
       {/* Modals */}
       <SearchPanel
         open={showSearch}
+        conversationId={searchConversationId}
         conversations={conversations}
         messages={messages}
-        onClose={() => setShowSearch(false)}
+        onClose={() => {
+          setShowSearch(false);
+          setSearchConversationId(null);
+        }}
         onSelectConversation={(conv) => {
           handleSelectConversation(conv);
           setShowSearch(false);
+          setSearchConversationId(null);
         }}
       />
 

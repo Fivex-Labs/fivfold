@@ -70,6 +70,17 @@ export class ChatController {
     return this.chatService.markAsRead(id, req.user.id);
   }
 
+  @Patch('conversations/:id/unread')
+  markAsUnread(@Param('id') id: string, @Request() req: { user: { id: string } }) {
+    return this.chatService.markAsUnread(id, req.user.id);
+  }
+
+  @Delete('conversations/:id/messages')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  clearConversationMessages(@Param('id') id: string, @Request() req: { user: { id: string } }) {
+    return this.chatService.clearConversationMessages(id, req.user.id);
+  }
+
   // ── Messages ───────────────────────────────────────────────────────────────
 
   @Post('messages')

@@ -3,7 +3,8 @@
 import { useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
-const QUICK_REACTIONS = ['👍', '❤️', '😂', '😮', '😢', '😡'];
+/** Kept in sync with quick-reaction hover bar on `MessageBubble`. */
+export const CHAT_QUICK_REACTION_EMOJIS = ['❤️', '👍', '😂', '😮', '😢', '🙏'] as const;
 
 interface ReactionPickerProps {
   onSelect: (emoji: string) => void;
@@ -37,7 +38,7 @@ export function ReactionPicker({ onSelect, onClose, className }: ReactionPickerP
         className
       )}
     >
-      {QUICK_REACTIONS.map((emoji) => (
+      {CHAT_QUICK_REACTION_EMOJIS.map((emoji) => (
         <button
           key={emoji}
           type="button"

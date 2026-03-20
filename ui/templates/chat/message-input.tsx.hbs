@@ -5,20 +5,27 @@ import {
   useRef,
   useCallback,
   useEffect,
-  type CSSProperties,
+  type ChangeEvent,
   type KeyboardEvent,
 } from 'react';
-import { Send, Paperclip, MapPin, BarChart2, Image } from 'lucide-react';
+import {
+  Send,
+  Paperclip,
+  MapPin,
+  BarChart2,
+  Image as ImageIcon,
+  Smile,
+  Plus,
+  ChevronLeft,
+} from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { AttachmentPicker } from './attachment-picker';
 import { GifPicker } from './gif-picker';
-import { PollCreator } from './poll-creator';
 import { LocationPicker } from './location-picker';
-import type { FivFoldChatSendMessagePayload } from './types';
+import type { FivFoldChatGif, FivFoldChatSendMessagePayload } from './types';
 
 interface MessageInputProps {
   onSend: (payload: FivFoldChatSendMessagePayload) => void | Promise<void>;
@@ -29,21 +36,48 @@ interface MessageInputProps {
   placeholder?: string;
 }
 
+const EMOJI_GRID = [
+  '😀', '😂', '🥰', '😍', '🤩', '😎', '🤔', '😅', '🎉', '🔥', '💯', '✨',
+  '👏', '🙌', '💪', '👋', '🎯', '🚀', '💡', '⚡',
+] as const;
+
+const PLACEHOLDER_GIF_HEX = ['#8b5cf6', '#3b82f6', '#10b981', '#f43f5e'] as const;
+
+function placeholderGif(hex: string): FivFoldChatGif {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="112" height="56"><rect fill="${hex}" width="100%" height="100%"/><text x="50%" y="52%" dominant-baseline="middle" text-anchor="middle" fill="white" font-size="12" font-family="system-ui,sans-serif">GIF</text></svg>`;
+  const url = `data:image/svg+xml,${encodeURIComponent(svg)}`;
+  return {
+    id: `fivfold-placeholder-gif-${hex}`,
+    url,
+    previewUrl: url,
+    title: 'GIF',
+    width: 112,
+    height: 56,
+  };
+}
+
 export function MessageInput({
   onSend,
   onTypingStart,
   onTypingStop,
   gifApiKey,
   disabled,
-  placeholder = 'Message…',
+  placeholder = 'Type a message…',
 }: MessageInputProps) {
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
+  const [iconsOpen, setIconsOpen] = useState(true);
+  const [showEmojiPanel, setShowEmojiPanel] = useState(false);
+  const [showPollPanel, setShowPollPanel] = useState(false);
+  const [pollQuestion, setPollQuestion] = useState('');
+  const [pollOptions, setPollOptions] = useState(['', '']);
   const [showAttachment, setShowAttachment] = useState(false);
-  const [showGif, setShowGif] = useState(false);
-  const [showPoll, setShowPoll] = useState(false);
+  const [showGifPicker, setShowGifPicker] = useState(false);
   const [showLocation, setShowLocation] = useState(false);
+
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const imageRef = useRef<HTMLInputElement>(null);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const isTypingRef = useRef(false);
 
@@ -61,6 +95,29 @@ export function MessageInput({
 
   useEffect(() => () => clearTimeout(typingTimeoutRef.current), []);
 
+  const autoResize = useCallback(() => {
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = `${Math.min(el.scrollHeight, 120)}px`;
+  }, []);
+
+  useEffect(() => {
+    autoResize();
+  }, [text, autoResize]);
+
+  const handleInputChange = useCallback(
+    (e: ChangeEvent<HTMLTextAreaElement>) => {
+      const val = e.target.value;
+      if (val.length === 1 && text.length === 0) setIconsOpen(false);
+      if (val.length === 0) setIconsOpen(true);
+      setText(val);
+      handleTyping();
+      setTimeout(autoResize, 0);
+    },
+    [text.length, handleTyping, autoResize]
+  );
+
   const handleSend = useCallback(async () => {
     const trimmed = text.trim();
     if (!trimmed || sending || disabled) return;
@@ -68,9 +125,13 @@ export function MessageInput({
     try {
       await onSend({ type: 'text', content: trimmed });
       setText('');
+      setIconsOpen(true);
+      setShowEmojiPanel(false);
+      setShowPollPanel(false);
       clearTimeout(typingTimeoutRef.current);
       isTypingRef.current = false;
       onTypingStop?.();
+      if (textareaRef.current) textareaRef.current.style.height = 'auto';
       textareaRef.current?.focus();
     } finally {
       setSending(false);
@@ -84,149 +145,387 @@ export function MessageInput({
     }
   };
 
+  const sendPoll = useCallback(async () => {
+    const opts = pollOptions.map((o) => o.trim()).filter(Boolean);
+    if (!pollQuestion.trim() || opts.length < 2 || sending || disabled) return;
+    setSending(true);
+    try {
+      await onSend({
+        type: 'poll',
+        poll: {
+          question: pollQuestion.trim(),
+          options: opts.map((t) => ({ text: t, voteCount: 0, voterIds: [] })),
+          allowMultipleAnswers: false,
+          expiresAt: undefined,
+        },
+      });
+      setPollQuestion('');
+      setPollOptions(['', '']);
+      setShowPollPanel(false);
+      setIconsOpen(true);
+    } finally {
+      setSending(false);
+    }
+  }, [pollQuestion, pollOptions, sending, disabled, onSend]);
+
+  const handleFileChange = useCallback(
+    async (e: ChangeEvent<HTMLInputElement>, kind: 'image' | 'file') => {
+      const file = e.target.files?.[0];
+      e.target.value = '';
+      if (!file || sending || disabled) return;
+      const url = URL.createObjectURL(file);
+      setSending(true);
+      try {
+        if (kind === 'image') {
+          await onSend({
+            type: 'image',
+            attachment: {
+              type: 'image',
+              url,
+              name: file.name,
+              size: file.size,
+              mimeType: file.type || 'image/*',
+            },
+          });
+        } else {
+          await onSend({
+            type: 'file',
+            attachment: {
+              type: 'file',
+              url,
+              name: file.name,
+              size: file.size,
+              mimeType: file.type || 'application/octet-stream',
+            },
+          });
+        }
+      } finally {
+        setSending(false);
+      }
+    },
+    [sending, disabled, onSend]
+  );
+
   const canSend = text.trim().length > 0 && !disabled && !sending;
 
   return (
     <div className="border-t border-border/50 bg-background/60 backdrop-blur-sm">
-      {/* Toolbar */}
-      <div className="flex items-center gap-0.5 border-b border-border/30 px-3 py-1.5">
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 text-muted-foreground hover:text-foreground"
-              onClick={() => setShowAttachment(true)}
-              disabled={disabled}
-            >
-              <Paperclip className="h-4 w-4" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>Attachment</TooltipContent>
-        </Tooltip>
+      <input ref={fileRef} type="file" className="hidden" onChange={(e) => handleFileChange(e, 'file')} />
+      <input
+        ref={imageRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => handleFileChange(e, 'image')}
+      />
 
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 text-muted-foreground hover:text-foreground"
-              onClick={() => setShowGif(true)}
-              disabled={disabled}
-            >
-              <Image className="h-4 w-4" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>GIF</TooltipContent>
-        </Tooltip>
+      {showPollPanel && (
+        <div className="space-y-2 border-b border-border/30 px-3 py-2">
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+            Create Poll
+          </p>
+          <input
+            className="w-full rounded-lg border border-border bg-muted/40 px-2.5 py-1.5 text-xs outline-none placeholder:text-muted-foreground"
+            placeholder="Poll question…"
+            value={pollQuestion}
+            onChange={(e) => setPollQuestion(e.target.value)}
+          />
+          {pollOptions.map((opt, i) => (
+            <input
+              key={i}
+              className="w-full rounded-lg border border-border bg-muted/40 px-2.5 py-1.5 text-xs outline-none placeholder:text-muted-foreground"
+              placeholder={`Option ${i + 1}`}
+              value={opt}
+              onChange={(e) => {
+                const next = [...pollOptions];
+                next[i] = e.target.value;
+                setPollOptions(next);
+              }}
+            />
+          ))}
+          <div className="flex flex-wrap items-center gap-2">
+            {pollOptions.length < 10 && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-7 text-[10px] text-muted-foreground"
+                onClick={() => setPollOptions([...pollOptions, ''])}
+              >
+                <Plus className="mr-1 h-3 w-3" />
+                Add option
+              </Button>
+            )}
+            <div className="ml-auto flex gap-2">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-7 text-[10px]"
+                onClick={() => setShowPollPanel(false)}
+              >
+                Cancel
+              </Button>
+              <Button type="button" size="sm" className="h-7 text-[10px]" onClick={() => void sendPoll()}>
+                Send Poll
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 text-muted-foreground hover:text-foreground"
-              onClick={() => setShowPoll(true)}
-              disabled={disabled}
-            >
-              <BarChart2 className="h-4 w-4" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>Poll</TooltipContent>
-        </Tooltip>
+      {showEmojiPanel && (
+        <div className="space-y-2 border-b border-border/30 px-3 py-2">
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Emoji</p>
+          <div className="flex flex-wrap gap-1">
+            {EMOJI_GRID.map((e) => (
+              <button
+                key={e}
+                type="button"
+                className="h-7 w-7 text-base transition-transform hover:scale-125"
+                onClick={() => {
+                  setText((v) => v + e);
+                  setShowEmojiPanel(false);
+                  textareaRef.current?.focus();
+                }}
+              >
+                {e}
+              </button>
+            ))}
+          </div>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">GIF</p>
+            {gifApiKey ? (
+              <Button type="button" variant="outline" size="sm" className="h-7 text-[10px]" onClick={() => setShowGifPicker(true)}>
+                Browse Tenor…
+              </Button>
+            ) : null}
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {PLACEHOLDER_GIF_HEX.map((hex) => (
+              <button
+                key={hex}
+                type="button"
+                className="flex h-10 w-16 items-center justify-center rounded-lg text-xs font-bold text-white shadow-sm transition-opacity hover:opacity-90"
+                style={{ backgroundColor: hex }}
+                onClick={() => {
+                  void onSend({ type: 'gif', gif: placeholderGif(hex) });
+                  setShowEmojiPanel(false);
+                }}
+              >
+                GIF
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 text-muted-foreground hover:text-foreground"
-              onClick={() => setShowLocation(true)}
-              disabled={disabled}
-            >
-              <MapPin className="h-4 w-4" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>Location</TooltipContent>
-        </Tooltip>
-      </div>
-
-      {/* Text input + send */}
-      <div className="flex items-end gap-2 px-3 py-2">
-        <Textarea
-          ref={textareaRef}
-          value={text}
-          onChange={(e) => {
-            setText(e.target.value);
-            handleTyping();
-          }}
-          onKeyDown={handleKeyDown}
-          placeholder={placeholder}
-          disabled={disabled || sending}
-          rows={1}
+      <div className="px-3 py-2">
+        <div
           className={cn(
-            'min-h-0 flex-1 resize-none rounded-2xl border-border/40 bg-muted/40',
-            'text-sm leading-relaxed backdrop-blur-sm',
-            'focus-visible:ring-1 focus-visible:ring-primary/50',
-            'max-h-32 overflow-y-auto'
+            'flex items-end gap-1.5 rounded-xl border border-border/50 px-2 py-1.5',
+            'bg-muted/40 backdrop-blur-sm'
           )}
-          style={{ fieldSizing: 'content' } as CSSProperties}
-        />
-
-        <AnimatePresence mode="popLayout">
-          <motion.div
-            key={canSend ? 'send' : 'idle'}
-            initial={{ scale: 0.7, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.7, opacity: 0 }}
-            transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-          >
-            <Button
-              size="icon"
-              onClick={handleSend}
-              disabled={!canSend}
+        >
+          <div className="flex shrink-0 items-end gap-0.5 self-end pb-0.5">
+            <div
               className={cn(
-                'h-9 w-9 shrink-0 rounded-full transition-all',
-                canSend ? 'bg-primary shadow-md shadow-primary/20' : 'bg-muted text-muted-foreground'
+                'flex items-center gap-0.5 overflow-hidden transition-[max-width,opacity] duration-200 ease-in-out',
+                iconsOpen ? 'max-w-[220px] opacity-100' : 'max-w-0 opacity-0 pointer-events-none'
               )}
-              aria-label="Send"
             >
-              {sending ? (
-                <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-              ) : (
-                <Send className="h-4 w-4" />
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                    disabled={disabled}
+                    onClick={() => fileRef.current?.click()}
+                  >
+                    <Paperclip className="h-3.5 w-3.5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Attach file</TooltipContent>
+              </Tooltip>
+
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                    disabled={disabled}
+                    onClick={() => imageRef.current?.click()}
+                  >
+                    <ImageIcon className="h-3.5 w-3.5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Photo</TooltipContent>
+              </Tooltip>
+
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                    disabled={disabled}
+                    onClick={() => setShowLocation(true)}
+                  >
+                    <MapPin className="h-3.5 w-3.5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Location</TooltipContent>
+              </Tooltip>
+
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className={cn(
+                      'h-7 w-7 hover:text-foreground',
+                      showPollPanel ? 'text-primary' : 'text-muted-foreground'
+                    )}
+                    disabled={disabled}
+                    onClick={() => {
+                      setShowPollPanel((v) => !v);
+                      setShowEmojiPanel(false);
+                    }}
+                  >
+                    <BarChart2 className="h-3.5 w-3.5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Poll</TooltipContent>
+              </Tooltip>
+
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className={cn(
+                      'h-7 w-7 hover:text-foreground',
+                      showEmojiPanel ? 'text-primary' : 'text-muted-foreground'
+                    )}
+                    disabled={disabled}
+                    onClick={() => {
+                      setShowEmojiPanel((v) => !v);
+                      setShowPollPanel(false);
+                    }}
+                  >
+                    <Smile className="h-3.5 w-3.5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Emoji &amp; GIF</TooltipContent>
+              </Tooltip>
+
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                    disabled={disabled}
+                    onClick={() => setShowAttachment(true)}
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>More attachments</TooltipContent>
+              </Tooltip>
+            </div>
+
+            <div
+              className={cn(
+                'overflow-hidden transition-[max-width,opacity] duration-200 ease-in-out',
+                text.length > 0 ? 'max-w-[28px] opacity-100' : 'max-w-0 opacity-0 pointer-events-none'
               )}
-            </Button>
-          </motion.div>
-        </AnimatePresence>
+            >
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                onClick={() => setIconsOpen((v) => !v)}
+              >
+                {iconsOpen ? <ChevronLeft className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}
+              </Button>
+            </div>
+          </div>
+
+          <textarea
+            ref={textareaRef}
+            rows={1}
+            value={text}
+            onChange={handleInputChange}
+            onKeyDown={handleKeyDown}
+            placeholder={placeholder}
+            disabled={disabled || sending}
+            className={cn(
+              'min-h-[28px] max-h-[120px] flex-1 resize-none overflow-y-auto bg-transparent py-1.5 text-sm leading-relaxed',
+              'text-foreground outline-none placeholder:text-muted-foreground'
+            )}
+          />
+
+          <AnimatePresence mode="popLayout">
+            <motion.div
+              key={canSend ? 'send' : 'idle'}
+              initial={{ scale: 0.7, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.7, opacity: 0 }}
+              transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+              className="mb-0.5 shrink-0 self-end"
+            >
+              <Button
+                type="button"
+                size="icon"
+                onClick={() => void handleSend()}
+                disabled={!canSend}
+                className={cn(
+                  'h-8 w-8 rounded-full transition-all',
+                  canSend ? 'bg-primary text-primary-foreground shadow-md hover:bg-primary/90' : 'bg-muted text-muted-foreground'
+                )}
+                aria-label="Send"
+              >
+                {sending ? (
+                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                ) : (
+                  <Send className="h-4 w-4" />
+                )}
+              </Button>
+            </motion.div>
+          </AnimatePresence>
+        </div>
       </div>
 
-      {/* Modals */}
       <AttachmentPicker
         open={showAttachment}
         onClose={() => setShowAttachment(false)}
         onSelect={(attachment) => {
-          onSend({ type: attachment.type as 'image', attachment: attachment as Parameters<typeof onSend>[0] extends { attachment: infer A } ? A : never });
+          void onSend({
+            type: attachment.type as 'image',
+            attachment: attachment as Parameters<typeof onSend>[0] extends { attachment: infer A } ? A : never,
+          });
           setShowAttachment(false);
         }}
       />
 
       <GifPicker
-        open={showGif}
+        open={showGifPicker}
         apiKey={gifApiKey}
-        onClose={() => setShowGif(false)}
+        onClose={() => setShowGifPicker(false)}
         onSelect={(gif) => {
-          onSend({ type: 'gif', gif });
-          setShowGif(false);
-        }}
-      />
-
-      <PollCreator
-        open={showPoll}
-        onClose={() => setShowPoll(false)}
-        onCreate={(poll) => {
-          onSend({ type: 'poll', poll: poll as Parameters<typeof onSend>[0] extends { poll: infer P } ? P : never });
-          setShowPoll(false);
+          void onSend({ type: 'gif', gif });
+          setShowGifPicker(false);
+          setShowEmojiPanel(false);
         }}
       />
 
@@ -234,7 +533,7 @@ export function MessageInput({
         open={showLocation}
         onClose={() => setShowLocation(false)}
         onShare={(location) => {
-          onSend({ type: 'location', location });
+          void onSend({ type: 'location', location });
           setShowLocation(false);
         }}
       />

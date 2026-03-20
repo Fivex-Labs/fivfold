@@ -21,11 +21,14 @@ export interface IChatService {
   pinConversation(conversationId: string, userId: string, pinned: boolean): Promise<void>;
   muteConversation(conversationId: string, userId: string, mutedUntil: Date | null): Promise<void>;
   markAsRead(conversationId: string, userId: string): Promise<void>;
+  markAsUnread(conversationId: string, userId: string): Promise<void>;
 
   // Messages
   sendMessage(dto: CreateMessageDto, senderId: string): Promise<unknown>;
   getMessages(conversationId: string, userId: string, pagination: PaginationDto): Promise<{ items: unknown[]; total: number; nextCursor?: string }>;
   deleteMessage(messageId: string, userId: string): Promise<void>;
+  /** Soft-delete all messages in the conversation (group: admins only; direct: any participant). */
+  clearConversationMessages(conversationId: string, userId: string): Promise<void>;
 
   // Groups
   createGroup(dto: CreateGroupDto, creatorId: string): Promise<unknown>;

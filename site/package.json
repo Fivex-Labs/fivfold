@@ -1,6 +1,6 @@
 {
   "name": "fivfold-site",
-  "version": "0.13.5",
+  "version": "0.13.6",
   "private": true,
   "packageManager": "pnpm@10.12.0",
   "author": "Fivex Labs",

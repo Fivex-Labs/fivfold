@@ -1,11 +1,28 @@
 'use client';
 
 import { useRef, useEffect, useCallback, useState, type UIEvent } from 'react';
-import { ArrowLeft, ChevronDown } from 'lucide-react';
+import {
+  ArrowLeft,
+  ChevronDown,
+  MoreHorizontal,
+  Info,
+  Search,
+  Bell,
+  BellOff,
+  Trash2,
+  UserMinus,
+} from 'lucide-react';
 import { format, isToday, isYesterday, isSameDay } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { ChatAvatar, GroupAvatar } from './chat-avatar';
 import { MessageBubble } from './message-bubble';
 import { MessageInput } from './message-input';
@@ -33,6 +50,11 @@ interface ConversationProps {
   onTypingStop?: () => void;
   onHeaderClick?: () => void;
   onBack?: () => void;
+  onSearchInConversation?: () => void;
+  onMuteConversation?: (conversationId: string, mutedUntil: Date | null) => void | Promise<void>;
+  onClearConversationMessages?: (conversationId: string) => void | Promise<void>;
+  onLeaveGroup?: (conversationId: string) => void | Promise<void>;
+  onBlockUser?: (userId: string) => void | Promise<void>;
 }
 
 function getDateSeparatorLabel(date: Date): string {
@@ -65,6 +87,11 @@ export function Conversation({
   onTypingStop,
   onHeaderClick,
   onBack,
+  onSearchInConversation,
+  onMuteConversation,
+  onClearConversationMessages,
+  onLeaveGroup,
+  onBlockUser,
 }: ConversationProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -81,7 +108,6 @@ export function Conversation({
     bottomRef.current?.scrollIntoView({ behavior: smooth ? 'smooth' : 'instant' });
   }, []);
 
-  // Scroll to bottom on new messages
   useEffect(() => {
     scrollToBottom();
   }, [messages.length, scrollToBottom]);
@@ -91,14 +117,12 @@ export function Conversation({
     const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
     setShowScrollButton(distanceFromBottom > 200);
 
-    // Load more when scrolling to top
     if (el.scrollTop < 100 && !loadingMore && onLoadMore) {
       setLoadingMore(true);
       void Promise.resolve(onLoadMore()).finally(() => setLoadingMore(false));
     }
   }, [loadingMore, onLoadMore]);
 
-  // Build message groups with date separators
   const messageGroups: Array<{ type: 'date'; label: string } | { type: 'message'; message: FivFoldChatMessage; showAvatar: boolean }> = [];
   let lastDate: Date | null = null;
 
@@ -120,17 +144,15 @@ export function Conversation({
     });
   }
 
+  const isMuted = conversation.isMuted;
+
   return (
     <div className="flex h-full flex-col">
       {/* Header */}
-      <button
-        type="button"
-        onClick={onHeaderClick}
+      <div
         className={cn(
-          'flex items-center gap-3 border-b border-border/50 px-4 py-3',
-          'bg-background/60 backdrop-blur-sm text-left',
-          'transition-colors hover:bg-muted/30',
-          onHeaderClick ? 'cursor-pointer' : 'cursor-default'
+          'flex shrink-0 items-center gap-2 border-b border-border/50 px-2 py-2 sm:px-4 sm:py-3',
+          'bg-background/60 backdrop-blur-sm'
         )}
       >
         {onBack && (
@@ -138,109 +160,192 @@ export function Conversation({
             variant="ghost"
             size="icon"
             className="h-8 w-8 shrink-0"
-            onClick={(e) => { e.stopPropagation(); onBack(); }}
+            onClick={onBack}
           >
             <ArrowLeft className="h-4 w-4" />
           </Button>
         )}
 
-        {conversation.type === 'group' ? (
-          <GroupAvatar
-            participants={conversation.participants.filter((p) => p.id !== currentUser.id)}
-            size="sm"
-          />
-        ) : (
-          <ChatAvatar
-            src={otherParticipant?.avatarUrl}
-            name={displayName}
-            online={otherParticipant?.online}
-            size="sm"
-          />
-        )}
+        <button
+          type="button"
+          onClick={onHeaderClick}
+          disabled={!onHeaderClick}
+          className={cn(
+            'flex min-w-0 flex-1 items-center gap-3 text-left',
+            onHeaderClick ? 'cursor-pointer rounded-lg hover:bg-muted/30' : 'cursor-default',
+            'px-1 py-0.5 transition-colors'
+          )}
+        >
+          {conversation.type === 'group' ? (
+            <GroupAvatar
+              participants={conversation.participants.filter((p) => p.id !== currentUser.id)}
+              size="sm"
+            />
+          ) : (
+            <ChatAvatar
+              src={otherParticipant?.avatarUrl}
+              name={displayName}
+              online={otherParticipant?.online}
+              size="sm"
+            />
+          )}
 
-        <div className="min-w-0 flex-1">
-          <p className="truncate font-semibold">{displayName}</p>
-          <p className="truncate text-xs text-muted-foreground">
-            {conversation.type === 'direct'
-              ? otherParticipant?.online
-                ? 'Online'
-                : otherParticipant?.lastSeen
-                  ? `Last seen ${format(new Date(otherParticipant.lastSeen), 'p')}`
-                  : ''
-              : `${conversation.participants.length} members`}
-          </p>
-        </div>
-      </button>
-
-      {/* Messages */}
-      <div
-        className="relative flex-1 overflow-y-auto"
-        onScroll={handleScroll}
-        ref={scrollRef}
-      >
-        {loadingMore && (
-          <div className="flex justify-center py-2">
-            <span className="text-xs text-muted-foreground">Loading…</span>
+          <div className="min-w-0 flex-1">
+            <p className="truncate font-semibold">{displayName}</p>
+            <p className="truncate text-xs text-muted-foreground">
+              {conversation.type === 'direct'
+                ? otherParticipant?.online
+                  ? 'Online'
+                  : otherParticipant?.lastSeen
+                    ? `Last seen ${format(new Date(otherParticipant.lastSeen), 'p')}`
+                    : ''
+                : `${conversation.participants.length} members`}
+            </p>
           </div>
-        )}
+        </button>
 
-        <div className="flex flex-col gap-1 px-4 py-4">
-          <AnimatePresence initial={false}>
-            {messageGroups.map((item) =>
-              item.type === 'date' ? (
-                <motion.div
-                  key={`date-${item.label}`}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="flex items-center gap-3 py-2"
-                >
-                  <div className="h-px flex-1 bg-border/30" />
-                  <span className="text-xs text-muted-foreground">{item.label}</span>
-                  <div className="h-px flex-1 bg-border/30" />
-                </motion.div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0 text-muted-foreground hover:text-foreground">
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuItem
+              onClick={() => onHeaderClick?.()}
+              disabled={!onHeaderClick}
+            >
+              <Info className="mr-2 h-3.5 w-3.5" />
+              {conversation.type === 'group' ? 'View Group Info' : 'View Profile'}
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => onSearchInConversation?.()}
+              disabled={!onSearchInConversation}
+            >
+              <Search className="mr-2 h-3.5 w-3.5" />
+              Search in Conversation
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onClick={() =>
+                onMuteConversation?.(
+                  conversation.id,
+                  isMuted ? null : new Date(Date.now() + 8 * 3600000)
+                )
+              }
+              disabled={!onMuteConversation}
+            >
+              {isMuted ? (
+                <>
+                  <Bell className="mr-2 h-3.5 w-3.5" />
+                  Unmute
+                </>
               ) : (
-                <MessageBubble
-                  key={item.message.id}
-                  message={item.message}
-                  showAvatar={item.showAvatar}
-                  currentUserId={currentUser.id}
-                  onReaction={onReaction}
-                  onDelete={onDeleteMessage}
-                  onVotePoll={onVotePoll}
-                />
-              )
+                <>
+                  <BellOff className="mr-2 h-3.5 w-3.5" />
+                  Mute Notifications
+                </>
+              )}
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => onClearConversationMessages?.(conversation.id)}
+              disabled={!onClearConversationMessages}
+            >
+              <Trash2 className="mr-2 h-3.5 w-3.5" />
+              Clear Chat
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            {conversation.type === 'group' ? (
+              <DropdownMenuItem
+                className="text-destructive focus:text-destructive"
+                onClick={() => onLeaveGroup?.(conversation.id)}
+                disabled={!onLeaveGroup}
+              >
+                <UserMinus className="mr-2 h-3.5 w-3.5" />
+                Leave Group
+              </DropdownMenuItem>
+            ) : (
+              <DropdownMenuItem
+                className="text-destructive focus:text-destructive"
+                onClick={() => otherParticipant && onBlockUser?.(otherParticipant.id)}
+                disabled={!otherParticipant || !onBlockUser}
+              >
+                <UserMinus className="mr-2 h-3.5 w-3.5" />
+                Block
+              </DropdownMenuItem>
             )}
-          </AnimatePresence>
-        </div>
-
-        {/* Typing indicator */}
-        <TypingIndicator typingUsers={typingUsers} className="px-4 pb-2" />
-
-        <div ref={bottomRef} />
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
-      {/* Scroll to bottom button */}
-      <AnimatePresence>
-        {showScrollButton && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.8 }}
-            className="absolute bottom-24 right-4 z-10"
-          >
-            <Button
-              size="icon"
-              variant="secondary"
-              onClick={() => scrollToBottom()}
-              className="h-9 w-9 rounded-full shadow-md"
-            >
-              <ChevronDown className="h-4 w-4" />
-            </Button>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Messages + floating scroll control */}
+      <div className="relative min-h-0 flex-1">
+        <div
+          className="h-full overflow-y-auto"
+          onScroll={handleScroll}
+          ref={scrollRef}
+        >
+          {loadingMore && (
+            <div className="flex justify-center py-2">
+              <span className="text-xs text-muted-foreground">Loading…</span>
+            </div>
+          )}
 
-      {/* Input */}
+          <div className="flex flex-col gap-1 px-4 py-4">
+            <AnimatePresence initial={false}>
+              {messageGroups.map((item) =>
+                item.type === 'date' ? (
+                  <motion.div
+                    key={`date-${item.label}`}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="flex items-center gap-3 py-2"
+                  >
+                    <div className="h-px flex-1 bg-border/30" />
+                    <span className="text-xs text-muted-foreground">{item.label}</span>
+                    <div className="h-px flex-1 bg-border/30" />
+                  </motion.div>
+                ) : (
+                  <MessageBubble
+                    key={item.message.id}
+                    message={item.message}
+                    showAvatar={item.showAvatar}
+                    currentUserId={currentUser.id}
+                    onReaction={onReaction}
+                    onDelete={onDeleteMessage}
+                    onVotePoll={onVotePoll}
+                  />
+                )
+              )}
+            </AnimatePresence>
+          </div>
+
+          <TypingIndicator typingUsers={typingUsers} className="px-4 pb-2" />
+
+          <div ref={bottomRef} />
+        </div>
+
+        <AnimatePresence>
+          {showScrollButton && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              className="pointer-events-none absolute bottom-4 right-4 z-10"
+            >
+              <Button
+                size="icon"
+                variant="secondary"
+                className="pointer-events-auto h-9 w-9 rounded-full shadow-md"
+                onClick={() => scrollToBottom()}
+              >
+                <ChevronDown className="h-4 w-4" />
+              </Button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
       <MessageInput
         onSend={(payload) => onSendMessage?.(payload)}
         onTypingStart={onTypingStart}

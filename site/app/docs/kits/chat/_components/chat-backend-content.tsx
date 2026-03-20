@@ -33,7 +33,9 @@ const API_ENDPOINTS_TABLE = (
         <tr className="border-b border-white/5"><td className="py-2 pr-4 font-mono">DELETE</td><td className="py-2 pr-4 font-mono">/api/chat/messages/:id</td><td>Delete own message</td></tr>
         <tr className="border-b border-white/5"><td className="py-2 pr-4 font-mono">POST</td><td className="py-2 pr-4 font-mono">/api/chat/groups/:id/members</td><td>Add member to group</td></tr>
         <tr className="border-b border-white/5"><td className="py-2 pr-4 font-mono">DELETE</td><td className="py-2 pr-4 font-mono">/api/chat/groups/:id/members/:userId</td><td>Remove member from group</td></tr>
-        <tr className="border-b border-white/5"><td className="py-2 pr-4 font-mono">GET</td><td className="py-2 pr-4 font-mono">/api/chat/search</td><td>Search conversations and messages</td></tr>
+        <tr className="border-b border-white/5"><td className="py-2 pr-4 font-mono">PATCH</td><td className="py-2 pr-4 font-mono">/api/chat/conversations/:id/unread</td><td>Mark conversation unread (clears <code className="rounded bg-white/10 px-1">lastReadAt</code> for current user)</td></tr>
+        <tr className="border-b border-white/5"><td className="py-2 pr-4 font-mono">DELETE</td><td className="py-2 pr-4 font-mono">/api/chat/conversations/:id/messages</td><td>Soft-delete all messages (direct: any participant; group: admins only)</td></tr>
+        <tr className="border-b border-white/5"><td className="py-2 pr-4 font-mono">GET</td><td className="py-2 pr-4 font-mono">/api/chat/search</td><td>Search only conversations you participate in; optional <code className="rounded bg-white/10 px-1">conversationId</code> scopes to one thread</td></tr>
       </tbody>
     </table>
   </div>
