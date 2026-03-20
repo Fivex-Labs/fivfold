@@ -29,12 +29,10 @@ export class RealtimeProviderStrategy implements IRealtimeStrategy {
       .join('');
 
     const outputContext = {
-      outputDir: ctx.outputDir,
-      kitName: ctx.kitName,
+      ...ctx,
       moduleName: ctx.kitName.charAt(0).toUpperCase() + ctx.kitName.slice(1),
       realtimeProvider: this.provider,
       realtimeNamePascal,
-      ...ctx,
     };
 
     for (const file of realtimeConfig.files) {

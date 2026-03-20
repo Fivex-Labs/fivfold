@@ -3,7 +3,6 @@
 import { FileUp, MapPin, ImageIcon } from "lucide-react";
 import { DocPage } from "../../components/doc-page";
 import { DocTabs } from "../../components/doc-tabs";
-import { DocCallout } from "../../components/doc-blocks";
 import { CodeBlock } from "../../components/code-block";
 import { ChatDemo } from "./_components/chat-demo";
 import { ChatBackendContent } from "./_components/chat-backend-content";

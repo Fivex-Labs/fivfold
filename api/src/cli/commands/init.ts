@@ -1,5 +1,5 @@
 import * as p from '@clack/prompts';
-import type { ApiConfig } from '../../lib/schemas.js';
+import type { ApiConfig, ApiOrm, ApiDatabase } from '../../lib/schemas.js';
 import { findProjectRoot, loadFivFoldConfig, saveApiConfig } from '../../lib/workspace.js';
 import {
   detectStack,
@@ -57,8 +57,8 @@ export async function initApi(flags: CliFlags = {}): Promise<void> {
 
   const apiConfig: ApiConfig = {
     framework,
-    orm,
-    database,
+    orm: orm as ApiOrm,
+    database: database as ApiDatabase,
     databaseCategory: dbCategory,
     outputDir,
   };

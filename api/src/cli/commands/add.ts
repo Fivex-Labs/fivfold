@@ -1,7 +1,15 @@
 import { existsSync, readdirSync, readFileSync } from 'fs';
 import { join, resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
-import type { ApiRegistry } from '../../lib/schemas.js';
+import type {
+  ApiRegistry,
+  ApiConfig,
+  ApiFramework,
+  ApiOrm,
+  ApiDatabase,
+  ApiAuthProvider,
+  ApiDatabaseCategory,
+} from '../../lib/schemas.js';
 import { buildStackKey } from '../../lib/schemas.js';
 import { findProjectRoot, loadFivFoldConfig } from '../../lib/workspace.js';
 import {
@@ -109,7 +117,14 @@ export async function addApiModule(names: string[], flags: CliFlags = {}): Promi
     return;
   }
 
-  const api = { framework, orm, database, databaseCategory, authProvider, outputDir };
+  const api: ApiConfig = {
+    framework: framework as ApiFramework,
+    orm: orm as ApiOrm,
+    database: database as ApiDatabase,
+    databaseCategory: databaseCategory as ApiDatabaseCategory | undefined,
+    authProvider: authProvider as ApiAuthProvider | undefined,
+    outputDir,
+  };
   const pm = detectPackageManager(root) as 'npm' | 'pnpm' | 'yarn';
   const vfs = new VirtualFileSystem();
   const resolvedProviders = new Map<string, string>();
@@ -231,7 +246,7 @@ export async function addApiModule(names: string[], flags: CliFlags = {}): Promi
 
 async function scaffoldWithManifest(
   name: string,
-  api: { framework: string; orm: string; database: string; databaseCategory?: string; authProvider?: string; outputDir: string },
+  api: ApiConfig,
   root: string,
   vfs: VirtualFileSystem,
   flags: CliFlags,

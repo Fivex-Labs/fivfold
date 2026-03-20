@@ -3,9 +3,8 @@ import { DocPage } from "../../components/doc-page";
 import {
   DocCodeBlock,
   DocCallout,
-  DocCard,
 } from "../../components/doc-blocks";
-import { Terminal, Wrench, Plus, List, FileText, HelpCircle } from "lucide-react";
+import { Wrench, Plus, List, FileText, HelpCircle } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "CLI Reference",

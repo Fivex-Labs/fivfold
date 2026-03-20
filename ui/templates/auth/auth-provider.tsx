@@ -41,7 +41,7 @@ export function AuthProvider({ children, onAuthStateChange }: AuthKitProps) {
       user,
       state,
       error,
-      login: async (email: string, password: string) => {
+      login: async (email: string, _password: string) => {
         setState("loading")
         setError(null)
         try {
@@ -58,7 +58,7 @@ export function AuthProvider({ children, onAuthStateChange }: AuthKitProps) {
           setState("error")
         }
       },
-      register: async (email: string, password: string, displayName?: string) => {
+      register: async (email: string, _password: string, displayName?: string) => {
         setState("loading")
         setError(null)
         try {

@@ -11,6 +11,9 @@ site/package-lock.json
 .vercel
 .next
 
+# UI template typecheck cache (regenerated locally)
+ui/.template-tsc-cache/
+
 # Cursor internal working files
 **/.cursor/plans/
 **/.cursor/projects/

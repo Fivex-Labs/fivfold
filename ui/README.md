@@ -87,6 +87,7 @@ Then run `npx @fivfold/ui init`. Init does not install Tailwind or shadcn for yo
 ```bash
 pnpm run build   # Output to dist/
 pnpm run dev     # Watch mode
+pnpm run type-check   # TypeScript check for `src/` only (kit templates under `templates/` are not in this project’s `tsconfig` include)
 ```
 
 ## Adding a New Kit

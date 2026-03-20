@@ -1,5 +1,4 @@
 import { Header } from "@/components/layout/header";
-import { Footer } from "@/components/layout/footer";
 import { DocsSidebar } from "./components/docs-sidebar";
 import { MobileDocsNav } from "./components/mobile-docs-nav";
 import { StackProvider } from "./components/stack-context";

@@ -8,7 +8,6 @@ import { Separator } from "@/components/ui/separator"
 import { OAuthButtons, type OAuthProvider } from "./oauth-buttons"
 import { AuthLayout } from "./auth-layout"
 import { useAuth } from "./auth-provider"
-import { cn } from "@/lib/utils"
 import type { LoginFormProps } from "./types"
 
 export function LoginForm({

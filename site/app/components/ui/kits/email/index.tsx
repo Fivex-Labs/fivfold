@@ -18,14 +18,7 @@ import {
   File,
 } from "lucide-react"
 
-import type {
-  FivFoldEmailFolder,
-  FivFoldEmailLabel,
-  FivFoldEmailMessage,
-  FivFoldEmailThread,
-  EmailKitProps,
-  ComposeDefaults,
-} from "./types"
+import type { FivFoldEmailFolder, EmailKitProps, ComposeDefaults } from "./types"
 import { ThreadItem } from "./thread-item"
 import { MessagePanel } from "./message-panel"
 import { ComposeDialog } from "./compose-dialog"

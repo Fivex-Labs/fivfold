@@ -1,6 +1,5 @@
 "use client"
 
-import * as React from "react"
 import { useAuth } from "./auth-provider"
 import type { AuthGuardProps } from "./types"
 

@@ -86,24 +86,10 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Extract changelog entry for this version
-        id: changelog
-        run: |
-          TAG="${{ github.ref_name }}"
-          VERSION="${TAG#v}"
-          # Extract the block between this version header and the next
-          NOTES=$(awk "/^## \[$VERSION\]/{found=1; next} found && /^## \[/{exit} found{print}" CHANGELOG.md)
-          # Fallback if no matching section found
-          if [ -z "$NOTES" ]; then
-            NOTES="See [CHANGELOG.md](https://github.com/Fivex-Labs/fivfold/blob/main/CHANGELOG.md) for details."
-          fi
-          # Write to a temp file to handle multiline safely
-          echo "$NOTES" > /tmp/release-notes.md
-
       - name: Create GitHub Release
         run: |
           gh release create ${{ github.ref_name }} \
             --title "Release ${{ github.ref_name }}" \
-            --notes-file /tmp/release-notes.md
+            --generate-notes
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

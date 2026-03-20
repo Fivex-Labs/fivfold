@@ -14,10 +14,8 @@ export class NestJsFrameworkStrategy implements IFrameworkStrategy {
     if (!fwConfig?.files?.length) return;
 
     const outputContext = {
-      outputDir: ctx.outputDir,
-      kitName: ctx.kitName,
-      moduleName: ctx.kitName.charAt(0).toUpperCase() + ctx.kitName.slice(1),
       ...ctx,
+      moduleName: ctx.kitName.charAt(0).toUpperCase() + ctx.kitName.slice(1),
     };
 
     for (const file of fwConfig.files) {
@@ -32,7 +30,7 @@ export class NestJsFrameworkStrategy implements IFrameworkStrategy {
     }
   }
 
-  async wireModule(ctx: GeneratorContext, moduleName: string): Promise<void> {
+  async wireModule(ctx: GeneratorContext, _moduleName: string): Promise<void> {
     const fwConfig = ctx.manifest.framework?.['nestjs'];
     const mutation = fwConfig?.astMutations?.find((m) => m.action === 'registerModule');
     if (!mutation?.module || !mutation?.importPath) return;

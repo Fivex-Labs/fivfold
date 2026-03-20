@@ -15,7 +15,8 @@
     "declarationMap": true,
     "outDir": "./dist",
     "rootDir": "./src",
-    "noUnusedLocals": false,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
     "noImplicitReturns": true
   },
   "include": ["src/**/*"],

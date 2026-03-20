@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { format } from 'date-fns';
 import { Check, CheckCheck, Trash2 } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -17,7 +17,7 @@ import { ChatAvatar } from './chat-avatar';
 import { PollDisplay } from './poll-display';
 import { LocationDisplay } from './location-display';
 import { ReactionPicker } from './reaction-picker';
-import type { FivFoldChatMessage, FivFoldChatUser } from './types';
+import type { FivFoldChatMessage } from './types';
 
 interface MessageBubbleProps {
   message: FivFoldChatMessage;

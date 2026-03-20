@@ -2,11 +2,7 @@ import {
   type LucideIcon,
   Info,
   FileCode,
-  Palette,
   Zap,
-  Layers,
-  Server,
-  CheckCircle2,
   ArrowRight,
 } from "lucide-react";
 import Link from "next/link";
@@ -133,7 +129,6 @@ export function DocCodeBlock({
 
 export function DocStep({
   step,
-  icon: Icon,
   title,
   children,
   color = "primary",

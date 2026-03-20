@@ -1,6 +1,5 @@
 "use client"
 
-import * as React from "react"
 import { useStack } from "./stack-context"
 import type { Framework, Orm } from "./stack-context"
 import { CodeBlock } from "./code-block"

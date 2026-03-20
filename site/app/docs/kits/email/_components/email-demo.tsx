@@ -7,7 +7,6 @@ import {
   MOCK_FOLDERS,
   MOCK_LABELS,
   MOCK_THREADS,
-  MOCK_CONTACTS,
 } from "../_data/mock-email-data";
 import {
   mergeThemeVars,

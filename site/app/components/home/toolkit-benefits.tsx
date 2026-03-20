@@ -3,7 +3,6 @@
 import { motion } from "framer-motion";
 import {
   Clock,
-  Zap,
   MessageSquare,
   Code2,
   Server,

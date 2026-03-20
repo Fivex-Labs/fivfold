@@ -5,9 +5,8 @@ import {
   DocStep,
   DocCodeBlock,
   DocCallout,
-  DocCard,
 } from "../../components/doc-blocks";
-import { Package, Terminal, CheckCircle2 } from "lucide-react";
+import { Package, CheckCircle2 } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Installation",

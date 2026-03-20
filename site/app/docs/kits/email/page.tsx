@@ -2,7 +2,6 @@
 
 import { DocPage } from "../../components/doc-page";
 import { DocTabs } from "../../components/doc-tabs";
-import { DocCallout } from "../../components/doc-blocks";
 import { CodeBlock } from "../../components/code-block";
 import { EmailDemo } from "./_components/email-demo";
 import { EmailBackendContent } from "./_components/email-backend-content";

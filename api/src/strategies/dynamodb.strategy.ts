@@ -12,10 +12,8 @@ export class DynamoDbOrmStrategy implements IOrmStrategy {
     if (!ormConfig?.files?.length) return;
 
     const outputContext = {
-      outputDir: ctx.outputDir,
-      kitName: ctx.kitName,
-      moduleName: ctx.kitName.charAt(0).toUpperCase() + ctx.kitName.slice(1),
       ...ctx,
+      moduleName: ctx.kitName.charAt(0).toUpperCase() + ctx.kitName.slice(1),
     };
 
     for (const file of ormConfig.files) {

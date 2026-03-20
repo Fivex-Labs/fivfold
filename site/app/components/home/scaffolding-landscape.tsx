@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Layers, Zap, Sparkles, Wallpaper } from "lucide-react";
+import { Layers, Wallpaper } from "lucide-react";
 import ElectricBorder from "../ui/ElectricBorder";
 import Image from "next/image";
 
