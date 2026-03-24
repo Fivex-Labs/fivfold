@@ -2,7 +2,7 @@ import { resolve } from 'path';
 import { existsSync, readFileSync } from 'fs';
 import type { IOrmStrategy } from '@fivfold/core';
 import type { GeneratorContext } from '@fivfold/core';
-import { resolveOutputPath } from '@fivfold/core';
+import { resolveOutputPath, pascalCase } from '@fivfold/core';
 
 export class PrismaOrmStrategy implements IOrmStrategy {
   readonly name = 'prisma';
@@ -15,7 +15,7 @@ export class PrismaOrmStrategy implements IOrmStrategy {
 
     const outputContext = {
       ...ctx,
-      moduleName: ctx.kitName.charAt(0).toUpperCase() + ctx.kitName.slice(1),
+      moduleName: pascalCase(ctx.kitName),
     };
 
     for (const file of ormConfig.files) {

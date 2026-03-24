@@ -1,6 +1,6 @@
 import { resolve } from 'path';
 import type { IRealtimeStrategy, GeneratorContext } from '@fivfold/core';
-import { resolveOutputPath } from '@fivfold/core';
+import { resolveOutputPath, pascalCase } from '@fivfold/core';
 
 export class RealtimeProviderStrategy implements IRealtimeStrategy {
   readonly layer = 'realtime' as const;
@@ -30,7 +30,7 @@ export class RealtimeProviderStrategy implements IRealtimeStrategy {
 
     const outputContext = {
       ...ctx,
-      moduleName: ctx.kitName.charAt(0).toUpperCase() + ctx.kitName.slice(1),
+      moduleName: pascalCase(ctx.kitName),
       realtimeProvider: this.provider,
       realtimeNamePascal,
     };

@@ -1,0 +1,39 @@
+import { GetObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import type {
+  AccessUrlParams,
+  IMediaUploadStorageAdapter,
+  PresignAdapterResult,
+  PresignParams,
+} from '../domain/media-upload.port';
+
+const bucket = process.env.AWS_S3_BUCKET ?? '';
+const region = process.env.AWS_REGION ?? 'us-east-1';
+
+export class {{providerNamePascal}}MediaStorageAdapter implements IMediaUploadStorageAdapter {
+  private readonly client = new S3Client({ region });
+
+  async presign(params: PresignParams): Promise<PresignAdapterResult> {
+    const safeName = params.fileName.replace(/[^a-zA-Z0-9._-]/g, '_');
+    const objectKey = `uploads/s3/${params.uploadSessionId}/${safeName}`;
+    const command = new PutObjectCommand({
+      Bucket: bucket,
+      Key: objectKey,
+      ContentType: params.mimeType,
+    });
+    const url = await getSignedUrl(this.client, command, { expiresIn: 900 });
+    return {
+      objectKey,
+      instruction: { kind: 'http-put', url, method: 'PUT', headers: { 'Content-Type': params.mimeType } },
+    };
+  }
+
+  async buildAccessUrl(params: AccessUrlParams): Promise<string> {
+    const publicBase = process.env.AWS_S3_PUBLIC_BASE_URL;
+    if (publicBase) {
+      return `${publicBase.replace(/\/$/, '')}/${encodeURI(params.objectKey)}`;
+    }
+    const command = new GetObjectCommand({ Bucket: bucket, Key: params.objectKey });
+    return getSignedUrl(this.client, command, { expiresIn: 3600 });
+  }
+}

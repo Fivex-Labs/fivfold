@@ -1,0 +1,19 @@
+import { IsIn, IsInt, IsOptional, IsString, MaxLength } from 'class-validator';
+
+export class FinalizeUploadDto {
+  @IsString()
+  @MaxLength(64)
+  uploadSessionId!: string;
+
+  @IsIn(['success', 'failure'])
+  outcome!: 'success' | 'failure';
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(2000)
+  failureReason?: string;
+
+  @IsOptional()
+  @IsInt()
+  storageHttpStatus?: number;
+}

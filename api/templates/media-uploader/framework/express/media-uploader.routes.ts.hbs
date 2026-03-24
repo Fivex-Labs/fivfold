@@ -1,0 +1,40 @@
+import { Router, type Request, type Response } from 'express';
+import type { CreatePresignDto } from './dto/create-presign.dto';
+import type { FinalizeUploadDto } from './dto/finalize-upload.dto';
+import type { {{moduleName}}MediaUploadApi } from './media-uploader.service';
+
+function authMiddleware(req: Request, res: Response, next: () => void): void {
+  // TODO: Replace with your auth check
+  next();
+}
+
+function getUserId(req: Request): string | null {
+  return (req as { user?: { id: string } }).user?.id ?? null;
+}
+
+export function create{{moduleName}}Router(api: {{moduleName}}MediaUploadApi): Router {
+  const router = Router();
+  router.use(authMiddleware);
+
+  router.post('/presign', async (req, res) => {
+    try {
+      const result = await api.presign(getUserId(req), req.body as CreatePresignDto);
+      res.status(201).json(result);
+    } catch (err) {
+      const e = err as Error & { status?: number };
+      res.status(e.status ?? 500).json({ error: String(err) });
+    }
+  });
+
+  router.post('/finalize', async (req, res) => {
+    try {
+      const result = await api.finalize(getUserId(req), req.body as FinalizeUploadDto);
+      res.status(200).json(result);
+    } catch (err) {
+      const e = err as Error & { status?: number };
+      res.status(e.status ?? 500).json({ error: String(err) });
+    }
+  });
+
+  return router;
+}

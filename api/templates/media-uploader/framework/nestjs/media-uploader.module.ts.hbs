@@ -1,0 +1,36 @@
+import { Module } from '@nestjs/common';
+import { {{moduleName}}Controller } from './media-uploader.controller';
+import { {{moduleName}}Service } from './media-uploader.service';
+{{#if (eq orm "typeorm")}}
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { MediaUploadAudit } from './entities/media-upload-audit.entity';
+{{/if}}
+{{#if (eq orm "mongoose")}}
+import { MongooseModule } from '@nestjs/mongoose';
+import { {{moduleName}}UploadAudit, {{moduleName}}UploadAuditSchema } from './schemas/media-upload-audit.schema';
+{{/if}}
+{{#if provider}}
+import { {{providerNamePascal}}MediaStorageAdapter } from './adapters/{{provider}}-media-storage.adapter';
+{{/if}}
+
+@Module({
+  imports: [
+    {{#if (eq orm "typeorm")}}
+    TypeOrmModule.forFeature([MediaUploadAudit]),
+    {{/if}}
+    {{#if (eq orm "mongoose")}}
+    MongooseModule.forFeature([
+      { name: {{moduleName}}UploadAudit.name, schema: {{moduleName}}UploadAuditSchema },
+    ]),
+    {{/if}}
+  ],
+  controllers: [{{moduleName}}Controller],
+  providers: [
+    {{moduleName}}Service,
+    {{#if provider}}
+    {{providerNamePascal}}MediaStorageAdapter,
+    {{/if}}
+  ],
+  exports: [{{moduleName}}Service],
+})
+export class {{moduleName}}Module {}

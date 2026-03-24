@@ -1,6 +1,6 @@
 ---
 name: fivfold-kits
-description: FivFold UI Kits conventions for React/Next.js projects. Use when working with FivFold Kits (Email, Kanban, Chat, Auth), import paths, theming, Tailwind CSS v4, shadcn/ui components, or kit customization.
+description: FivFold UI Kits conventions for React/Next.js projects. Use when working with FivFold Kits (Email, Kanban, Chat, Auth, Media Uploader), import paths, theming, Tailwind CSS v4, shadcn/ui components, or kit customization.
 license: MIT
 metadata:
   author: Fivex Labs
@@ -13,7 +13,7 @@ Conventions for using FivFold UI Kits in React and Next.js projects.
 
 ## When to Apply
 
-- Importing or customizing FivFold Kits (Email, Kanban, Chat, Auth)
+- Importing or customizing FivFold Kits (Email, Kanban, Chat, Auth, Media Uploader)
 - Setting up theming, Tailwind CSS v4, or shadcn/ui
 - Working with kit component exports and props
 
@@ -56,3 +56,4 @@ npx @fivfold/ui add <name> --theme zinc  # add with specific theme
 | Kanban | Drag-and-drop board with columns, tasks, priorities |
 | Chat | Threads, Socket.IO-ready kit: dropdown menus, inline composer (poll/emoji/GIF), search — wire optional `ChatKit` callbacks to your API |
 | Auth | Login, Register, ForgotPassword (Firebase, Cognito, Auth0, JWT) |
+| Media Uploader | `MediaUploaderKit`: `presign` + `finalizeUpload`, optional `simulateTransport` for demos; pair with `@fivfold/api add media-uploader` |

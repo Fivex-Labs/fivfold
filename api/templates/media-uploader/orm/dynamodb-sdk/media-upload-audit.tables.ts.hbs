@@ -1,0 +1,8 @@
+import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
+import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb';
+
+const client = new DynamoDBClient({});
+export const {{camelCase moduleName}}Ddb = DynamoDBDocumentClient.from(client);
+
+export const {{moduleName}}UploadAuditTableName =
+  process.env.MEDIA_UPLOAD_AUDIT_TABLE ?? 'media_uploader_upload_audits';

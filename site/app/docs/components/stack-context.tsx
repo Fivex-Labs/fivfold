@@ -15,8 +15,18 @@ export type Orm =
   | "dynamodb-sdk"
 export type AuthProvider = "firebase" | "cognito" | "auth0" | "jwt"
 export type PushProvider = "fcm" | "onesignal" | "sns" | "pushy" | "pusher-beams"
+/** Object storage for Media Uploader kit docs (CORS / policy steps). */
+export type StorageProvider = "s3" | "azure-blob" | "gcs" | "cloudinary" | "dropbox"
 /** Frontend bundler / framework for docs (how the UI app reaches the API in dev). */
 export type FrontendBundler = "vite" | "nextjs"
+
+export const STORAGE_OPTIONS: { value: StorageProvider; label: string }[] = [
+  { value: "s3", label: "Amazon S3" },
+  { value: "azure-blob", label: "Azure Blob" },
+  { value: "gcs", label: "Google Cloud Storage" },
+  { value: "cloudinary", label: "Cloudinary" },
+  { value: "dropbox", label: "Dropbox" },
+]
 
 export interface StackSelection {
   runtime: Runtime
@@ -28,6 +38,7 @@ export interface StackSelection {
   frontend: FrontendBundler
   authProvider?: AuthProvider
   pushProvider?: PushProvider
+  storageProvider?: StorageProvider
 }
 
 export const FRONTEND_BUNDLER_OPTIONS: { value: FrontendBundler; label: string }[] = [
@@ -86,6 +97,7 @@ const defaultStack: StackSelection = {
   frontend: "nextjs",
   authProvider: "firebase",
   pushProvider: "fcm",
+  storageProvider: "s3",
 }
 
 function loadFromStorage(): StackSelection {
@@ -107,6 +119,7 @@ function loadFromStorage(): StackSelection {
         : defaultStack.frontend),
       authProvider: parsed.authProvider ?? defaultStack.authProvider,
       pushProvider: parsed.pushProvider ?? defaultStack.pushProvider,
+      storageProvider: (parsed as Partial<StackSelection>).storageProvider ?? defaultStack.storageProvider,
     }
   } catch {
     return defaultStack

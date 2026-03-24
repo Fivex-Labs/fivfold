@@ -1,6 +1,6 @@
 ---
 name: fivfold-api
-description: FivFold API scaffolding conventions for Express/NestJS backends. Use when working with FivFold API modules (Email, Kanban, Push, Chat), Hexagonal architecture, ORM patterns (TypeORM, Prisma, Mongoose), or backend scaffolding.
+description: FivFold API scaffolding conventions for Express/NestJS backends. Use when working with FivFold API modules (Email, Kanban, Push, Chat, Media Uploader), Hexagonal architecture, ORM patterns (TypeORM, Prisma, Mongoose), or backend scaffolding.
 license: MIT
 metadata:
   author: Fivex Labs
@@ -13,7 +13,7 @@ Conventions for FivFold API modules and backend scaffolding.
 
 ## When to Apply
 
-- Scaffolding or modifying FivFold API modules (Email, Kanban, Push, Chat)
+- Scaffolding or modifying FivFold API modules (Email, Kanban, Push, Chat, Media Uploader)
 - Implementing Hexagonal (Ports & Adapters) architecture
 - Working with ORM patterns (TypeORM, Prisma, Mongoose, Cosmos SDK, DynamoDB SDK)
 
@@ -39,6 +39,7 @@ npx @fivfold/api add email       # scaffold email API module
 npx @fivfold/api add kanban      # scaffold kanban API module
 npx @fivfold/api add push        # scaffold push notifications module
 npx @fivfold/api add chat        # scaffold chat API module
+npx @fivfold/api add media-uploader --provider=s3   # presign + finalize + audit rows; pick s3 | azure-blob | gcs | cloudinary | dropbox
 ```
 
 Chat REST (generated) includes participant-scoped search, `PATCH …/conversations/:id/unread`, and `DELETE …/conversations/:id/messages` (soft-clear; group admins only). The Chat module is not scaffolded for Firestore/Realtime Database — use TypeORM, Prisma, Mongoose, Cosmos SDK, or DynamoDB SDK per your `api add chat` stack.

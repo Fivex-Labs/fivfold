@@ -1,0 +1,66 @@
+import { BlobSASPermissions, BlobServiceClient, SASProtocol, StorageSharedKeyCredential } from '@azure/storage-blob';
+import type {
+  AccessUrlParams,
+  IMediaUploadStorageAdapter,
+  PresignAdapterResult,
+  PresignParams,
+} from '../domain/media-upload.port';
+
+function getCredential(): StorageSharedKeyCredential {
+  const conn = process.env.AZURE_STORAGE_CONNECTION_STRING ?? '';
+  const accountName = process.env.AZURE_STORAGE_ACCOUNT_NAME;
+  const accountKey = process.env.AZURE_STORAGE_ACCOUNT_KEY;
+  if (accountName && accountKey) {
+    return new StorageSharedKeyCredential(accountName, accountKey);
+  }
+  const match = conn.match(/AccountName=([^;]+);AccountKey=([^;]+)/);
+  if (!match) throw new Error('Set AZURE_STORAGE_CONNECTION_STRING or AZURE_STORAGE_ACCOUNT_NAME + KEY');
+  return new StorageSharedKeyCredential(match[1], match[2]);
+}
+
+export class {{providerNamePascal}}MediaStorageAdapter implements IMediaUploadStorageAdapter {
+  async presign(params: PresignParams): Promise<PresignAdapterResult> {
+    const containerName = process.env.AZURE_STORAGE_CONTAINER ?? 'uploads';
+    const cred = getCredential();
+    const accountName = cred.accountName;
+    const safeName = params.fileName.replace(/[^a-zA-Z0-9._-]/g, '_');
+    const blobName = `{{provider}}/${params.uploadSessionId}/${safeName}`;
+    const service = new BlobServiceClient(`https://${accountName}.blob.core.windows.net`, cred);
+    const container = service.getContainerClient(containerName);
+    const blob = container.getBlockBlobClient(blobName);
+    const startsOn = new Date(Date.now() - 60_000);
+    const expiresOn = new Date(Date.now() + 15 * 60_000);
+    const sas = blob.generateSasUrl({
+      permissions: BlobSASPermissions.parse('cw'),
+      startsOn,
+      expiresOn,
+      protocol: SASProtocol.Https,
+    });
+    return {
+      objectKey: `${containerName}/${blobName}`,
+      instruction: {
+        kind: 'http-put',
+        url: sas,
+        method: 'PUT',
+        headers: { 'x-ms-blob-type': 'BlockBlob', 'Content-Type': params.mimeType },
+      },
+    };
+  }
+
+  async buildAccessUrl(params: AccessUrlParams): Promise<string> {
+    const cred = getCredential();
+    const accountName = cred.accountName;
+    const [containerName, ...rest] = params.objectKey.split('/');
+    const blobName = rest.join('/');
+    const service = new BlobServiceClient(`https://${accountName}.blob.core.windows.net`, cred);
+    const blob = service.getContainerClient(containerName).getBlockBlobClient(blobName);
+    const startsOn = new Date(Date.now() - 60_000);
+    const expiresOn = new Date(Date.now() + 60 * 60_000);
+    return blob.generateSasUrl({
+      permissions: BlobSASPermissions.parse('r'),
+      startsOn,
+      expiresOn,
+      protocol: SASProtocol.Https,
+    });
+  }
+}

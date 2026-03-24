@@ -1,7 +1,7 @@
 import { resolve } from 'path';
 import type { IServiceProviderStrategy } from '@fivfold/core';
 import type { GeneratorContext } from '@fivfold/core';
-import { resolveOutputPath } from '@fivfold/core';
+import { resolveOutputPath, pascalCase } from '@fivfold/core';
 
 export class PushProviderStrategy implements IServiceProviderStrategy {
   readonly name: string;
@@ -19,7 +19,7 @@ export class PushProviderStrategy implements IServiceProviderStrategy {
 
     const outputContext = {
       ...ctx,
-      moduleName: ctx.kitName.charAt(0).toUpperCase() + ctx.kitName.slice(1),
+      moduleName: pascalCase(ctx.kitName),
       providerName: this.providerName,
       providerNamePascal: this.providerName
         .split(/[-_]/)

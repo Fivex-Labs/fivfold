@@ -11,6 +11,7 @@ import {
   Cog,
   Bell,
   MessageSquareText,
+  Upload,
 } from "lucide-react";
 
 export type SearchDocsSection = "Getting Started" | "Kits";
@@ -98,6 +99,27 @@ export const searchDocsEntries: SearchDocsEntry[] = [
     keywords: ["kanban", "kanban kit", "board", "column", "card", "drag", "dnd", "drag and drop", "tasks"],
     section: "Kits",
     icon: LayoutGrid,
+  },
+  {
+    title: "Media Uploader",
+    href: "/docs/kits/media-uploader",
+    description:
+      "Direct-to-cloud uploads with presign, finalize, accessUrl, and audit-only DB rows. S3, Azure Blob, GCS, Cloudinary, Dropbox.",
+    keywords: [
+      "media uploader",
+      "upload",
+      "presigned",
+      "s3",
+      "azure blob",
+      "gcs",
+      "cloudinary",
+      "dropbox",
+      "multipart",
+      "drag and drop upload",
+      "file upload",
+    ],
+    section: "Kits",
+    icon: Upload,
   },
   {
     title: "Push Notifications",

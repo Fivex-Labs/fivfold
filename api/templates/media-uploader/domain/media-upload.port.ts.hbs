@@ -1,0 +1,29 @@
+import type { DirectUploadInstruction } from './media-upload.types';
+
+export interface PresignParams {
+  uploadSessionId: string;
+  fileName: string;
+  mimeType: string;
+  sizeBytes: number;
+}
+
+export interface PresignAdapterResult {
+  instruction: DirectUploadInstruction;
+  objectKey: string;
+  /** Cloudinary public_id, etc. */
+  publicId?: string;
+}
+
+export interface AccessUrlParams {
+  objectKey: string;
+  publicId?: string;
+  mimeType: string;
+}
+
+/**
+ * Storage adapter: presigned / SAS upload + canonical read URL after upload succeeds.
+ */
+export interface IMediaUploadStorageAdapter {
+  presign(params: PresignParams): Promise<PresignAdapterResult>;
+  buildAccessUrl(params: AccessUrlParams): Promise<string>;
+}

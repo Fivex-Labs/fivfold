@@ -2,11 +2,12 @@
 
 import * as React from "react"
 import { useStack } from "./stack-context"
-import type { Runtime, Framework, AuthProvider, PushProvider, FrontendBundler } from "./stack-context"
+import type { Runtime, Framework, AuthProvider, PushProvider, FrontendBundler, StorageProvider } from "./stack-context"
 import {
   DATABASE_OPTIONS,
   ORM_OPTIONS_BY_DATABASE,
   FRONTEND_BUNDLER_OPTIONS,
+  STORAGE_OPTIONS,
 } from "./stack-context"
 import {
   Sheet,
@@ -45,6 +46,8 @@ export interface StackConfiguratorSidebarProps {
   showAuthProvider?: boolean
   authOnly?: boolean
   showPushProvider?: boolean
+  /** Object storage (Media Uploader kit docs). */
+  showStorageProvider?: boolean
   showDatabaseFields?: boolean
   /** Show Frontend (Vite / Next.js) — drives kit docs for dev routing and CORS hints. */
   showFrontendBundler?: boolean
@@ -116,6 +119,7 @@ export function StackConfiguratorSidebar({
   showAuthProvider = false,
   authOnly = false,
   showPushProvider = false,
+  showStorageProvider = false,
   showDatabaseFields = false,
   showFrontendBundler = false,
 }: StackConfiguratorSidebarProps) {
@@ -130,6 +134,9 @@ export function StackConfiguratorSidebar({
   const ormLabel = ormOptions.find((o) => o.value === stack.orm)?.label ?? stack.orm
   const authLabel = AUTH_OPTIONS.find((o) => o.value === (stack.authProvider ?? "firebase"))?.label ?? (stack.authProvider ?? "firebase")
   const pushLabel = PUSH_OPTIONS.find((o) => o.value === (stack.pushProvider ?? "fcm"))?.label ?? (stack.pushProvider ?? "fcm")
+  const storageLabel =
+    STORAGE_OPTIONS.find((o) => o.value === (stack.storageProvider ?? "s3"))?.label ??
+    (stack.storageProvider ?? "s3")
   const frontendLabel =
     FRONTEND_BUNDLER_OPTIONS.find((o) => o.value === stack.frontend)?.label ?? stack.frontend
 
@@ -200,6 +207,14 @@ export function StackConfiguratorSidebar({
               value={pushLabel}
               platformKey={stack.pushProvider ?? "fcm"}
               onClick={() => setOpenCategory("push")}
+            />
+          )}
+          {showStorageProvider && (
+            <StackCard
+              label="Storage"
+              value={storageLabel}
+              platformKey={stack.storageProvider ?? "s3"}
+              onClick={() => setOpenCategory("storage")}
             />
           )}
         </div>
@@ -344,6 +359,33 @@ export function StackConfiguratorSidebar({
                 selected={(stack.authProvider ?? "firebase") === opt.value}
                 onClick={() => {
                   setStack({ authProvider: opt.value as AuthProvider })
+                  setOpenCategory(null)
+                }}
+              />
+            ))}
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      {/* Storage Sheet */}
+      <Sheet open={openCategory === "storage"} onOpenChange={(o) => !o && setOpenCategory(null)}>
+        <SheetContent side="right" className="overflow-y-auto rounded-t-xl border-white/10 bg-[#0a0a0a]">
+          <SheetHeader>
+            <SheetTitle className="text-white">Choose object storage</SheetTitle>
+          </SheetHeader>
+          <p className="px-4 text-xs text-white/50">
+            Used for Media Uploader CORS and bucket policy documentation.
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-4">
+            {STORAGE_OPTIONS.map((opt) => (
+              <OptionCard
+                key={opt.value}
+                value={opt.value}
+                label={opt.label}
+                platformKey={opt.value}
+                selected={(stack.storageProvider ?? "s3") === opt.value}
+                onClick={() => {
+                  setStack({ storageProvider: opt.value as StorageProvider })
                   setOpenCategory(null)
                 }}
               />

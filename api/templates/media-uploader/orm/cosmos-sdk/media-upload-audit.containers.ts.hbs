@@ -1,0 +1,35 @@
+import { CosmosClient, Container, Database } from '@azure/cosmos';
+
+const endpoint = process.env.COSMOS_ENDPOINT!;
+const key = process.env.COSMOS_KEY!;
+const databaseId = process.env.COSMOS_DATABASE_ID ?? 'appdb';
+
+const client = new CosmosClient({ endpoint, key });
+
+export interface {{moduleName}}UploadAuditItem {
+  id: string;
+  uploadSessionId: string;
+  userId?: string | null;
+  originalFileName: string;
+  mimeType: string;
+  sizeBytes: number;
+  storageProvider: string;
+  objectKey: string;
+  publicId?: string | null;
+  status: 'pending' | 'completed' | 'failed';
+  accessUrl?: string | null;
+  uploadedAt?: string | null;
+  failedAt?: string | null;
+  failureReason?: string | null;
+  createdAt: string;
+  _partitionKey: string;
+}
+
+export async function get{{moduleName}}UploadAuditContainer(): Promise<Container> {
+  const { database } = await client.databases.createIfNotExists({ id: databaseId });
+  const { container } = await database.containers.createIfNotExists({
+    id: 'media_uploader_upload_audits',
+    partitionKey: { paths: ['/uploadSessionId'] },
+  });
+  return container;
+}

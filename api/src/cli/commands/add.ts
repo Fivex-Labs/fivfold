@@ -21,7 +21,7 @@ import {
   getInstallCommand,
   runInstall,
   parseGlobalFlags,
-  selectPushProvider,
+  selectKitServiceProvider,
   selectRealtimeProvider,
   type CliFlags,
 } from '@fivfold/core';
@@ -263,7 +263,11 @@ async function scaffoldWithManifest(
   if (manifest.services && Object.keys(manifest.services).length > 0) {
     provider = flags.provider ?? config?.api?.provider;
     if (!provider) {
-      provider = await selectPushProvider(Object.keys(manifest.services), flags);
+      provider = await selectKitServiceProvider(
+        Object.keys(manifest.services),
+        flags,
+        manifest.serviceProviderPrompt
+      );
     } else if (!manifest.services[provider]) {
       provider = Object.keys(manifest.services)[0];
     }

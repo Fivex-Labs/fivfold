@@ -135,26 +135,44 @@ export async function selectAuthProvider(flags: CliFlags): Promise<string> {
   return result as string;
 }
 
+/** Generic kit `services` provider picker; uses manifest `serviceProviderPrompt` when provided. */
+export async function selectKitServiceProvider(
+  availableProviders: string[],
+  flags: CliFlags,
+  prompt?: { message: string; labels: Record<string, string> }
+): Promise<string> {
+  if (flags.yes || flags.dryRun) return availableProviders[0] ?? '';
+  if (flags.provider && availableProviders.includes(flags.provider)) return flags.provider;
+
+  const message = prompt?.message ?? 'Which service provider do you want to use?';
+  const options = availableProviders.map((value) => ({
+    value,
+    label: prompt?.labels[value] ?? value.replace(/-/g, ' '),
+  }));
+
+  const result = await p.select({
+    message,
+    options,
+    initialValue: availableProviders[0],
+  });
+  if (p.isCancel(result)) process.exit(0);
+  return result as string;
+}
+
 export async function selectPushProvider(
   availableProviders: string[],
   flags: CliFlags
 ): Promise<string> {
-  if (flags.yes || flags.dryRun) return availableProviders[0] ?? 'fcm';
-  if (flags.provider && availableProviders.includes(flags.provider)) return flags.provider;
-
-  const result = await p.select({
+  return selectKitServiceProvider(availableProviders, flags, {
     message: 'Which push notification service do you want to use?',
-    options: [
-      { value: 'fcm', label: 'Firebase Cloud Messaging (FCM)' },
-      { value: 'onesignal', label: 'OneSignal' },
-      { value: 'sns', label: 'AWS SNS' },
-      { value: 'pushy', label: 'Pushy' },
-      { value: 'pusher-beams', label: 'Pusher Beams' },
-    ].filter((opt) => availableProviders.includes(opt.value)),
-    initialValue: availableProviders[0] ?? 'fcm',
+    labels: {
+      fcm: 'Firebase Cloud Messaging (FCM)',
+      onesignal: 'OneSignal',
+      sns: 'AWS SNS',
+      pushy: 'Pushy',
+      'pusher-beams': 'Pusher Beams',
+    },
   });
-  if (p.isCancel(result)) process.exit(0);
-  return result as string;
 }
 
 export async function selectRealtimeProvider(

@@ -1,7 +1,7 @@
 import { resolve } from 'path';
 import type { IOrmStrategy } from '@fivfold/core';
 import type { GeneratorContext } from '@fivfold/core';
-import { resolveOutputPath } from '@fivfold/core';
+import { resolveOutputPath, pascalCase } from '@fivfold/core';
 
 export class TypeOrmOrmStrategy implements IOrmStrategy {
   readonly name = 'typeorm';
@@ -14,7 +14,7 @@ export class TypeOrmOrmStrategy implements IOrmStrategy {
 
     const outputContext = {
       ...ctx,
-      moduleName: ctx.kitName.charAt(0).toUpperCase() + ctx.kitName.slice(1),
+      moduleName: pascalCase(ctx.kitName),
     };
 
     for (const file of ormConfig.files) {

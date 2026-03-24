@@ -1,0 +1,45 @@
+import { Dropbox } from 'dropbox';
+import type {
+  AccessUrlParams,
+  IMediaUploadStorageAdapter,
+  PresignAdapterResult,
+  PresignParams,
+} from '../domain/media-upload.port';
+
+export class {{providerNamePascal}}MediaStorageAdapter implements IMediaUploadStorageAdapter {
+  private client(): Dropbox {
+    const token = process.env.DROPBOX_ACCESS_TOKEN;
+    if (!token) throw new Error('DROPBOX_ACCESS_TOKEN is required');
+    return new Dropbox({ accessToken: token, fetch });
+  }
+
+  async presign(params: PresignParams): Promise<PresignAdapterResult> {
+    const safeName = params.fileName.replace(/[^a-zA-Z0-9._-]/g, '_');
+    const path = `/fivfold-uploads/${params.uploadSessionId}/${safeName}`;
+    const token = process.env.DROPBOX_ACCESS_TOKEN ?? '';
+    const dropboxApiArg = JSON.stringify({
+      path,
+      mode: 'add',
+      autorename: true,
+      mute: false,
+    });
+    return {
+      objectKey: path,
+      instruction: {
+        kind: 'http-put',
+        url: 'https://content.dropboxapi.com/2/files/upload',
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/octet-stream',
+          'Dropbox-API-Arg': dropboxApiArg,
+        },
+      },
+    };
+  }
+
+  async buildAccessUrl(params: AccessUrlParams): Promise<string> {
+    const res = await this.client().filesGetTemporaryLink({ path: params.objectKey });
+    return res.result.link;
+  }
+}

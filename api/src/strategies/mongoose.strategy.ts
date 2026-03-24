@@ -1,6 +1,6 @@
 import { resolve } from 'path';
 import type { IOrmStrategy, GeneratorContext } from '@fivfold/core';
-import { resolveOutputPath } from '@fivfold/core';
+import { resolveOutputPath, pascalCase } from '@fivfold/core';
 
 export class MongooseOrmStrategy implements IOrmStrategy {
   readonly name = 'mongoose';
@@ -13,7 +13,7 @@ export class MongooseOrmStrategy implements IOrmStrategy {
 
     const outputContext = {
       ...ctx,
-      moduleName: ctx.kitName.charAt(0).toUpperCase() + ctx.kitName.slice(1),
+      moduleName: pascalCase(ctx.kitName),
     };
 
     for (const file of ormConfig.files) {
