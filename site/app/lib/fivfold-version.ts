@@ -2,7 +2,7 @@
  * Marketing / docs release label shown in the site header and homepage.
  * Keep in sync with published `@fivfold/*` package versions in the monorepo.
  */
-export const FIVFOLD_MARKETING_VERSION = "0.13.6";
+export const FIVFOLD_MARKETING_VERSION = "0.14.1";
 
 export function formatMarketingVersionLabel(): string {
   return `v${FIVFOLD_MARKETING_VERSION}`;

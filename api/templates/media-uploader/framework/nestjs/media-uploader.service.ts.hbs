@@ -1,0 +1,341 @@
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { randomUUID } from 'crypto';
+import type { CreatePresignDto } from './dto/create-presign.dto';
+import type { FinalizeUploadDto } from './dto/finalize-upload.dto';
+import type { IMediaUploadStorageAdapter } from './domain/media-upload.port';
+{{#if provider}}
+import { {{providerNamePascal}}MediaStorageAdapter } from './adapters/{{provider}}-media-storage.adapter';
+{{/if}}
+{{#if (eq orm "typeorm")}}
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { MediaUploadAudit } from './entities/media-upload-audit.entity';
+{{/if}}
+{{#if (eq orm "prisma")}}
+import { PrismaService } from '../../prisma.service';
+{{/if}}
+{{#if (eq orm "mongoose")}}
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import { {{moduleName}}UploadAudit, {{moduleName}}UploadAuditDocument } from './schemas/media-upload-audit.schema';
+{{/if}}
+{{#if (eq orm "cosmos-sdk")}}
+import {
+  get{{moduleName}}UploadAuditContainer,
+  type {{moduleName}}UploadAuditItem,
+} from './containers/media-upload-audit.containers';
+{{/if}}
+{{#if (eq orm "dynamodb-sdk")}}
+import {
+  {{camelCase moduleName}}Ddb,
+  {{moduleName}}UploadAuditTableName,
+} from './tables/media-upload-audit.tables';
+import { GetCommand, PutCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb';
+{{/if}}
+
+@Injectable()
+export class {{moduleName}}Service {
+  constructor(
+    {{#if provider}}
+    private readonly storageAdapter: {{providerNamePascal}}MediaStorageAdapter,
+    {{/if}}
+    {{#if (eq orm "typeorm")}}
+    @InjectRepository(MediaUploadAudit)
+    private readonly auditRepo: Repository<MediaUploadAudit>,
+    {{/if}}
+    {{#if (eq orm "prisma")}}
+    private readonly prisma: PrismaService,
+    {{/if}}
+    {{#if (eq orm "mongoose")}}
+    @InjectModel({{moduleName}}UploadAudit.name)
+    private readonly auditModel: Model<{{moduleName}}UploadAuditDocument>,
+    {{/if}}
+  ) {}
+
+  private getAdapter(): IMediaUploadStorageAdapter {
+    {{#if provider}}
+    return this.storageAdapter;
+    {{else}}
+    throw new Error('No storage adapter');
+    {{/if}}
+  }
+
+  async presign(userId: string | null, dto: CreatePresignDto) {
+    const uploadSessionId = randomUUID();
+    const adapter = this.getAdapter();
+    const { instruction, objectKey, publicId } = await adapter.presign({
+      uploadSessionId,
+      fileName: dto.fileName,
+      mimeType: dto.mimeType,
+      sizeBytes: dto.sizeBytes,
+    });
+
+    {{#if (eq orm "typeorm")}}
+    const row = this.auditRepo.create({
+      uploadSessionId,
+      userId,
+      originalFileName: dto.fileName,
+      mimeType: dto.mimeType,
+      sizeBytes: dto.sizeBytes,
+      storageProvider: '{{provider}}',
+      objectKey,
+      publicId: publicId ?? null,
+      status: 'pending',
+    });
+    await this.auditRepo.save(row);
+    {{/if}}
+    {{#if (eq orm "prisma")}}
+    await this.prisma.{{camelCase moduleName}}UploadAudit.create({
+      data: {
+        uploadSessionId,
+        userId,
+        originalFileName: dto.fileName,
+        mimeType: dto.mimeType,
+        sizeBytes: dto.sizeBytes,
+        storageProvider: '{{provider}}',
+        objectKey,
+        publicId: publicId ?? null,
+        status: 'pending',
+      },
+    });
+    {{/if}}
+    {{#if (eq orm "mongoose")}}
+    await this.auditModel.create({
+      uploadSessionId,
+      userId,
+      originalFileName: dto.fileName,
+      mimeType: dto.mimeType,
+      sizeBytes: dto.sizeBytes,
+      storageProvider: '{{provider}}',
+      objectKey,
+      publicId: publicId ?? null,
+      status: 'pending',
+    });
+    {{/if}}
+    {{#if (eq orm "cosmos-sdk")}}
+    const container = await get{{moduleName}}UploadAuditContainer();
+    const item: {{moduleName}}UploadAuditItem = {
+      id: uploadSessionId,
+      uploadSessionId,
+      userId,
+      originalFileName: dto.fileName,
+      mimeType: dto.mimeType,
+      sizeBytes: dto.sizeBytes,
+      storageProvider: '{{provider}}',
+      objectKey,
+      publicId: publicId ?? null,
+      status: 'pending',
+      createdAt: new Date().toISOString(),
+      _partitionKey: uploadSessionId,
+    };
+    await container.items.create(item);
+    {{/if}}
+    {{#if (eq orm "dynamodb-sdk")}}
+    await {{camelCase moduleName}}Ddb.send(
+      new PutCommand({
+        TableName: {{moduleName}}UploadAuditTableName,
+        Item: {
+          uploadSessionId,
+          userId,
+          originalFileName: dto.fileName,
+          mimeType: dto.mimeType,
+          sizeBytes: dto.sizeBytes,
+          storageProvider: '{{provider}}',
+          objectKey,
+          publicId: publicId ?? null,
+          status: 'pending',
+          createdAt: new Date().toISOString(),
+        },
+      })
+    );
+    {{/if}}
+
+    return { uploadSessionId, upload: instruction };
+  }
+
+  async finalize(userId: string | null, dto: FinalizeUploadDto) {
+    {{#if (eq orm "typeorm")}}
+    const row = await this.auditRepo.findOne({ where: { uploadSessionId: dto.uploadSessionId } });
+    if (!row) throw new NotFoundException('Unknown upload session');
+    if (userId && row.userId && row.userId !== userId) throw new ForbiddenException();
+    if (row.status !== 'pending') throw new BadRequestException('Session already finalized');
+
+    if (dto.outcome === 'failure') {
+      row.status = 'failed';
+      row.failedAt = new Date();
+      row.failureReason = dto.failureReason ?? `storage_http_${dto.storageHttpStatus ?? 'error'}`;
+      await this.auditRepo.save(row);
+      return { success: false as const, error: row.failureReason };
+    }
+
+    const accessUrl = await this.getAdapter().buildAccessUrl({
+      objectKey: row.objectKey,
+      publicId: row.publicId ?? undefined,
+      mimeType: row.mimeType,
+    });
+    row.status = 'completed';
+    row.uploadedAt = new Date();
+    row.accessUrl = accessUrl;
+    await this.auditRepo.save(row);
+    return { success: true as const, accessUrl, auditId: row.id };
+    {{/if}}
+
+    {{#if (eq orm "prisma")}}
+    const row = await this.prisma.{{camelCase moduleName}}UploadAudit.findUnique({
+      where: { uploadSessionId: dto.uploadSessionId },
+    });
+    if (!row) throw new NotFoundException('Unknown upload session');
+    if (userId && row.userId && row.userId !== userId) throw new ForbiddenException();
+    if (row.status !== 'pending') throw new BadRequestException('Session already finalized');
+
+    if (dto.outcome === 'failure') {
+      const reason = dto.failureReason ?? `storage_http_${dto.storageHttpStatus ?? 'error'}`;
+      await this.prisma.{{camelCase moduleName}}UploadAudit.update({
+        where: { uploadSessionId: dto.uploadSessionId },
+        data: {
+          status: 'failed',
+          failedAt: new Date(),
+          failureReason: reason,
+        },
+      });
+      return { success: false as const, error: reason };
+    }
+
+    const accessUrl = await this.getAdapter().buildAccessUrl({
+      objectKey: row.objectKey,
+      publicId: row.publicId ?? undefined,
+      mimeType: row.mimeType,
+    });
+    const updated = await this.prisma.{{camelCase moduleName}}UploadAudit.update({
+      where: { uploadSessionId: dto.uploadSessionId },
+      data: {
+        status: 'completed',
+        uploadedAt: new Date(),
+        accessUrl,
+      },
+    });
+    return { success: true as const, accessUrl, auditId: updated.id };
+    {{/if}}
+
+    {{#if (eq orm "mongoose")}}
+    const row = await this.auditModel.findOne({ uploadSessionId: dto.uploadSessionId }).exec();
+    if (!row) throw new NotFoundException('Unknown upload session');
+    if (userId && row.userId && row.userId !== userId) throw new ForbiddenException();
+    if (row.status !== 'pending') throw new BadRequestException('Session already finalized');
+
+    if (dto.outcome === 'failure') {
+      const reason = dto.failureReason ?? `storage_http_${dto.storageHttpStatus ?? 'error'}`;
+      row.status = 'failed';
+      row.failedAt = new Date();
+      row.failureReason = reason;
+      await row.save();
+      return { success: false as const, error: reason };
+    }
+
+    const accessUrl = await this.getAdapter().buildAccessUrl({
+      objectKey: row.objectKey,
+      publicId: row.publicId ?? undefined,
+      mimeType: row.mimeType,
+    });
+    row.status = 'completed';
+    row.uploadedAt = new Date();
+    row.accessUrl = accessUrl;
+    await row.save();
+    return { success: true as const, accessUrl, auditId: String(row._id) };
+    {{/if}}
+
+    {{#if (eq orm "cosmos-sdk")}}
+    const container = await get{{moduleName}}UploadAuditContainer();
+    const { resource: existing } = await container
+      .item(dto.uploadSessionId, dto.uploadSessionId)
+      .read<{{moduleName}}UploadAuditItem>();
+    if (!existing) throw new NotFoundException('Unknown upload session');
+    if (userId && existing.userId && existing.userId !== userId) throw new ForbiddenException();
+    if (existing.status !== 'pending') throw new BadRequestException('Session already finalized');
+
+    if (dto.outcome === 'failure') {
+      const reason = dto.failureReason ?? `storage_http_${dto.storageHttpStatus ?? 'error'}`;
+      const failed: {{moduleName}}UploadAuditItem = {
+        ...existing,
+        status: 'failed',
+        failedAt: new Date().toISOString(),
+        failureReason: reason,
+      };
+      await container.item(existing.id, existing.uploadSessionId).replace(failed);
+      return { success: false as const, error: reason };
+    }
+
+    const accessUrl = await this.getAdapter().buildAccessUrl({
+      objectKey: existing.objectKey,
+      publicId: existing.publicId ?? undefined,
+      mimeType: existing.mimeType,
+    });
+    const done: {{moduleName}}UploadAuditItem = {
+      ...existing,
+      status: 'completed',
+      uploadedAt: new Date().toISOString(),
+      accessUrl,
+    };
+    await container.item(existing.id, existing.uploadSessionId).replace(done);
+    return { success: true as const, accessUrl, auditId: existing.id };
+    {{/if}}
+
+    {{#if (eq orm "dynamodb-sdk")}}
+    const got = await {{camelCase moduleName}}Ddb.send(
+      new GetCommand({
+        TableName: {{moduleName}}UploadAuditTableName,
+        Key: { uploadSessionId: dto.uploadSessionId },
+      })
+    );
+    const row = got.Item as Record<string, unknown> | undefined;
+    if (!row) throw new NotFoundException('Unknown upload session');
+    if (userId && row.userId && row.userId !== userId) throw new ForbiddenException();
+    if (row.status !== 'pending') throw new BadRequestException('Session already finalized');
+
+    if (dto.outcome === 'failure') {
+      const reason = dto.failureReason ?? `storage_http_${dto.storageHttpStatus ?? 'error'}`;
+      await {{camelCase moduleName}}Ddb.send(
+        new UpdateCommand({
+          TableName: {{moduleName}}UploadAuditTableName,
+          Key: { uploadSessionId: dto.uploadSessionId },
+          UpdateExpression: 'SET #s = :failed, failedAt = :fa, failureReason = :fr',
+          ExpressionAttributeNames: { '#s': 'status' },
+          ExpressionAttributeValues: {
+            ':failed': 'failed',
+            ':fa': new Date().toISOString(),
+            ':fr': reason,
+          },
+        })
+      );
+      return { success: false as const, error: String(reason) };
+    }
+
+    const accessUrl = await this.getAdapter().buildAccessUrl({
+      objectKey: String(row.objectKey),
+      publicId: row.publicId ? String(row.publicId) : undefined,
+      mimeType: String(row.mimeType),
+    });
+    await {{camelCase moduleName}}Ddb.send(
+      new UpdateCommand({
+        TableName: {{moduleName}}UploadAuditTableName,
+        Key: { uploadSessionId: dto.uploadSessionId },
+        UpdateExpression: 'SET #s = :ok, uploadedAt = :ua, accessUrl = :url',
+        ExpressionAttributeNames: { '#s': 'status' },
+        ExpressionAttributeValues: {
+          ':ok': 'completed',
+          ':ua': new Date().toISOString(),
+          ':url': accessUrl,
+        },
+      })
+    );
+    return { success: true as const, accessUrl, auditId: dto.uploadSessionId };
+    {{/if}}
+
+    throw new Error('Unsupported ORM for media-uploader kit');
+  }
+}

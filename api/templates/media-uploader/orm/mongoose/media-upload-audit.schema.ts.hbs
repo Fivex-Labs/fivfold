@@ -1,0 +1,50 @@
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { HydratedDocument } from 'mongoose';
+
+export type {{moduleName}}UploadAuditDocument = HydratedDocument<{{moduleName}}UploadAudit>;
+
+@Schema({ collection: 'media_uploader_upload_audits', timestamps: { createdAt: 'createdAt', updatedAt: false } })
+export class {{moduleName}}UploadAudit {
+  @Prop({ required: true, unique: true })
+  uploadSessionId!: string;
+
+  @Prop({ type: String, default: null })
+  userId!: string | null;
+
+  @Prop({ required: true })
+  originalFileName!: string;
+
+  @Prop({ required: true })
+  mimeType!: string;
+
+  @Prop({ required: true })
+  sizeBytes!: number;
+
+  @Prop({ required: true })
+  storageProvider!: string;
+
+  @Prop({ required: true })
+  objectKey!: string;
+
+  @Prop({ type: String, default: null })
+  publicId!: string | null;
+
+  @Prop({ required: true, enum: ['pending', 'completed', 'failed'] })
+  status!: 'pending' | 'completed' | 'failed';
+
+  @Prop({ type: String, default: null })
+  accessUrl!: string | null;
+
+  @Prop({ type: Date, default: null })
+  uploadedAt!: Date | null;
+
+  @Prop({ type: Date, default: null })
+  failedAt!: Date | null;
+
+  @Prop({ type: String, default: null })
+  failureReason!: string | null;
+
+  createdAt!: Date;
+}
+
+export const {{moduleName}}UploadAuditSchema = SchemaFactory.createForClass({{moduleName}}UploadAudit);

@@ -2,7 +2,7 @@ import { resolve } from 'path';
 import { existsSync } from 'fs';
 import type { IFrameworkStrategy } from '@fivfold/core';
 import type { GeneratorContext } from '@fivfold/core';
-import { resolveOutputPath, TsMorphEngine } from '@fivfold/core';
+import { resolveOutputPath, TsMorphEngine, pascalCase } from '@fivfold/core';
 import type { AstMutation } from '@fivfold/core';
 
 export class ExpressFrameworkStrategy implements IFrameworkStrategy {
@@ -16,7 +16,7 @@ export class ExpressFrameworkStrategy implements IFrameworkStrategy {
 
     const outputContext = {
       ...ctx,
-      moduleName: ctx.kitName.charAt(0).toUpperCase() + ctx.kitName.slice(1),
+      moduleName: pascalCase(ctx.kitName),
     };
 
     for (const file of fwConfig.files) {

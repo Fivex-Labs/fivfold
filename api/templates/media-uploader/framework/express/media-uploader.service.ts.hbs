@@ -1,0 +1,105 @@
+import { randomUUID } from 'crypto';
+import type { CreatePresignDto } from './dto/create-presign.dto';
+import type { FinalizeUploadDto } from './dto/finalize-upload.dto';
+import type { IMediaUploadStorageAdapter } from './domain/media-upload.port';
+{{#if (eq orm "typeorm")}}
+import type { DataSource, Repository } from 'typeorm';
+import { MediaUploadAudit } from './entities/media-upload-audit.entity';
+{{/if}}
+{{#if provider}}
+import { {{providerNamePascal}}MediaStorageAdapter } from './adapters/{{provider}}-media-storage.adapter';
+{{/if}}
+
+export interface {{moduleName}}MediaUploadApi {
+  presign(userId: string | null, dto: CreatePresignDto): Promise<{ uploadSessionId: string; upload: unknown }>;
+  finalize(
+    userId: string | null,
+    dto: FinalizeUploadDto
+  ): Promise<
+    | { success: true; accessUrl: string; auditId: string }
+    | { success: false; error: string }
+  >;
+}
+
+{{#if (eq orm "typeorm")}}
+export function create{{moduleName}}MediaUploadService(dataSource: DataSource): {{moduleName}}MediaUploadApi {
+  const auditRepo: Repository<MediaUploadAudit> = dataSource.getRepository(MediaUploadAudit);
+  {{#if provider}}
+  const storageAdapter: IMediaUploadStorageAdapter = new {{providerNamePascal}}MediaStorageAdapter();
+  {{else}}
+  const storageAdapter = null as unknown as IMediaUploadStorageAdapter;
+  {{/if}}
+
+  return {
+    async presign(userId, dto) {
+      const uploadSessionId = randomUUID();
+      const { instruction, objectKey, publicId } = await storageAdapter.presign({
+        uploadSessionId,
+        fileName: dto.fileName,
+        mimeType: dto.mimeType,
+        sizeBytes: dto.sizeBytes,
+      });
+      const row = auditRepo.create({
+        uploadSessionId,
+        userId,
+        originalFileName: dto.fileName,
+        mimeType: dto.mimeType,
+        sizeBytes: dto.sizeBytes,
+        storageProvider: '{{provider}}',
+        objectKey,
+        publicId: publicId ?? null,
+        status: 'pending',
+      });
+      await auditRepo.save(row);
+      return { uploadSessionId, upload: instruction };
+    },
+
+    async finalize(userId, dto) {
+      const row = await auditRepo.findOne({ where: { uploadSessionId: dto.uploadSessionId } });
+      if (!row) {
+        const err: Error & { status?: number } = new Error('Unknown upload session');
+        err.status = 404;
+        throw err;
+      }
+      if (userId && row.userId && row.userId !== userId) {
+        const err: Error & { status?: number } = new Error('Forbidden');
+        err.status = 403;
+        throw err;
+      }
+      if (row.status !== 'pending') {
+        const err: Error & { status?: number } = new Error('Session already finalized');
+        err.status = 400;
+        throw err;
+      }
+
+      if (dto.outcome === 'failure') {
+        row.status = 'failed';
+        row.failedAt = new Date();
+        row.failureReason = dto.failureReason ?? `storage_http_${dto.storageHttpStatus ?? 'error'}`;
+        await auditRepo.save(row);
+        return { success: false as const, error: row.failureReason };
+      }
+
+      const accessUrl = await storageAdapter.buildAccessUrl({
+        objectKey: row.objectKey,
+        publicId: row.publicId ?? undefined,
+        mimeType: row.mimeType,
+      });
+      row.status = 'completed';
+      row.uploadedAt = new Date();
+      row.accessUrl = accessUrl;
+      await auditRepo.save(row);
+      return { success: true as const, accessUrl, auditId: row.id };
+    },
+  };
+}
+{{else}}
+export function create{{moduleName}}MediaUploadService(_dataSource?: unknown): {{moduleName}}MediaUploadApi {
+  const notImpl = (): never => {
+    throw new Error(
+      `{{moduleName}} Express media upload service: use TypeORM for generated Express wiring, or scaffold with NestJS for {{orm}}.`
+    );
+  };
+  return { presign: notImpl, finalize: notImpl };
+}
+{{/if}}

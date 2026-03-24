@@ -1,0 +1,57 @@
+import { v2 as cloudinary } from 'cloudinary';
+import type {
+  AccessUrlParams,
+  IMediaUploadStorageAdapter,
+  PresignAdapterResult,
+  PresignParams,
+} from '../domain/media-upload.port';
+
+function assertImageOrVideo(mime: string): void {
+  if (!mime.startsWith('image/') && !mime.startsWith('video/')) {
+    throw new Error('Cloudinary kit adapter: only image/* and video/* MIME types are supported');
+  }
+}
+
+export class {{providerNamePascal}}MediaStorageAdapter implements IMediaUploadStorageAdapter {
+  constructor() {
+    cloudinary.config({
+      cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+      api_key: process.env.CLOUDINARY_API_KEY,
+      api_secret: process.env.CLOUDINARY_API_SECRET,
+    });
+  }
+
+  async presign(params: PresignParams): Promise<PresignAdapterResult> {
+    assertImageOrVideo(params.mimeType);
+    const folder = process.env.CLOUDINARY_UPLOAD_FOLDER ?? 'fivfold-uploads';
+    const timestamp = Math.round(Date.now() / 1000);
+    const publicId = `${params.uploadSessionId}/${params.fileName.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
+    const toSign: Record<string, string | number> = {
+      folder,
+      timestamp,
+      public_id: publicId,
+    };
+    const signature = cloudinary.utils.api_sign_request(toSign, process.env.CLOUDINARY_API_SECRET ?? '');
+    const cloudName = process.env.CLOUDINARY_CLOUD_NAME ?? '';
+    const resource = params.mimeType.startsWith('video/') ? 'video' : 'image';
+    const url = `https://api.cloudinary.com/v1_1/${cloudName}/${resource}/upload`;
+    const fields: Record<string, string> = {
+      api_key: process.env.CLOUDINARY_API_KEY ?? '',
+      timestamp: String(timestamp),
+      signature,
+      folder,
+      public_id: publicId,
+    };
+    return {
+      objectKey: publicId,
+      publicId,
+      instruction: { kind: 'post-multipart', url, fields },
+    };
+  }
+
+  async buildAccessUrl(params: AccessUrlParams): Promise<string> {
+    const pid = params.publicId ?? params.objectKey;
+    const resource = params.mimeType.startsWith('video/') ? 'video' : 'image';
+    return cloudinary.url(pid, { resource_type: resource, secure: true });
+  }
+}

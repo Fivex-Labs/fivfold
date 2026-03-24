@@ -1,7 +1,7 @@
 import { resolve } from 'path';
 import type { IGeneratorStrategy } from '@fivfold/core';
 import type { GeneratorContext } from '@fivfold/core';
-import { resolveOutputPath } from '@fivfold/core';
+import { resolveOutputPath, pascalCase } from '@fivfold/core';
 
 export class DomainStrategy implements IGeneratorStrategy {
   readonly name = 'domain';
@@ -13,7 +13,7 @@ export class DomainStrategy implements IGeneratorStrategy {
 
     const outputContext = {
       ...ctx,
-      moduleName: ctx.kitName.charAt(0).toUpperCase() + ctx.kitName.slice(1),
+      moduleName: pascalCase(ctx.kitName),
     };
 
     for (const file of domain.files) {

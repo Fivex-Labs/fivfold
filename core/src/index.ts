@@ -24,6 +24,7 @@ export type {
   AuthProviderConfig,
   ServiceProviderConfig,
   RealtimeProviderConfig,
+  ServiceProviderPromptConfig,
 } from './manifest/schema.js';
 export { loadManifest, loadUiManifest, resolveManifestPath, resolveOutputPath } from './manifest/resolver.js';
 
@@ -53,6 +54,7 @@ export {
   promptOutputDir,
   selectAuthProvider,
   selectPushProvider,
+  selectKitServiceProvider,
   selectRealtimeProvider,
   confirmOverwrite,
 } from './prompt/interactive.js';

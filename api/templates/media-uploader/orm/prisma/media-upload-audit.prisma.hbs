@@ -1,0 +1,21 @@
+// ---- Media Uploader Kit (audit only; no file blobs) ----
+
+model {{moduleName}}UploadAudit {
+  id               String    @id @default(uuid())
+  uploadSessionId  String    @unique @map("upload_session_id")
+  userId           String?   @map("user_id")
+  originalFileName String    @map("original_file_name")
+  mimeType         String    @map("mime_type")
+  sizeBytes        Int       @map("size_bytes")
+  storageProvider  String    @map("storage_provider")
+  objectKey        String    @map("object_key")
+  publicId         String?   @map("public_id")
+  status           String    @db.VarChar(16)
+  accessUrl        String?   @map("access_url")
+  uploadedAt       DateTime? @map("uploaded_at")
+  failedAt         DateTime? @map("failed_at")
+  failureReason    String?   @map("failure_reason")
+  createdAt        DateTime  @default(now()) @map("created_at")
+
+  @@map("media_uploader_upload_audits")
+}

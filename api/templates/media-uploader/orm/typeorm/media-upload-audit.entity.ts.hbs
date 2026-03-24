@@ -1,0 +1,54 @@
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
+
+@Entity('media_uploader_upload_audits')
+export class MediaUploadAudit {
+  @PrimaryGeneratedColumn('uuid')
+  id!: string;
+
+  @Column({ unique: true })
+  uploadSessionId!: string;
+
+  @Column({ type: 'varchar', nullable: true })
+  userId!: string | null;
+
+  @Column()
+  originalFileName!: string;
+
+  @Column()
+  mimeType!: string;
+
+  @Column({ type: 'int' })
+  sizeBytes!: number;
+
+  @Column()
+  storageProvider!: string;
+
+  @Column({ type: 'text' })
+  objectKey!: string;
+
+  @Column({ type: 'varchar', nullable: true })
+  publicId!: string | null;
+
+  @Column({ type: 'varchar', length: 16 })
+  status!: 'pending' | 'completed' | 'failed';
+
+  @Column({ type: 'text', nullable: true })
+  accessUrl!: string | null;
+
+  @Column({ type: 'timestamptz', nullable: true })
+  uploadedAt!: Date | null;
+
+  @Column({ type: 'timestamptz', nullable: true })
+  failedAt!: Date | null;
+
+  @Column({ type: 'text', nullable: true })
+  failureReason!: string | null;
+
+  @CreateDateColumn({ type: 'timestamptz' })
+  createdAt!: Date;
+}

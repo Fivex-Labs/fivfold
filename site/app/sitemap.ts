@@ -18,6 +18,7 @@ const routes: {
   { path: "/docs/kits/chat", priority: 0.8, changeFrequency: "weekly" },
   { path: "/docs/kits/email", priority: 0.8, changeFrequency: "weekly" },
   { path: "/docs/kits/kanban", priority: 0.8, changeFrequency: "weekly" },
+  { path: "/docs/kits/media-uploader", priority: 0.8, changeFrequency: "weekly" },
   { path: "/docs/kits/push", priority: 0.8, changeFrequency: "weekly" },
   { path: "/docs/api/setup", priority: 0.8, changeFrequency: "weekly" },
   { path: "/docs/api/express", priority: 0.7, changeFrequency: "monthly" },

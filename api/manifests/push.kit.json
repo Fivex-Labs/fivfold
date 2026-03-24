@@ -2,6 +2,16 @@
   "name": "push",
   "version": "1.0.0",
   "description": "Push notifications backend with device registration, sending, logging, and pluggable providers (FCM, OneSignal, AWS SNS, Pushy, Pusher Beams).",
+  "serviceProviderPrompt": {
+    "message": "Which push notification service do you want to use?",
+    "labels": {
+      "fcm": "Firebase Cloud Messaging (FCM)",
+      "onesignal": "OneSignal",
+      "sns": "AWS SNS",
+      "pushy": "Pushy",
+      "pusher-beams": "Pusher Beams"
+    }
+  },
   "domain": {
     "files": [
       { "template": "push/domain/push.port.ts.hbs", "output": "{{outputDir}}/{{kitName}}/domain/push.port.ts" },

@@ -50,6 +50,12 @@ export interface RealtimeProviderConfig {
   envVars?: string[];
 }
 
+/** Optional CLI prompt copy when `services` has multiple providers (e.g. push, media-uploader). */
+export interface ServiceProviderPromptConfig {
+  message: string;
+  labels: Record<string, string>;
+}
+
 export interface KitManifest {
   name: string;
   version: string;
@@ -62,6 +68,8 @@ export interface KitManifest {
   auth?: Record<string, AuthProviderConfig>;
   services?: Record<string, ServiceProviderConfig>;
   realtime?: Record<string, RealtimeProviderConfig>;
+  /** When set with `services`, drives `selectKitServiceProvider` labels and message. */
+  serviceProviderPrompt?: ServiceProviderPromptConfig;
 }
 
 export interface UiKitManifest {

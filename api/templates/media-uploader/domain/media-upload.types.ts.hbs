@@ -1,0 +1,18 @@
+/**
+ * Transport instructions for direct browser → object storage upload.
+ * The API never receives raw file bytes for the upload itself.
+ */
+export type DirectUploadInstruction =
+  | {
+      kind: 'http-put';
+      url: string;
+      method?: 'PUT' | 'POST';
+      headers?: Record<string, string>;
+    }
+  | {
+      kind: 'post-multipart';
+      url: string;
+      fields: Record<string, string>;
+    };
+
+export type MediaUploadAuditStatus = 'pending' | 'completed' | 'failed';

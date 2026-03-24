@@ -1,0 +1,25 @@
+{
+  "name": "media-uploader",
+  "version": "1.0.0",
+  "description": "Drag-and-drop media uploader with presign + direct-to-storage upload + finalize, per-file and overall progress, size warnings, and accessUrl on success.",
+  "dependencies": ["lucide-react"],
+  "shadcnDependencies": ["button", "card", "progress", "scroll-area", "badge"],
+  "files": [
+    {
+      "template": "templates/media-uploader/types.ts",
+      "output": "{{outputDir}}/{{kitName}}/types.ts"
+    },
+    {
+      "template": "templates/media-uploader/upload-client.ts",
+      "output": "{{outputDir}}/{{kitName}}/upload-client.ts"
+    },
+    {
+      "template": "templates/media-uploader/media-uploader.tsx",
+      "output": "{{outputDir}}/{{kitName}}/media-uploader.tsx"
+    },
+    {
+      "template": "templates/media-uploader/index.tsx",
+      "output": "{{outputDir}}/{{kitName}}/index.tsx"
+    }
+  ]
+}

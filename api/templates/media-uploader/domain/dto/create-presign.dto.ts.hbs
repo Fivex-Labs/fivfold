@@ -1,0 +1,15 @@
+import { IsInt, IsString, MaxLength, Min } from 'class-validator';
+
+export class CreatePresignDto {
+  @IsString()
+  @MaxLength(512)
+  fileName!: string;
+
+  @IsString()
+  @MaxLength(256)
+  mimeType!: string;
+
+  @IsInt()
+  @Min(1)
+  sizeBytes!: number;
+}

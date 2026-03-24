@@ -1,0 +1,46 @@
+import { Storage } from '@google-cloud/storage';
+import type {
+  AccessUrlParams,
+  IMediaUploadStorageAdapter,
+  PresignAdapterResult,
+  PresignParams,
+} from '../domain/media-upload.port';
+
+const bucketName = process.env.GCS_BUCKET ?? '';
+
+export class {{providerNamePascal}}MediaStorageAdapter implements IMediaUploadStorageAdapter {
+  private readonly storage = new Storage();
+  private bucket() {
+    return this.storage.bucket(bucketName);
+  }
+
+  async presign(params: PresignParams): Promise<PresignAdapterResult> {
+    const safeName = params.fileName.replace(/[^a-zA-Z0-9._-]/g, '_');
+    const objectKey = `uploads/gcs/${params.uploadSessionId}/${safeName}`;
+    const file = this.bucket().file(objectKey);
+    const [url] = await file.getSignedUrl({
+      version: 'v4',
+      action: 'write',
+      expires: Date.now() + 15 * 60 * 1000,
+      contentType: params.mimeType,
+    });
+    return {
+      objectKey,
+      instruction: { kind: 'http-put', url, method: 'PUT', headers: { 'Content-Type': params.mimeType } },
+    };
+  }
+
+  async buildAccessUrl(params: AccessUrlParams): Promise<string> {
+    const file = this.bucket().file(params.objectKey);
+    const publicUrl = process.env.GCS_PUBLIC_BASE_URL;
+    if (publicUrl) {
+      return `${publicUrl.replace(/\/$/, '')}/${encodeURI(params.objectKey)}`;
+    }
+    const [url] = await file.getSignedUrl({
+      version: 'v4',
+      action: 'read',
+      expires: Date.now() + 60 * 60 * 1000,
+    });
+    return url;
+  }
+}

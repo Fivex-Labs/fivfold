@@ -1,0 +1,27 @@
+import { Body, Controller, HttpCode, HttpStatus, Post, Request } from '@nestjs/common';
+import { {{moduleName}}Service } from './media-uploader.service';
+import type { CreatePresignDto } from './dto/create-presign.dto';
+import type { FinalizeUploadDto } from './dto/finalize-upload.dto';
+
+// TODO: Add @UseGuards(AuthGuard) from your auth module
+
+@Controller('media-uploader')
+export class {{moduleName}}Controller {
+  constructor(private readonly mediaUploadService: {{moduleName}}Service) {}
+
+  private getUserId(req: { user?: { id: string } }): string | null {
+    return req.user?.id ?? null;
+  }
+
+  @Post('presign')
+  @HttpCode(HttpStatus.CREATED)
+  presign(@Request() req: { user?: { id: string } }, @Body() dto: CreatePresignDto) {
+    return this.mediaUploadService.presign(this.getUserId(req), dto);
+  }
+
+  @Post('finalize')
+  @HttpCode(HttpStatus.OK)
+  finalize(@Request() req: { user?: { id: string } }, @Body() dto: FinalizeUploadDto) {
+    return this.mediaUploadService.finalize(this.getUserId(req), dto);
+  }
+}

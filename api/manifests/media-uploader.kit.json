@@ -1,0 +1,135 @@
+{
+  "name": "media-uploader",
+  "version": "1.0.0",
+  "description": "Direct-to-cloud media uploads with presigned URLs, finalize + accessUrl, and ORM audit log only (no file blobs in DB). Supports S3, Azure Blob, GCS, Cloudinary (images/videos), Dropbox.",
+  "serviceProviderPrompt": {
+    "message": "Which object storage provider do you want to use?",
+    "labels": {
+      "s3": "Amazon S3",
+      "azure-blob": "Azure Blob Storage",
+      "gcs": "Google Cloud Storage",
+      "cloudinary": "Cloudinary (images & videos only)",
+      "dropbox": "Dropbox"
+    }
+  },
+  "domain": {
+    "files": [
+      { "template": "media-uploader/domain/media-upload.types.ts.hbs", "output": "{{outputDir}}/{{kitName}}/domain/media-upload.types.ts" },
+      { "template": "media-uploader/domain/media-upload.port.ts.hbs", "output": "{{outputDir}}/{{kitName}}/domain/media-upload.port.ts" },
+      { "template": "media-uploader/domain/dto/create-presign.dto.ts.hbs", "output": "{{outputDir}}/{{kitName}}/dto/create-presign.dto.ts" },
+      { "template": "media-uploader/domain/dto/finalize-upload.dto.ts.hbs", "output": "{{outputDir}}/{{kitName}}/dto/finalize-upload.dto.ts" }
+    ]
+  },
+  "framework": {
+    "express": {
+      "files": [
+        { "template": "media-uploader/framework/express/media-uploader.routes.ts.hbs", "output": "{{outputDir}}/{{kitName}}/media-uploader.routes.ts" },
+        { "template": "media-uploader/framework/express/media-uploader.service.ts.hbs", "output": "{{outputDir}}/{{kitName}}/media-uploader.service.ts" }
+      ],
+      "dependencies": ["class-validator", "class-transformer", "express", "uuid"],
+      "devDependencies": ["@types/express", "@types/uuid"],
+      "astMutations": [
+        {
+          "target": "src/app.ts",
+          "action": "registerMiddleware",
+          "routePath": "/api/media-uploader",
+          "importPath": "./modules/media-uploader/media-uploader.routes",
+          "importName": "createMediaUploaderRouter"
+        }
+      ]
+    },
+    "nestjs": {
+      "files": [
+        { "template": "media-uploader/framework/nestjs/media-uploader.module.ts.hbs", "output": "{{outputDir}}/{{kitName}}/media-uploader.module.ts" },
+        { "template": "media-uploader/framework/nestjs/media-uploader.controller.ts.hbs", "output": "{{outputDir}}/{{kitName}}/media-uploader.controller.ts" },
+        { "template": "media-uploader/framework/nestjs/media-uploader.service.ts.hbs", "output": "{{outputDir}}/{{kitName}}/media-uploader.service.ts" }
+      ],
+      "dependencies": ["class-validator", "class-transformer", "@nestjs/common", "@nestjs/core", "uuid"],
+      "devDependencies": ["@types/uuid"],
+      "astMutations": [
+        {
+          "target": "src/app.module.ts",
+          "action": "registerModule",
+          "module": "MediaUploaderModule",
+          "importPath": "./modules/media-uploader/media-uploader.module"
+        }
+      ]
+    }
+  },
+  "orm": {
+    "typeorm": {
+      "files": [
+        { "template": "media-uploader/orm/typeorm/media-upload-audit.entity.ts.hbs", "output": "{{outputDir}}/{{kitName}}/entities/media-upload-audit.entity.ts" }
+      ],
+      "dependencies": ["typeorm", "pg", "reflect-metadata"],
+      "devDependencies": ["@types/pg"]
+    },
+    "prisma": {
+      "files": [
+        { "template": "media-uploader/orm/prisma/media-upload-audit.prisma.hbs", "output": "prisma/schema.prisma", "mode": "append" }
+      ],
+      "dependencies": ["@prisma/client"],
+      "devDependencies": ["prisma"]
+    },
+    "mongoose": {
+      "files": [
+        { "template": "media-uploader/orm/mongoose/media-upload-audit.schema.ts.hbs", "output": "{{outputDir}}/{{kitName}}/schemas/media-upload-audit.schema.ts" }
+      ],
+      "dependencies": ["mongoose", "@nestjs/mongoose"],
+      "devDependencies": []
+    },
+    "cosmos-sdk": {
+      "files": [
+        { "template": "media-uploader/orm/cosmos-sdk/media-upload-audit.containers.ts.hbs", "output": "{{outputDir}}/{{kitName}}/containers/media-upload-audit.containers.ts" }
+      ],
+      "dependencies": ["@azure/cosmos"],
+      "devDependencies": [],
+      "envVars": ["COSMOS_ENDPOINT", "COSMOS_KEY", "COSMOS_DATABASE_ID"]
+    },
+    "dynamodb-sdk": {
+      "files": [
+        { "template": "media-uploader/orm/dynamodb-sdk/media-upload-audit.tables.ts.hbs", "output": "{{outputDir}}/{{kitName}}/tables/media-upload-audit.tables.ts" }
+      ],
+      "dependencies": ["@aws-sdk/client-dynamodb", "@aws-sdk/lib-dynamodb"],
+      "devDependencies": [],
+      "envVars": ["AWS_REGION", "AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "MEDIA_UPLOAD_AUDIT_TABLE"]
+    }
+  },
+  "services": {
+    "s3": {
+      "files": [
+        { "template": "media-uploader/services/s3/s3-media-storage.adapter.ts.hbs", "output": "{{outputDir}}/{{kitName}}/adapters/s3-media-storage.adapter.ts" }
+      ],
+      "dependencies": ["@aws-sdk/client-s3", "@aws-sdk/s3-request-presigner"],
+      "envVars": ["AWS_REGION", "AWS_S3_BUCKET", "AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_S3_PUBLIC_BASE_URL"]
+    },
+    "azure-blob": {
+      "files": [
+        { "template": "media-uploader/services/azure-blob/azure-blob-media-storage.adapter.ts.hbs", "output": "{{outputDir}}/{{kitName}}/adapters/azure-blob-media-storage.adapter.ts" }
+      ],
+      "dependencies": ["@azure/storage-blob"],
+      "envVars": ["AZURE_STORAGE_CONNECTION_STRING", "AZURE_STORAGE_CONTAINER"]
+    },
+    "gcs": {
+      "files": [
+        { "template": "media-uploader/services/gcs/gcs-media-storage.adapter.ts.hbs", "output": "{{outputDir}}/{{kitName}}/adapters/gcs-media-storage.adapter.ts" }
+      ],
+      "dependencies": ["@google-cloud/storage"],
+      "envVars": ["GCS_BUCKET", "GOOGLE_APPLICATION_CREDENTIALS", "GCS_PUBLIC_BASE_URL"]
+    },
+    "cloudinary": {
+      "files": [
+        { "template": "media-uploader/services/cloudinary/cloudinary-media-storage.adapter.ts.hbs", "output": "{{outputDir}}/{{kitName}}/adapters/cloudinary-media-storage.adapter.ts" }
+      ],
+      "dependencies": ["cloudinary"],
+      "envVars": ["CLOUDINARY_CLOUD_NAME", "CLOUDINARY_API_KEY", "CLOUDINARY_API_SECRET", "CLOUDINARY_UPLOAD_FOLDER"]
+    },
+    "dropbox": {
+      "files": [
+        { "template": "media-uploader/services/dropbox/dropbox-media-storage.adapter.ts.hbs", "output": "{{outputDir}}/{{kitName}}/adapters/dropbox-media-storage.adapter.ts" }
+      ],
+      "dependencies": ["dropbox"],
+      "envVars": ["DROPBOX_ACCESS_TOKEN"]
+    }
+  }
+}

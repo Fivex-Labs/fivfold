@@ -16,6 +16,9 @@ import {
   SiMysql,
   SiVite,
   SiNextdotjs,
+  SiGooglecloud,
+  SiCloudinary,
+  SiDropbox,
 } from 'react-icons/si';
 
 import
@@ -96,6 +99,13 @@ const platformConfig: Record<
   sns: { Icon: FaAws, color: "#FF9900" },
   pushy: { Icon: IoCloudDoneOutline, color: "#fd6c6a" },
   "pusher-beams": { Icon: SiPusher, color: "#09b56c" },
+
+  // Object storage (Media Uploader)
+  s3: { Icon: FaAws, color: "#FF9900" },
+  "azure-blob": { Icon: VscAzure, color: "#0089D6" },
+  gcs: { Icon: SiGooglecloud, color: "#4285F4" },
+  cloudinary: { Icon: SiCloudinary, color: "#3448C5" },
+  dropbox: { Icon: SiDropbox, color: "#0061FF" },
 };
 
 export function PlatformIcon({
@@ -110,7 +120,7 @@ export function PlatformIcon({
   const config = platformConfig[platform] ?? { Icon: TbCircleDashed, color: "#94a3b8" };
   const { Icon, color } = config;
 
-  const useStyleColor = ["cognito", "jwt", "onesignal", "sns", "pushy", "cosmos-sdk", "dynamodb-sdk", "cosmosdb", "dynamodb", "socketio", "mssql", "postgres", "mysql"].includes(platform);
+  const useStyleColor = ["cognito", "jwt", "onesignal", "sns", "pushy", "cosmos-sdk", "dynamodb-sdk", "cosmosdb", "dynamodb", "socketio", "mssql", "postgres", "mysql", "s3", "azure-blob", "gcs", "cloudinary", "dropbox"].includes(platform);
 
   if (useStyleColor) {
     return (
