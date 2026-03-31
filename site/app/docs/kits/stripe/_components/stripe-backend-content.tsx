@@ -7,54 +7,6 @@ import { stripeDiagramImages } from "./stripe-diagram-assets";
 
 const BASE = "src/modules/stripe";
 
-/** Sequence diagram aligned with PaymentIntents + async webhook fulfillment */
-const MERMAID_PAYMENT_INTENTS_SEQUENCE = `sequenceDiagram
-    autonumber
-    actor User
-    participant Client as Client (browser)
-    participant API as Backend (Node.js)
-    participant Stripe as Stripe API
-
-    User->>Client: Checkout
-    Client->>API: POST /api/stripe/payment-intents { cartId }
-    activate API
-    API->>API: Calculate order total from DB
-    API->>Stripe: Create PaymentIntent (amount, currency)
-    Stripe-->>API: client_secret
-    deactivate API
-    API-->>Client: { clientSecret, paymentIntentId, ... }
-    Client->>Stripe: confirmPayment (client_secret, payment method)
-    Stripe-->>Client: Authorized / success (or error)
-    Client->>User: Redirect to processing / result
-
-    rect rgba(255, 234, 140, 0.35)
-        Note over Stripe, API: Asynchronous webhook
-        Stripe->>API: POST /api/stripe/webhook (payment_intent.succeeded)
-        activate API
-        API->>API: Verify signature and idempotency
-        API->>API: Update DB (PAID), fulfill order
-        deactivate API
-    end`;
-
-/** Sequence diagram aligned with Stripe Connect Express onboarding */
-const MERMAID_CONNECT_EXPRESS_SEQUENCE = `sequenceDiagram
-    autonumber
-    actor Vendor
-    participant App as Your app (API)
-    participant Stripe as Stripe
-
-    Vendor->>App: Start onboarding (get paid)
-    App->>Stripe: Create Express account (email)
-    Stripe-->>App: acct_...
-    App->>App: Save acct_... to DB
-    App->>Stripe: Create AccountLink (acct, return URLs)
-    Stripe-->>App: onboarding_url
-    App->>Vendor: Redirect to onboarding_url
-    Vendor->>Stripe: Complete KYC (ID, bank, ...)
-    Stripe->>Vendor: Redirect back to platform
-    Stripe->>App: Webhook account.updated
-    App->>App: DB: set payouts_enabled`;
-
 type OrmKey = "typeorm" | "prisma" | "mongoose" | "cosmos-sdk" | "dynamodb-sdk";
 
 function ormArtifactBlock(orm: OrmKey): string {

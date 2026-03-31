@@ -1,5 +1,4 @@
 import * as React from "react";
-import { CodeBlock } from "./code-block";
 import { ZoomableDocImage } from "./zoomable-doc-image";
 import { ImageIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
