@@ -2,6 +2,7 @@ import * as p from '@clack/prompts';
 import type { CliFlags } from './flags.js';
 import type { DetectedStack, DatabaseCategory } from '../detection/detector.js';
 import { getSmartDefaults, getOrmOptionsForDatabase, getDatabaseOptionsForCategory } from './smart-defaults.js';
+import type { KitFeaturePromptConfig } from '../manifest/schema.js';
 
 export async function selectFramework(detected: DetectedStack, flags: CliFlags): Promise<string> {
   if (flags.yes || flags.dryRun) return getSmartDefaults(detected).framework;
@@ -211,4 +212,41 @@ export async function confirmOverwrite(message: string, flags?: CliFlags): Promi
   });
   if (p.isCancel(result)) process.exit(0);
   return result as boolean;
+}
+
+const FEATURE_VALUE = /^[a-z0-9-]+$/i;
+
+/**
+ * Resolve enabled kit features from flags or interactive multiselect (arrow keys + space).
+ */
+export async function selectKitFeatures(
+  prompt: KitFeaturePromptConfig,
+  flags: CliFlags
+): Promise<string[]> {
+  const allowed = new Set(prompt.options.map((o) => o.value));
+  const defaults = [...prompt.defaultFeatures];
+
+  if (flags.features?.trim()) {
+    const parsed = flags.features
+      .split(',')
+      .map((s) => s.trim())
+      .filter((s) => s.length > 0 && FEATURE_VALUE.test(s));
+    const valid = parsed.filter((v) => allowed.has(v));
+    if (valid.length > 0) return [...new Set(valid)];
+  }
+
+  if (flags.yes || flags.dryRun) {
+    return defaults.filter((f) => allowed.has(f));
+  }
+
+  const result = await p.multiselect({
+    message: prompt.message,
+    options: prompt.options.map((o) => ({ value: o.value, label: o.label })),
+    initialValues: defaults.filter((f) => allowed.has(f)),
+    required: false,
+  });
+  if (p.isCancel(result)) process.exit(0);
+  const selected = (result as string[]).filter((v) => allowed.has(v));
+  if (selected.length === 0) return defaults.filter((f) => allowed.has(f));
+  return [...new Set(selected)];
 }

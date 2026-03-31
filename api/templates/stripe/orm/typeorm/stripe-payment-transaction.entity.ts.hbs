@@ -1,0 +1,37 @@
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  Index,
+} from 'typeorm';
+
+@Entity('stripe_payment_transactions')
+export class StripePaymentTransaction {
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
+
+  @Column({ type: 'varchar', name: 'cart_id' })
+  @Index()
+  cartId: string;
+
+  @Column({ type: 'varchar', name: 'user_id', nullable: true })
+  @Index()
+  userId: string | null;
+
+  @Column({ type: 'varchar', name: 'stripe_payment_intent_id' })
+  @Index({ unique: true })
+  stripePaymentIntentId: string;
+
+  @Column({ type: 'int', name: 'amount_cents' })
+  amountCents: number;
+
+  @Column({ type: 'varchar', length: 10 })
+  currency: string;
+
+  @Column({ type: 'varchar', default: 'requires_payment_method' })
+  status: string;
+
+  @CreateDateColumn({ name: 'created_at' })
+  createdAt: Date;
+}

@@ -1,7 +1,7 @@
 import { resolve } from 'path';
 import type { IGeneratorStrategy } from '@fivfold/core';
 import type { GeneratorContext } from '@fivfold/core';
-import { resolveOutputPath, pascalCase } from '@fivfold/core';
+import { resolveOutputPath, pascalCase, filterManifestFiles } from '@fivfold/core';
 
 export class DomainStrategy implements IGeneratorStrategy {
   readonly name = 'domain';
@@ -16,7 +16,7 @@ export class DomainStrategy implements IGeneratorStrategy {
       moduleName: pascalCase(ctx.kitName),
     };
 
-    for (const file of domain.files) {
+    for (const file of filterManifestFiles(domain.files, ctx.kitFeatures)) {
       const content = ctx.templateEngine.renderTemplate(file.template, outputContext);
       const outputPath = resolveOutputPath(file.output, outputContext);
       const fullPath = resolve(ctx.projectRoot, outputPath);

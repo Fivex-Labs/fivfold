@@ -1,0 +1,66 @@
+import { Module } from '@nestjs/common';
+import { {{moduleName}}Controller } from './stripe.controller';
+import { {{moduleName}}Service } from './stripe.service';
+{{#if (eq orm "typeorm")}}
+import { TypeOrmModule } from '@nestjs/typeorm';
+{{#if (hasFeature kitFeatures "payments")}}
+import { StripeCustomer } from './entities/stripe-customer.entity';
+import { StripePaymentTransaction } from './entities/stripe-payment-transaction.entity';
+{{/if}}
+{{#if (hasFeature kitFeatures "webhooks")}}
+import { StripeWebhookEvent } from './entities/stripe-webhook-event.entity';
+{{/if}}
+{{#if (hasFeature kitFeatures "connect")}}
+import { StripeConnectedAccount } from './entities/stripe-connected-account.entity';
+{{/if}}
+{{/if}}
+{{#if (eq orm "mongoose")}}
+import { MongooseModule } from '@nestjs/mongoose';
+{{#if (hasFeature kitFeatures "payments")}}
+import { StripeCustomerSchema } from './schemas/stripe-customer.schema';
+import { StripePaymentTransactionSchema } from './schemas/stripe-payment-transaction.schema';
+{{/if}}
+{{#if (hasFeature kitFeatures "webhooks")}}
+import { StripeWebhookEventSchema } from './schemas/stripe-webhook-event.schema';
+{{/if}}
+{{#if (hasFeature kitFeatures "connect")}}
+import { StripeConnectedAccountSchema } from './schemas/stripe-connected-account.schema';
+{{/if}}
+{{/if}}
+
+@Module({
+  imports: [
+    {{#if (eq orm "typeorm")}}
+    TypeOrmModule.forFeature([
+      {{#if (hasFeature kitFeatures "payments")}}
+      StripeCustomer,
+      StripePaymentTransaction,
+      {{/if}}
+      {{#if (hasFeature kitFeatures "webhooks")}}
+      StripeWebhookEvent,
+      {{/if}}
+      {{#if (hasFeature kitFeatures "connect")}}
+      StripeConnectedAccount,
+      {{/if}}
+    ]),
+    {{/if}}
+    {{#if (eq orm "mongoose")}}
+    MongooseModule.forFeature([
+      {{#if (hasFeature kitFeatures "payments")}}
+      { name: 'StripeCustomer', schema: StripeCustomerSchema },
+      { name: 'StripePaymentTransaction', schema: StripePaymentTransactionSchema },
+      {{/if}}
+      {{#if (hasFeature kitFeatures "webhooks")}}
+      { name: 'StripeWebhookEvent', schema: StripeWebhookEventSchema },
+      {{/if}}
+      {{#if (hasFeature kitFeatures "connect")}}
+      { name: 'StripeConnectedAccount', schema: StripeConnectedAccountSchema },
+      {{/if}}
+    ]),
+    {{/if}}
+  ],
+  controllers: [{{moduleName}}Controller],
+  providers: [{{moduleName}}Service],
+  exports: [{{moduleName}}Service],
+})
+export class {{moduleName}}Module {}

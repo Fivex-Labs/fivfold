@@ -1,0 +1,9 @@
+import { IsString, IsUrl } from 'class-validator';
+
+export class CreatePortalSessionDto {
+  @IsString()
+  customerId!: string;
+
+  @IsUrl()
+  returnUrl!: string;
+}

@@ -1,0 +1,72 @@
+import { CosmosClient, type Container, type Database } from '@azure/cosmos';
+
+const endpoint = process.env.COSMOS_ENDPOINT!;
+const key = process.env.COSMOS_KEY!;
+const databaseId = process.env.COSMOS_DATABASE_ID ?? 'appdb';
+
+const client = new CosmosClient({ endpoint, key });
+
+export interface StripeCustomerItem {
+  id: string;
+  userId: string;
+  stripeCustomerId: string;
+  email?: string | null;
+  createdAt: string;
+  _partitionKey: string;
+}
+
+export interface StripeWebhookEventItem {
+  id: string;
+  stripeEventId: string;
+  type: string;
+  status: string;
+  lastError?: string | null;
+  receivedAt: string;
+  processedAt?: string | null;
+  _partitionKey: string;
+}
+
+export interface StripePaymentTransactionItem {
+  id: string;
+  cartId: string;
+  userId?: string | null;
+  stripePaymentIntentId: string;
+  amountCents: number;
+  currency: string;
+  status: string;
+  createdAt: string;
+  _partitionKey: string;
+}
+
+export interface StripeConnectedAccountItem {
+  id: string;
+  userId: string;
+  stripeAccountId: string;
+  payoutsEnabled: boolean;
+  createdAt: string;
+  updatedAt: string;
+  _partitionKey: string;
+}
+
+export async function getStripeCosmosContainers(): Promise<{
+  customers: Container;
+  webhookEvents: Container;
+  paymentTransactions: Container;
+  connectedAccounts: Container;
+}> {
+  const { database } = await client.databases.createIfNotExists({ id: databaseId });
+
+  const [customers, webhookEvents, paymentTransactions, connectedAccounts] = await Promise.all([
+    database.containers.createIfNotExists({ id: 'stripe_customers', partitionKey: '/userId' }),
+    database.containers.createIfNotExists({ id: 'stripe_webhook_events', partitionKey: '/stripeEventId' }),
+    database.containers.createIfNotExists({ id: 'stripe_payment_transactions', partitionKey: '/cartId' }),
+    database.containers.createIfNotExists({ id: 'stripe_connected_accounts', partitionKey: '/userId' }),
+  ]);
+
+  return {
+    customers: customers.container,
+    webhookEvents: webhookEvents.container,
+    paymentTransactions: paymentTransactions.container,
+    connectedAccounts: connectedAccounts.container,
+  };
+}

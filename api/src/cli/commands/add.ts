@@ -23,6 +23,8 @@ import {
   parseGlobalFlags,
   selectKitServiceProvider,
   selectRealtimeProvider,
+  selectKitFeatures,
+  mergeFeatureDependencyBlocks,
   type CliFlags,
 } from '@fivfold/core';
 import {
@@ -129,10 +131,11 @@ export async function addApiModule(names: string[], flags: CliFlags = {}): Promi
   const vfs = new VirtualFileSystem();
   const resolvedProviders = new Map<string, string>();
   const resolvedRealtimeProviders = new Map<string, string>();
+  const resolvedKitFeatures = new Map<string, string[]>();
 
   for (const name of names) {
     if (manifestExists(name)) {
-      const { provider, realtimeProvider } = await scaffoldWithManifest(
+      const { provider, realtimeProvider, kitFeatures } = await scaffoldWithManifest(
         name,
         api,
         root,
@@ -142,6 +145,7 @@ export async function addApiModule(names: string[], flags: CliFlags = {}): Promi
       );
       if (provider) resolvedProviders.set(name, provider);
       if (realtimeProvider) resolvedRealtimeProviders.set(name, realtimeProvider);
+      if (kitFeatures?.length) resolvedKitFeatures.set(name, kitFeatures);
     } else {
       const stackKey = buildStackKey(api);
       scaffoldLegacy(name, stackKey, api.outputDir, root, vfs);
@@ -180,17 +184,46 @@ export async function addApiModule(names: string[], flags: CliFlags = {}): Promi
       const realtimeProvider = resolvedRealtimeProviders.get(name) ?? effectiveFlags.realtime;
       const serviceConfig = provider ? manifest.services?.[provider] : undefined;
       const realtimeConfig = realtimeProvider ? manifest.realtime?.[realtimeProvider] : undefined;
+      const kitFeats = resolvedKitFeatures.get(name);
+      const fwMerged = mergeFeatureDependencyBlocks(
+        fwConfig?.dependencies ?? [],
+        fwConfig?.devDependencies,
+        fwConfig?.featureDependencies,
+        kitFeats
+      );
+      const ormMerged = mergeFeatureDependencyBlocks(
+        ormConfig?.dependencies ?? [],
+        ormConfig?.devDependencies,
+        ormConfig?.featureDependencies,
+        kitFeats
+      );
+      const svcMerged = serviceConfig
+        ? mergeFeatureDependencyBlocks(
+            serviceConfig.dependencies ?? [],
+            serviceConfig.devDependencies,
+            serviceConfig.featureDependencies,
+            kitFeats
+          )
+        : { dependencies: [] as string[], devDependencies: [] as string[] };
+      const rtMerged = realtimeConfig
+        ? mergeFeatureDependencyBlocks(
+            realtimeConfig.dependencies ?? [],
+            realtimeConfig.devDependencies,
+            undefined,
+            kitFeats
+          )
+        : { dependencies: [] as string[], devDependencies: [] as string[] };
       const deps = [
-        ...(fwConfig?.dependencies ?? []),
-        ...(ormConfig?.dependencies ?? []),
-        ...(serviceConfig?.dependencies ?? []),
-        ...(realtimeConfig?.dependencies ?? []),
+        ...fwMerged.dependencies,
+        ...ormMerged.dependencies,
+        ...svcMerged.dependencies,
+        ...rtMerged.dependencies,
       ];
       const devDeps = [
-        ...(fwConfig?.devDependencies ?? []),
-        ...(ormConfig?.devDependencies ?? []),
-        ...(serviceConfig?.devDependencies ?? []),
-        ...(realtimeConfig?.devDependencies ?? []),
+        ...fwMerged.devDependencies,
+        ...ormMerged.devDependencies,
+        ...svcMerged.devDependencies,
+        ...rtMerged.devDependencies,
       ];
       const allDeps = [...new Set(deps)];
       const allDevDeps = [...new Set(devDeps)];
@@ -251,12 +284,18 @@ async function scaffoldWithManifest(
   vfs: VirtualFileSystem,
   flags: CliFlags,
   config: { api?: { provider?: string; authProvider?: string } } | null
-): Promise<{ provider?: string; realtimeProvider?: string }> {
+): Promise<{ provider?: string; realtimeProvider?: string; kitFeatures?: string[] }> {
   console.log(`\n  Scaffolding API module: ${name} (manifest)`);
 
   const manifestsDir = getManifestsDir();
   const templateRoot = getTemplateRoot();
   const manifest = loadManifest(manifestsDir, name);
+
+  let kitFeatures: string[] | undefined;
+  if (manifest.featurePrompt) {
+    kitFeatures = await selectKitFeatures(manifest.featurePrompt, flags);
+    console.log(`  Enabled kit features: ${kitFeatures.join(', ')}`);
+  }
 
   // Resolve service provider (push/email etc.) — orthogonal to auth provider
   let provider: string | undefined;
@@ -325,13 +364,14 @@ async function scaffoldWithManifest(
     provider,
     providerNamePascal,
     realtimeProvider,
+    kitFeatures,
     vfs,
     templateEngine,
     manifest,
   };
 
   await pipeline.execute(ctx);
-  return { provider, realtimeProvider };
+  return { provider, realtimeProvider, kitFeatures };
 }
 
 function scaffoldLegacy(

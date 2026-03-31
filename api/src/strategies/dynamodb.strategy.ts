@@ -1,6 +1,6 @@
 import { resolve } from 'path';
 import type { IOrmStrategy, GeneratorContext } from '@fivfold/core';
-import { resolveOutputPath, pascalCase } from '@fivfold/core';
+import { resolveOutputPath, pascalCase, filterManifestFiles } from '@fivfold/core';
 
 export class DynamoDbOrmStrategy implements IOrmStrategy {
   readonly name = 'dynamodb-sdk';
@@ -16,7 +16,7 @@ export class DynamoDbOrmStrategy implements IOrmStrategy {
       moduleName: pascalCase(ctx.kitName),
     };
 
-    for (const file of ormConfig.files) {
+    for (const file of filterManifestFiles(ormConfig.files, ctx.kitFeatures)) {
       const content = ctx.templateEngine.renderTemplate(file.template, outputContext);
       const outputPath = resolveOutputPath(file.output, outputContext);
       const fullPath = resolve(ctx.projectRoot, outputPath);

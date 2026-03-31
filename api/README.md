@@ -13,7 +13,7 @@ CLI for scaffolding backend modules (entities, DTOs, services, controllers) for 
 | Command | Description | Options |
 |---------|-------------|---------|
 | `init` | Configure FivFold API (framework, ORM, database) | `--yes`, `--dry-run`, `--framework`, `--orm`, `--database`, `--output` |
-| `add <module> [module...]` | Scaffold one or more API modules | `--yes`, `--dry-run`, `--framework`, `--orm` |
+| `add <module> [module...]` | Scaffold one or more API modules | `--yes`, `--dry-run`, `--framework`, `--orm`, `--features` (kits with `featurePrompt`, e.g. `stripe`) |
 | `list` | List all available API modules | |
 
 **Examples:**
@@ -22,6 +22,7 @@ CLI for scaffolding backend modules (entities, DTOs, services, controllers) for 
 npx @fivfold/api init --yes
 npx @fivfold/api add kanban --framework=nestjs --orm=typeorm
 npx @fivfold/api add email kanban --dry-run
+npx @fivfold/api add stripe --features=payments,webhooks,connect
 ```
 
 ## Manifests

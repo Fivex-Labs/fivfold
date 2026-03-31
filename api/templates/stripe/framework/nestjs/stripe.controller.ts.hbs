@@ -1,0 +1,84 @@
+import {
+  Controller,
+  Post,
+  Body,
+  Req,
+  Headers,
+  HttpCode,
+  BadRequestException,
+} from '@nestjs/common';
+import type { RawBodyRequest } from '@nestjs/common';
+import type { Request } from 'express';
+import { {{moduleName}}Service } from './stripe.service';
+
+@Controller('stripe')
+export class {{moduleName}}Controller {
+  constructor(private readonly stripeService: {{moduleName}}Service) {}
+
+  {{#if (hasFeature kitFeatures "webhooks")}}
+  @Post('webhook')
+  @HttpCode(200)
+  async handleWebhook(
+    @Req() req: RawBodyRequest<Request>,
+    @Headers('stripe-signature') signature: string | undefined
+  ) {
+    const raw = req.rawBody;
+    if (!Buffer.isBuffer(raw)) {
+      throw new BadRequestException(
+        'Missing raw body. Ensure NestFactory.create(AppModule, { rawBody: true }) in main.ts (FivFold AST should add this when webhooks are enabled).'
+      );
+    }
+    return this.stripeService.processWebhook(raw, signature);
+  }
+  {{/if}}
+
+  {{#if (hasFeature kitFeatures "payments")}}
+  @Post('customers')
+  async createCustomer(@Body() body: unknown, @Req() req: Request) {
+    const userId = (req as unknown as { user?: { id: string } }).user?.id ?? 'REPLACE_WITH_USER_ID';
+    return this.stripeService.createCustomer(userId, body);
+  }
+
+  @Post('payment-intents')
+  async createPaymentIntent(@Body() body: unknown, @Req() req: Request) {
+    const userId = (req as unknown as { user?: { id: string } }).user?.id ?? null;
+    return this.stripeService.createPaymentIntent(userId, body);
+  }
+  {{/if}}
+
+  {{#if (hasFeature kitFeatures "checkout")}}
+  @Post('checkout/sessions')
+  async checkoutSession(@Body() body: unknown, @Req() req: Request) {
+    const userId = (req as unknown as { user?: { id: string } }).user?.id ?? null;
+    return this.stripeService.createCheckoutSession(userId, body);
+  }
+  {{/if}}
+
+  {{#if (hasFeature kitFeatures "connect")}}
+  @Post('connect/accounts')
+  async connectAccount(@Body() body: unknown, @Req() req: Request) {
+    const userId = (req as unknown as { user?: { id: string } }).user?.id ?? 'REPLACE_WITH_USER_ID';
+    return this.stripeService.createConnectedAccount(userId, body);
+  }
+
+  @Post('connect/account-links')
+  async accountLink(@Body() body: unknown, @Req() req: Request) {
+    const userId = (req as unknown as { user?: { id: string } }).user?.id ?? 'REPLACE_WITH_USER_ID';
+    return this.stripeService.createAccountLink(userId, body);
+  }
+  {{/if}}
+
+  {{#if (hasFeature kitFeatures "billing")}}
+  @Post('billing/subscriptions')
+  async subscription(@Body() body: unknown, @Req() req: Request) {
+    const userId = (req as unknown as { user?: { id: string } }).user?.id ?? 'REPLACE_WITH_USER_ID';
+    return this.stripeService.createSubscription(userId, body);
+  }
+
+  @Post('billing/portal-sessions')
+  async portal(@Body() body: unknown, @Req() req: Request) {
+    const userId = (req as unknown as { user?: { id: string } }).user?.id ?? 'REPLACE_WITH_USER_ID';
+    return this.stripeService.createPortalSession(userId, body);
+  }
+  {{/if}}
+}

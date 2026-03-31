@@ -1,0 +1,22 @@
+import { Entity, PrimaryColumn, Column, CreateDateColumn, Index } from 'typeorm';
+
+@Entity('stripe_webhook_events')
+export class StripeWebhookEvent {
+  @PrimaryColumn({ type: 'varchar', name: 'stripe_event_id' })
+  stripeEventId: string;
+
+  @Column({ type: 'varchar' })
+  type: string;
+
+  @Column({ type: 'varchar', default: 'received' })
+  status: 'received' | 'processed' | 'failed';
+
+  @Column({ type: 'text', nullable: true })
+  lastError: string | null;
+
+  @CreateDateColumn({ name: 'received_at' })
+  receivedAt: Date;
+
+  @Column({ type: 'timestamptz', nullable: true, name: 'processed_at' })
+  processedAt: Date | null;
+}

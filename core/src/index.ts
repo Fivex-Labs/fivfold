@@ -25,7 +25,16 @@ export type {
   ServiceProviderConfig,
   RealtimeProviderConfig,
   ServiceProviderPromptConfig,
+  KitFeaturePromptConfig,
+  KitFeatureOption,
+  FeatureDependencyBlock,
 } from './manifest/schema.js';
+export {
+  shouldIncludeForKitFeatures,
+  filterManifestFiles,
+  filterAstMutations,
+  mergeFeatureDependencyBlocks,
+} from './manifest/features.js';
 export { loadManifest, loadUiManifest, resolveManifestPath, resolveOutputPath } from './manifest/resolver.js';
 
 export { TemplateEngine, registerTemplateHelpers } from './template/engine.js';
@@ -57,6 +66,7 @@ export {
   selectKitServiceProvider,
   selectRealtimeProvider,
   confirmOverwrite,
+  selectKitFeatures,
 } from './prompt/interactive.js';
 
 export { findProjectRoot } from './workspace/workspace.js';

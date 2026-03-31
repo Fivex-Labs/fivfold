@@ -1,0 +1,27 @@
+import { IsIn, IsOptional, IsString, IsUrl } from 'class-validator';
+
+export class CreateCheckoutSessionDto {
+  @IsIn(['payment', 'subscription'])
+  mode!: 'payment' | 'subscription';
+
+  @IsString()
+  priceId!: string;
+
+  @IsOptional()
+  @IsString()
+  quantity?: string;
+
+  @IsUrl()
+  successUrl!: string;
+
+  @IsUrl()
+  cancelUrl!: string;
+
+  @IsOptional()
+  @IsString()
+  customerId?: string;
+
+  @IsOptional()
+  @IsString()
+  stripeAccountId?: string;
+}

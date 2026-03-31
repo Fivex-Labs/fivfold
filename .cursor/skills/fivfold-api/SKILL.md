@@ -40,6 +40,7 @@ npx @fivfold/api add kanban      # scaffold kanban API module
 npx @fivfold/api add push        # scaffold push notifications module
 npx @fivfold/api add chat        # scaffold chat API module
 npx @fivfold/api add media-uploader --provider=s3   # presign + finalize + audit rows; pick s3 | azure-blob | gcs | cloudinary | dropbox
+npx @fivfold/api add stripe   # Stripe payments (features: payments, webhooks, connect, checkout, billing); use --features= or interactive multiselect
 ```
 
 Chat REST (generated) includes participant-scoped search, `PATCH …/conversations/:id/unread`, and `DELETE …/conversations/:id/messages` (soft-clear; group admins only). The Chat module is not scaffolded for Firestore/Realtime Database — use TypeORM, Prisma, Mongoose, Cosmos SDK, or DynamoDB SDK per your `api add chat` stack.

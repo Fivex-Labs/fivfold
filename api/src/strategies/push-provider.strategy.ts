@@ -1,7 +1,7 @@
 import { resolve } from 'path';
 import type { IServiceProviderStrategy } from '@fivfold/core';
 import type { GeneratorContext } from '@fivfold/core';
-import { resolveOutputPath, pascalCase } from '@fivfold/core';
+import { resolveOutputPath, pascalCase, filterManifestFiles } from '@fivfold/core';
 
 export class PushProviderStrategy implements IServiceProviderStrategy {
   readonly name: string;
@@ -27,7 +27,7 @@ export class PushProviderStrategy implements IServiceProviderStrategy {
         .join(''),
     };
 
-    for (const file of serviceConfig.files) {
+    for (const file of filterManifestFiles(serviceConfig.files, ctx.kitFeatures)) {
       const content = ctx.templateEngine.renderTemplate(file.template, outputContext);
       const outputPath = resolveOutputPath(file.output, outputContext);
       const fullPath = resolve(ctx.projectRoot, outputPath);

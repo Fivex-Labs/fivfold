@@ -1,0 +1,103 @@
+import { Router, type Request, type Response, type NextFunction, raw, json } from 'express';
+import type { {{moduleName}}Service } from './stripe.service';
+
+function authMiddleware(req: Request, res: Response, next: NextFunction): void {
+  next();
+}
+
+function getUser(req: Request): { id: string } {
+  return (req as unknown as { user?: { id: string } }).user ?? { id: 'REPLACE_WITH_USER_ID' };
+}
+
+export function createStripeRouter(service: {{moduleName}}Service): Router {
+  const router = Router();
+
+  {{#if (hasFeature kitFeatures "webhooks")}}
+  router.post('/webhook', raw({ type: 'application/json' }), (req: Request, res: Response) => {
+    void service.handleStripeWebhook(req, res);
+  });
+  {{/if}}
+
+  router.use(json());
+  router.use(authMiddleware);
+
+  {{#if (hasFeature kitFeatures "payments")}}
+  router.post('/customers', async (req, res) => {
+    try {
+      const user = getUser(req);
+      const out = await service.createCustomer(user.id, req.body);
+      res.status(201).json(out);
+    } catch (err) {
+      res.status(400).json({ error: String(err) });
+    }
+  });
+
+  router.post('/payment-intents', async (req, res) => {
+    try {
+      const user = getUser(req);
+      const out = await service.createPaymentIntent(user.id, req.body);
+      res.status(201).json(out);
+    } catch (err) {
+      res.status(400).json({ error: String(err) });
+    }
+  });
+  {{/if}}
+
+  {{#if (hasFeature kitFeatures "checkout")}}
+  router.post('/checkout/sessions', async (req, res) => {
+    try {
+      const user = getUser(req);
+      const out = await service.createCheckoutSession(user.id, req.body);
+      res.status(201).json(out);
+    } catch (err) {
+      res.status(400).json({ error: String(err) });
+    }
+  });
+  {{/if}}
+
+  {{#if (hasFeature kitFeatures "connect")}}
+  router.post('/connect/accounts', async (req, res) => {
+    try {
+      const user = getUser(req);
+      const out = await service.createConnectedAccount(user.id, req.body);
+      res.status(201).json(out);
+    } catch (err) {
+      res.status(400).json({ error: String(err) });
+    }
+  });
+
+  router.post('/connect/account-links', async (req, res) => {
+    try {
+      const user = getUser(req);
+      const out = await service.createAccountLink(user.id, req.body);
+      res.status(201).json(out);
+    } catch (err) {
+      res.status(400).json({ error: String(err) });
+    }
+  });
+  {{/if}}
+
+  {{#if (hasFeature kitFeatures "billing")}}
+  router.post('/billing/subscriptions', async (req, res) => {
+    try {
+      const user = getUser(req);
+      const out = await service.createSubscription(user.id, req.body);
+      res.status(201).json(out);
+    } catch (err) {
+      res.status(400).json({ error: String(err) });
+    }
+  });
+
+  router.post('/billing/portal-sessions', async (req, res) => {
+    try {
+      const user = getUser(req);
+      const out = await service.createPortalSession(user.id, req.body);
+      res.status(201).json(out);
+    } catch (err) {
+      res.status(400).json({ error: String(err) });
+    }
+  });
+  {{/if}}
+
+  return router;
+}

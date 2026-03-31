@@ -4,6 +4,7 @@ import { join } from 'path';
 import { registerModuleInAppModule } from './mutations/nestjs-module.js';
 import { registerMiddlewareInExpressApp } from './mutations/express-middleware.js';
 import { addImportIfNotPresent } from './mutations/import-injection.js';
+import { enableNestRawBodyInMain } from './mutations/nest-raw-body.js';
 
 export interface AstMutationResult {
   success: boolean;
@@ -74,6 +75,21 @@ export class TsMorphEngine {
       sourceFile = this.project.createSourceFile(fullPath, content, { overwrite: true });
     }
     const modified = addImportIfNotPresent(sourceFile, moduleSpecifier, namedImport, isDefault);
+    return {
+      success: true,
+      modified,
+      content: sourceFile.getFullText(),
+    };
+  }
+
+  enableNestRawBody(filePath: string): AstMutationResult {
+    const fullPath = this.resolvePath(filePath);
+    let sourceFile = this.project.getSourceFile(fullPath);
+    if (!sourceFile) {
+      const content = readFileSync(fullPath, 'utf8');
+      sourceFile = this.project.createSourceFile(fullPath, content, { overwrite: true });
+    }
+    const modified = enableNestRawBodyInMain(sourceFile);
     return {
       success: true,
       modified,

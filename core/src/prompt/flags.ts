@@ -9,6 +9,8 @@ export interface CliFlags {
   authProvider?: string;
   realtime?: string;
   output?: string;
+  /** Comma-separated kit feature tokens (e.g. `payments,webhooks,connect`) */
+  features?: string;
 }
 
 export function parseGlobalFlags(args: string[]): CliFlags {
@@ -24,6 +26,7 @@ export function parseGlobalFlags(args: string[]): CliFlags {
     else if (arg.startsWith('--auth-provider=')) flags.authProvider = arg.split('=')[1];
     else if (arg.startsWith('--realtime=')) flags.realtime = arg.split('=')[1];
     else if (arg.startsWith('--output=')) flags.output = arg.split('=')[1];
+    else if (arg.startsWith('--features=')) flags.features = arg.split('=')[1];
   }
   return flags;
 }
