@@ -1,0 +1,27 @@
+import { Schema, model, type Document } from 'mongoose';
+
+export interface StripeWebhookEventDoc extends Document {
+  stripeEventId: string;
+  type: string;
+  status: 'received' | 'processed' | 'failed';
+  lastError?: string | null;
+  receivedAt: Date;
+  processedAt?: Date | null;
+}
+
+const StripeWebhookEventSchema = new Schema<StripeWebhookEventDoc>(
+  {
+    stripeEventId: { type: String, required: true, unique: true },
+    type: { type: String, required: true },
+    status: { type: String, enum: ['received', 'processed', 'failed'], default: 'received' },
+    lastError: { type: String },
+    processedAt: { type: Date },
+  },
+  { timestamps: { createdAt: 'receivedAt', updatedAt: false }, collection: 'stripe_webhook_events' }
+);
+
+export const StripeWebhookEventModel = model<StripeWebhookEventDoc>(
+  'StripeWebhookEvent',
+  StripeWebhookEventSchema
+);
+export { StripeWebhookEventSchema };

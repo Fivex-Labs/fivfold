@@ -1,0 +1,115 @@
+{
+  "name": "stripe",
+  "version": "1.0.0",
+  "description": "Stripe payments backend: customers, PaymentIntents (server-side totals), signed webhooks with idempotency, optional Connect (Express accounts + platform fee env), Checkout Sessions, and Billing helpers.",
+  "featurePrompt": {
+    "message": "Which Stripe capabilities should we scaffold? (space to toggle, enter to confirm)",
+    "defaultFeatures": ["payments", "webhooks"],
+    "options": [
+      { "value": "payments", "label": "Payments — customers + PaymentIntents (amount from your DB, not the client)" },
+      { "value": "webhooks", "label": "Webhooks — Stripe-Signature verification + idempotent event store" },
+      { "value": "connect", "label": "Connect — Express connected accounts, AccountLinks, optional platform fee (STRIPE_PLATFORM_FEE_BPS)" },
+      { "value": "checkout", "label": "Checkout — Checkout Sessions API" },
+      { "value": "billing", "label": "Billing — subscriptions + billing portal session" }
+    ]
+  },
+  "domain": {
+    "files": [
+      { "template": "stripe/domain/stripe.port.ts.hbs", "output": "{{outputDir}}/{{kitName}}/domain/stripe.port.ts" },
+      { "template": "stripe/domain/dto/create-customer.dto.ts.hbs", "output": "{{outputDir}}/{{kitName}}/dto/create-customer.dto.ts", "features": ["payments"] },
+      { "template": "stripe/domain/dto/create-payment-intent.dto.ts.hbs", "output": "{{outputDir}}/{{kitName}}/dto/create-payment-intent.dto.ts", "features": ["payments"] },
+      { "template": "stripe/domain/dto/create-checkout-session.dto.ts.hbs", "output": "{{outputDir}}/{{kitName}}/dto/create-checkout-session.dto.ts", "features": ["checkout"] },
+      { "template": "stripe/domain/dto/create-connect-account.dto.ts.hbs", "output": "{{outputDir}}/{{kitName}}/dto/create-connect-account.dto.ts", "features": ["connect"] },
+      { "template": "stripe/domain/dto/create-account-link.dto.ts.hbs", "output": "{{outputDir}}/{{kitName}}/dto/create-account-link.dto.ts", "features": ["connect"] },
+      { "template": "stripe/domain/dto/create-subscription.dto.ts.hbs", "output": "{{outputDir}}/{{kitName}}/dto/create-subscription.dto.ts", "features": ["billing"] },
+      { "template": "stripe/domain/dto/create-portal-session.dto.ts.hbs", "output": "{{outputDir}}/{{kitName}}/dto/create-portal-session.dto.ts", "features": ["billing"] },
+      { "template": "stripe/adapters/stripe-node.adapter.ts.hbs", "output": "{{outputDir}}/{{kitName}}/adapters/stripe-node.adapter.ts" }
+    ]
+  },
+  "framework": {
+    "express": {
+      "files": [
+        { "template": "stripe/framework/express/stripe.service.ts.hbs", "output": "{{outputDir}}/{{kitName}}/stripe.service.ts" },
+        { "template": "stripe/framework/express/stripe.routes.ts.hbs", "output": "{{outputDir}}/{{kitName}}/stripe.routes.ts" }
+      ],
+      "dependencies": ["class-validator", "class-transformer", "express", "stripe"],
+      "devDependencies": ["@types/express"],
+      "astMutations": [
+        {
+          "target": "src/app.ts",
+          "action": "registerMiddleware",
+          "routePath": "/api/stripe",
+          "importPath": "./modules/stripe/stripe.routes",
+          "importName": "createStripeRouter"
+        }
+      ]
+    },
+    "nestjs": {
+      "files": [
+        { "template": "stripe/framework/nestjs/stripe.module.ts.hbs", "output": "{{outputDir}}/{{kitName}}/stripe.module.ts" },
+        { "template": "stripe/framework/nestjs/stripe.controller.ts.hbs", "output": "{{outputDir}}/{{kitName}}/stripe.controller.ts" },
+        { "template": "stripe/framework/nestjs/stripe.service.ts.hbs", "output": "{{outputDir}}/{{kitName}}/stripe.service.ts" }
+      ],
+      "dependencies": ["class-validator", "class-transformer", "@nestjs/common", "@nestjs/core", "stripe"],
+      "devDependencies": [],
+      "astMutations": [
+        {
+          "target": "src/app.module.ts",
+          "action": "registerModule",
+          "module": "StripeModule",
+          "importPath": "./modules/stripe/stripe.module"
+        },
+        {
+          "target": "src/main.ts",
+          "action": "enableNestRawBody",
+          "features": ["webhooks"]
+        }
+      ]
+    }
+  },
+  "orm": {
+    "typeorm": {
+      "files": [
+        { "template": "stripe/orm/typeorm/stripe-customer.entity.ts.hbs", "output": "{{outputDir}}/{{kitName}}/entities/stripe-customer.entity.ts", "features": ["payments"] },
+        { "template": "stripe/orm/typeorm/stripe-webhook-event.entity.ts.hbs", "output": "{{outputDir}}/{{kitName}}/entities/stripe-webhook-event.entity.ts", "features": ["webhooks"] },
+        { "template": "stripe/orm/typeorm/stripe-payment-transaction.entity.ts.hbs", "output": "{{outputDir}}/{{kitName}}/entities/stripe-payment-transaction.entity.ts", "features": ["payments"] },
+        { "template": "stripe/orm/typeorm/stripe-connected-account.entity.ts.hbs", "output": "{{outputDir}}/{{kitName}}/entities/stripe-connected-account.entity.ts", "features": ["connect"] }
+      ],
+      "dependencies": ["typeorm", "pg", "reflect-metadata"],
+      "devDependencies": ["@types/pg"]
+    },
+    "prisma": {
+      "files": [
+        { "template": "stripe/orm/prisma/stripe-models.prisma.hbs", "output": "prisma/schema.prisma", "mode": "append" }
+      ],
+      "dependencies": ["@prisma/client"],
+      "devDependencies": ["prisma"]
+    },
+    "mongoose": {
+      "files": [
+        { "template": "stripe/orm/mongoose/stripe-customer.schema.ts.hbs", "output": "{{outputDir}}/{{kitName}}/schemas/stripe-customer.schema.ts", "features": ["payments"] },
+        { "template": "stripe/orm/mongoose/stripe-webhook-event.schema.ts.hbs", "output": "{{outputDir}}/{{kitName}}/schemas/stripe-webhook-event.schema.ts", "features": ["webhooks"] },
+        { "template": "stripe/orm/mongoose/stripe-payment-transaction.schema.ts.hbs", "output": "{{outputDir}}/{{kitName}}/schemas/stripe-payment-transaction.schema.ts", "features": ["payments"] },
+        { "template": "stripe/orm/mongoose/stripe-connected-account.schema.ts.hbs", "output": "{{outputDir}}/{{kitName}}/schemas/stripe-connected-account.schema.ts", "features": ["connect"] }
+      ],
+      "dependencies": ["mongoose"],
+      "devDependencies": []
+    },
+    "cosmos-sdk": {
+      "files": [
+        { "template": "stripe/orm/cosmos-sdk/stripe.containers.ts.hbs", "output": "{{outputDir}}/{{kitName}}/containers/stripe.containers.ts" }
+      ],
+      "dependencies": ["@azure/cosmos"],
+      "devDependencies": [],
+      "envVars": ["COSMOS_ENDPOINT", "COSMOS_KEY", "COSMOS_DATABASE_ID"]
+    },
+    "dynamodb-sdk": {
+      "files": [
+        { "template": "stripe/orm/dynamodb-sdk/stripe.tables.ts.hbs", "output": "{{outputDir}}/{{kitName}}/tables/stripe.tables.ts" }
+      ],
+      "dependencies": ["@aws-sdk/client-dynamodb", "@aws-sdk/lib-dynamodb"],
+      "devDependencies": [],
+      "envVars": ["AWS_REGION", "AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY"]
+    }
+  }
+}

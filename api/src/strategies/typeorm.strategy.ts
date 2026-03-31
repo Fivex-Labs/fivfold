@@ -1,7 +1,7 @@
 import { resolve } from 'path';
 import type { IOrmStrategy } from '@fivfold/core';
 import type { GeneratorContext } from '@fivfold/core';
-import { resolveOutputPath, pascalCase } from '@fivfold/core';
+import { resolveOutputPath, pascalCase, filterManifestFiles } from '@fivfold/core';
 
 export class TypeOrmOrmStrategy implements IOrmStrategy {
   readonly name = 'typeorm';
@@ -17,7 +17,7 @@ export class TypeOrmOrmStrategy implements IOrmStrategy {
       moduleName: pascalCase(ctx.kitName),
     };
 
-    for (const file of ormConfig.files) {
+    for (const file of filterManifestFiles(ormConfig.files, ctx.kitFeatures)) {
       const content = ctx.templateEngine.renderTemplate(file.template, outputContext);
       const outputPath = resolveOutputPath(file.output, outputContext);
       const fullPath = resolve(ctx.projectRoot, outputPath);

@@ -1,0 +1,12 @@
+import { IsOptional, IsString } from 'class-validator';
+
+/** Server resolves amount from DB using cartId — body must not carry money amounts. */
+export class CreatePaymentIntentDto {
+  @IsString()
+  cartId!: string;
+
+  @IsOptional()
+  @IsString()
+  /** When using Connect, destination connected account id (acct_...) */
+  stripeAccountId?: string;
+}

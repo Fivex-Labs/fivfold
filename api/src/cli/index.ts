@@ -9,7 +9,7 @@ const program = new Command();
 program
   .name('fivfold-api')
   .description('FivFold API -- backend scaffolding for FivFold Kits')
-  .version('0.14.1');
+  .version('0.14.2');
 
 program
   .command('init')
@@ -41,6 +41,10 @@ program
   .option('--orm <name>', 'ORM (typeorm|prisma|mongoose|cosmos-sdk|dynamodb-sdk)')
   .option('--database <name>', 'Database (postgres|mongodb|cosmosdb|dynamodb)')
   .option('--provider <name>', 'Push/auth provider (fcm|onesignal|sns|pushy|pusher-beams)')
+  .option(
+    '--features <list>',
+    'Comma-separated kit features when the kit supports them (e.g. stripe: payments,webhooks,connect)'
+  )
   .action(async (modules: string[], opts) => {
     console.log(`\n  Scaffolding ${modules.length} module${modules.length > 1 ? 's' : ''}: ${modules.join(', ')}\n`);
     await addApiModule(modules, {
@@ -50,6 +54,7 @@ program
       orm: opts.orm,
       database: opts.database,
       provider: opts.provider,
+      features: opts.features,
     });
   });
 

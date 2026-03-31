@@ -1,0 +1,21 @@
+import { Schema, model, type Document } from 'mongoose';
+
+export interface StripeCustomerDoc extends Document {
+  userId: string;
+  stripeCustomerId: string;
+  email?: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+const StripeCustomerSchema = new Schema<StripeCustomerDoc>(
+  {
+    userId: { type: String, required: true, unique: true, index: true },
+    stripeCustomerId: { type: String, required: true, unique: true, index: true },
+    email: { type: String },
+  },
+  { timestamps: true, collection: 'stripe_customers' }
+);
+
+export const StripeCustomerModel = model<StripeCustomerDoc>('StripeCustomer', StripeCustomerSchema);
+export { StripeCustomerSchema };

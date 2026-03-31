@@ -1,6 +1,6 @@
 import { resolve } from 'path';
 import type { IRealtimeStrategy, GeneratorContext } from '@fivfold/core';
-import { resolveOutputPath, pascalCase } from '@fivfold/core';
+import { resolveOutputPath, pascalCase, filterManifestFiles } from '@fivfold/core';
 
 export class RealtimeProviderStrategy implements IRealtimeStrategy {
   readonly layer = 'realtime' as const;
@@ -35,7 +35,7 @@ export class RealtimeProviderStrategy implements IRealtimeStrategy {
       realtimeNamePascal,
     };
 
-    for (const file of realtimeConfig.files) {
+    for (const file of filterManifestFiles(realtimeConfig.files, ctx.kitFeatures)) {
       const content = ctx.templateEngine.renderTemplate(file.template, outputContext);
       const outputPath = resolveOutputPath(file.output, outputContext);
       const fullPath = resolve(ctx.projectRoot, outputPath);

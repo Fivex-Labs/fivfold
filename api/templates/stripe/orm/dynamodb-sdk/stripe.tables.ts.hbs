@@ -1,0 +1,118 @@
+import {
+  DynamoDBClient,
+  type CreateTableCommandInput,
+} from '@aws-sdk/client-dynamodb';
+import {
+  DynamoDBDocumentClient,
+  PutCommand,
+  GetCommand,
+  QueryCommand,
+  UpdateCommand,
+} from '@aws-sdk/lib-dynamodb';
+
+const region = process.env.AWS_REGION ?? 'us-east-1';
+const rawClient = new DynamoDBClient({ region });
+export const stripeDdb = DynamoDBDocumentClient.from(rawClient);
+
+export const STRIPE_TABLES = {
+  CUSTOMERS: 'stripe_customers',
+  WEBHOOK_EVENTS: 'stripe_webhook_events',
+  PAYMENT_TX: 'stripe_payment_transactions',
+  CONNECT_ACCOUNTS: 'stripe_connected_accounts',
+} as const;
+
+export interface StripeCustomerDdbItem {
+  PK: string;
+  SK: string;
+  userId: string;
+  stripeCustomerId: string;
+  email?: string | null;
+  createdAt: string;
+}
+
+export interface StripeWebhookEventDdbItem {
+  PK: string;
+  SK: string;
+  stripeEventId: string;
+  type: string;
+  status: string;
+  lastError?: string | null;
+  receivedAt: string;
+  processedAt?: string | null;
+}
+
+export interface StripePaymentTxDdbItem {
+  PK: string;
+  SK: string;
+  cartId: string;
+  userId?: string | null;
+  stripePaymentIntentId: string;
+  amountCents: number;
+  currency: string;
+  status: string;
+  createdAt: string;
+}
+
+export interface StripeConnectAccountDdbItem {
+  PK: string;
+  SK: string;
+  userId: string;
+  stripeAccountId: string;
+  payoutsEnabled: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** Optional table definitions — prefer IaC in production */
+export const STRIPE_TABLE_DEFINITIONS: CreateTableCommandInput[] = [
+  {
+    TableName: STRIPE_TABLES.CUSTOMERS,
+    BillingMode: 'PAY_PER_REQUEST',
+    AttributeDefinitions: [
+      { AttributeName: 'PK', AttributeType: 'S' },
+      { AttributeName: 'SK', AttributeType: 'S' },
+    ],
+    KeySchema: [
+      { AttributeName: 'PK', KeyType: 'HASH' },
+      { AttributeName: 'SK', KeyType: 'RANGE' },
+    ],
+  },
+  {
+    TableName: STRIPE_TABLES.WEBHOOK_EVENTS,
+    BillingMode: 'PAY_PER_REQUEST',
+    AttributeDefinitions: [
+      { AttributeName: 'PK', AttributeType: 'S' },
+      { AttributeName: 'SK', AttributeType: 'S' },
+    ],
+    KeySchema: [
+      { AttributeName: 'PK', KeyType: 'HASH' },
+      { AttributeName: 'SK', KeyType: 'RANGE' },
+    ],
+  },
+  {
+    TableName: STRIPE_TABLES.PAYMENT_TX,
+    BillingMode: 'PAY_PER_REQUEST',
+    AttributeDefinitions: [
+      { AttributeName: 'PK', AttributeType: 'S' },
+      { AttributeName: 'SK', AttributeType: 'S' },
+    ],
+    KeySchema: [
+      { AttributeName: 'PK', KeyType: 'HASH' },
+      { AttributeName: 'SK', KeyType: 'RANGE' },
+    ],
+  },
+  {
+    TableName: STRIPE_TABLES.CONNECT_ACCOUNTS,
+    BillingMode: 'PAY_PER_REQUEST',
+    AttributeDefinitions: [
+      { AttributeName: 'PK', AttributeType: 'S' },
+      { AttributeName: 'SK', AttributeType: 'S' },
+    ],
+    KeySchema: [
+      { AttributeName: 'PK', KeyType: 'HASH' },
+      { AttributeName: 'SK', KeyType: 'RANGE' },
+    ],
+  },
+];
+
+export { PutCommand, GetCommand, QueryCommand, UpdateCommand };

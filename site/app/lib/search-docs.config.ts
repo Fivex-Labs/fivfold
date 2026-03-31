@@ -12,6 +12,7 @@ import {
   Bell,
   MessageSquareText,
   Upload,
+  CreditCard,
 } from "lucide-react";
 
 export type SearchDocsSection = "Getting Started" | "Kits";
@@ -128,6 +129,28 @@ export const searchDocsEntries: SearchDocsEntry[] = [
     keywords: ["push", "push notifications kit", "notifications", "fcm", "firebase", "onesignal", "sns", "aws", "pushy", "pusher", "beams", "device", "token", "mobile"],
     section: "Kits",
     icon: Bell,
+  },
+  {
+    title: "Stripe",
+    href: "/docs/kits/stripe",
+    description:
+      "Backend Stripe payments: PaymentIntents with server-side totals, signed webhooks with idempotency, optional Connect (Express accounts + platform fee env), Checkout Sessions, and Billing helpers.",
+    keywords: [
+      "stripe",
+      "stripe kit",
+      "payments",
+      "payment intent",
+      "webhook",
+      "connect",
+      "express account",
+      "checkout",
+      "billing",
+      "subscription",
+      "platform fee",
+      "commission",
+    ],
+    section: "Kits",
+    icon: CreditCard,
   },
   {
     title: "Chat",

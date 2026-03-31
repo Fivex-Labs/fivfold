@@ -1,0 +1,16 @@
+import { IsIn, IsOptional, IsString, IsUrl } from 'class-validator';
+
+export class CreateAccountLinkDto {
+  @IsString()
+  accountId!: string;
+
+  @IsUrl()
+  refreshUrl!: string;
+
+  @IsUrl()
+  returnUrl!: string;
+
+  @IsOptional()
+  @IsIn(['account_onboarding', 'account_update'])
+  type?: 'account_onboarding' | 'account_update';
+}

@@ -2,7 +2,14 @@ import { resolve } from 'path';
 import { existsSync } from 'fs';
 import type { IFrameworkStrategy } from '@fivfold/core';
 import type { GeneratorContext } from '@fivfold/core';
-import { resolveOutputPath, TsMorphEngine, pascalCase } from '@fivfold/core';
+import {
+  resolveOutputPath,
+  TsMorphEngine,
+  pascalCase,
+  filterManifestFiles,
+  filterAstMutations,
+  type AstMutation,
+} from '@fivfold/core';
 
 export class NestJsFrameworkStrategy implements IFrameworkStrategy {
   readonly name = 'nestjs';
@@ -11,28 +18,31 @@ export class NestJsFrameworkStrategy implements IFrameworkStrategy {
 
   async generate(ctx: GeneratorContext): Promise<void> {
     const fwConfig = ctx.manifest.framework?.['nestjs'];
-    if (!fwConfig?.files?.length) return;
+    const files = filterManifestFiles(fwConfig?.files, ctx.kitFeatures);
+    if (!files.length) return;
 
     const outputContext = {
       ...ctx,
       moduleName: pascalCase(ctx.kitName),
     };
 
-    for (const file of fwConfig.files) {
+    for (const file of files) {
       const content = ctx.templateEngine.renderTemplate(file.template, outputContext);
       const outputPath = resolveOutputPath(file.output, outputContext);
       const fullPath = resolve(ctx.projectRoot, outputPath);
       ctx.vfs.stageCreate(fullPath, content);
     }
 
-    if (fwConfig.astMutations?.length) {
+    if (fwConfig?.astMutations?.length) {
       await this.applyAstMutations(ctx, fwConfig.astMutations);
     }
   }
 
   async wireModule(ctx: GeneratorContext, _moduleName: string): Promise<void> {
     const fwConfig = ctx.manifest.framework?.['nestjs'];
-    const mutation = fwConfig?.astMutations?.find((m) => m.action === 'registerModule');
+    const mutation = filterAstMutations(fwConfig?.astMutations, ctx.kitFeatures).find(
+      (m) => m.action === 'registerModule'
+    );
     if (!mutation?.module || !mutation?.importPath) return;
 
     const targetPath = this.resolveTarget(ctx, mutation.target);
@@ -49,18 +59,25 @@ export class NestJsFrameworkStrategy implements IFrameworkStrategy {
     }
   }
 
-  private async applyAstMutations(
-    ctx: GeneratorContext,
-    mutations: Array<{ target: string; action: string; module?: string; importPath?: string }>
-  ): Promise<void> {
+  private async applyAstMutations(ctx: GeneratorContext, mutations: AstMutation[]): Promise<void> {
     const engine = new TsMorphEngine(ctx.projectRoot);
 
-    for (const m of mutations) {
+    for (const m of filterAstMutations(mutations, ctx.kitFeatures)) {
       const targetPath = this.resolveTarget(ctx, m.target);
       if (!targetPath || !existsSync(targetPath)) continue;
 
       if (m.action === 'registerModule' && m.module && m.importPath) {
         const result = engine.registerNestJsModule(targetPath, m.module, m.importPath);
+        if (result.modified) {
+          ctx.vfs.stageModify(targetPath, result.content);
+        }
+      } else if (m.action === 'enableNestRawBody') {
+        const result = engine.enableNestRawBody(targetPath);
+        if (result.modified) {
+          ctx.vfs.stageModify(targetPath, result.content);
+        }
+      } else if (m.action === 'addImport' && m.importPath && m.namedImport) {
+        const result = engine.addImport(targetPath, m.importPath, m.namedImport, false);
         if (result.modified) {
           ctx.vfs.stageModify(targetPath, result.content);
         }

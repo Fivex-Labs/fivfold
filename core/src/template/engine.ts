@@ -10,6 +10,9 @@ export function registerTemplateHelpers(): void {
   Handlebars.registerHelper('eq', (a, b) => a === b);
   Handlebars.registerHelper('or', (...args) => args.slice(0, -1).some(Boolean));
   Handlebars.registerHelper('and', (...args) => args.slice(0, -1).every(Boolean));
+  Handlebars.registerHelper('hasFeature', (features: unknown, name: string) =>
+    Array.isArray(features) && typeof name === 'string' ? features.includes(name) : false
+  );
 }
 
 export class TemplateEngine {

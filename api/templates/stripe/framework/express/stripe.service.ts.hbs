@@ -1,0 +1,411 @@
+import type { Request, Response } from 'express';
+import { plainToInstance } from 'class-transformer';
+import { validate } from 'class-validator';
+import { StripeNodeAdapter } from './adapters/stripe-node.adapter';
+{{#if (hasFeature kitFeatures "payments")}}
+import { CreateStripeCustomerDto } from './dto/create-customer.dto';
+import { CreatePaymentIntentDto } from './dto/create-payment-intent.dto';
+{{/if}}
+{{#if (hasFeature kitFeatures "checkout")}}
+import { CreateCheckoutSessionDto } from './dto/create-checkout-session.dto';
+{{/if}}
+{{#if (hasFeature kitFeatures "connect")}}
+import { CreateConnectAccountDto } from './dto/create-connect-account.dto';
+import { CreateAccountLinkDto } from './dto/create-account-link.dto';
+{{/if}}
+{{#if (hasFeature kitFeatures "billing")}}
+import { CreateSubscriptionDto } from './dto/create-subscription.dto';
+import { CreatePortalSessionDto } from './dto/create-portal-session.dto';
+{{/if}}
+
+{{#if (eq orm "typeorm")}}
+import type { DataSource } from 'typeorm';
+{{#if (hasFeature kitFeatures "payments")}}
+import { StripeCustomer } from './entities/stripe-customer.entity';
+import { StripePaymentTransaction } from './entities/stripe-payment-transaction.entity';
+{{/if}}
+{{#if (hasFeature kitFeatures "webhooks")}}
+import { StripeWebhookEvent } from './entities/stripe-webhook-event.entity';
+{{/if}}
+{{#if (hasFeature kitFeatures "connect")}}
+import { StripeConnectedAccount } from './entities/stripe-connected-account.entity';
+{{/if}}
+{{/if}}
+{{#if (eq orm "prisma")}}
+import type { PrismaClient } from '@prisma/client';
+{{/if}}
+{{#if (eq orm "mongoose")}}
+import type { Connection } from 'mongoose';
+{{#if (hasFeature kitFeatures "payments")}}
+import { StripeCustomerModel } from './schemas/stripe-customer.schema';
+import { StripePaymentTransactionModel } from './schemas/stripe-payment-transaction.schema';
+{{/if}}
+{{#if (hasFeature kitFeatures "webhooks")}}
+import { StripeWebhookEventModel } from './schemas/stripe-webhook-event.schema';
+{{/if}}
+{{#if (hasFeature kitFeatures "connect")}}
+import { StripeConnectedAccountModel } from './schemas/stripe-connected-account.schema';
+{{/if}}
+{{/if}}
+
+async function validateDto<T extends object>(DtoClass: new () => T, body: unknown): Promise<T> {
+  const dto = plainToInstance(DtoClass, body);
+  const errors = await validate(dto as object);
+  if (errors.length > 0) {
+    const msg = errors.map((e) => Object.values(e.constraints ?? {}).join(', ')).join('; ');
+    throw new Error(msg);
+  }
+  return dto;
+}
+
+export async function resolveCartTotalCents(_cartId: string): Promise<number> {
+  return Number(process.env.STRIPE_DEV_FIXTURE_AMOUNT_CENTS ?? '1000');
+}
+
+export function create{{moduleName}}Service(
+  {{#if (eq orm "typeorm")}}
+  dataSource: DataSource
+  {{/if}}
+  {{#if (eq orm "prisma")}}
+  prisma: PrismaClient
+  {{/if}}
+  {{#if (eq orm "mongoose")}}
+  connection: Connection
+  {{/if}}
+  {{#if (eq orm "cosmos-sdk")}}
+  _cosmos: unknown
+  {{/if}}
+  {{#if (eq orm "dynamodb-sdk")}}
+  _ddb: unknown
+  {{/if}}
+) {
+  const stripe = new StripeNodeAdapter();
+
+  {{#if (eq orm "typeorm")}}
+  {{#if (hasFeature kitFeatures "payments")}}
+  const customerRepo = dataSource.getRepository(StripeCustomer);
+  const paymentTxRepo = dataSource.getRepository(StripePaymentTransaction);
+  {{/if}}
+  {{#if (hasFeature kitFeatures "webhooks")}}
+  const webhookRepo = dataSource.getRepository(StripeWebhookEvent);
+  {{/if}}
+  {{#if (hasFeature kitFeatures "connect")}}
+  const connectRepo = dataSource.getRepository(StripeConnectedAccount);
+  {{/if}}
+  {{/if}}
+
+  return {
+    {{#if (hasFeature kitFeatures "payments")}}
+    async createCustomer(userId: string, body: unknown) {
+      const dto = await validateDto(CreateStripeCustomerDto, body);
+      const customer = await stripe.createCustomer({
+        email: dto.email,
+        name: dto.name,
+        metadata: dto.metadata,
+      });
+      {{#if (eq orm "typeorm")}}
+      await customerRepo.save(
+        customerRepo.create({
+          userId,
+          stripeCustomerId: customer.id,
+          email: dto.email,
+        })
+      );
+      {{/if}}
+      {{#if (eq orm "prisma")}}
+      await prisma.stripeCustomer.upsert({
+        where: { userId },
+        create: { userId, stripeCustomerId: customer.id, email: dto.email },
+        update: { stripeCustomerId: customer.id, email: dto.email },
+      });
+      {{/if}}
+      {{#if (eq orm "mongoose")}}
+      await StripeCustomerModel.findOneAndUpdate(
+        { userId },
+        { userId, stripeCustomerId: customer.id, email: dto.email },
+        { upsert: true, new: true }
+      );
+      {{/if}}
+      {{#if (eq orm "cosmos-sdk")}}
+      void _cosmos;
+      {{/if}}
+      {{#if (eq orm "dynamodb-sdk")}}
+      void _ddb;
+      {{/if}}
+      return { customerId: customer.id };
+    },
+
+    async createPaymentIntent(userId: string | null, body: unknown) {
+      const dto = await validateDto(CreatePaymentIntentDto, body);
+      const amountCents = await resolveCartTotalCents(dto.cartId);
+      const currency = (process.env.STRIPE_DEFAULT_CURRENCY ?? 'usd').toLowerCase();
+      const pi = await stripe.createPaymentIntent({
+        amountCents,
+        currency,
+        metadata: { cartId: dto.cartId, userId: userId ?? '' },
+        stripeAccountId: dto.stripeAccountId,
+      });
+      {{#if (eq orm "typeorm")}}
+      await paymentTxRepo.save(
+        paymentTxRepo.create({
+          cartId: dto.cartId,
+          userId,
+          stripePaymentIntentId: pi.id,
+          amountCents,
+          currency,
+          status: pi.status,
+        })
+      );
+      {{/if}}
+      {{#if (eq orm "prisma")}}
+      await prisma.stripePaymentTransaction.create({
+        data: {
+          cartId: dto.cartId,
+          userId,
+          stripePaymentIntentId: pi.id,
+          amountCents,
+          currency,
+          status: pi.status,
+        },
+      });
+      {{/if}}
+      {{#if (eq orm "mongoose")}}
+      await StripePaymentTransactionModel.create({
+        cartId: dto.cartId,
+        userId,
+        stripePaymentIntentId: pi.id,
+        amountCents,
+        currency,
+        status: pi.status,
+      });
+      {{/if}}
+      return {
+        clientSecret: pi.client_secret,
+        paymentIntentId: pi.id,
+        amountCents,
+        currency,
+      };
+    },
+    {{/if}}
+
+    {{#if (hasFeature kitFeatures "checkout")}}
+    async createCheckoutSession(userId: string | null, body: unknown) {
+      const dto = await validateDto(CreateCheckoutSessionDto, body);
+      const qty = dto.quantity ? Number(dto.quantity) : 1;
+      const session = await stripe.createCheckoutSession({
+        mode: dto.mode,
+        lineItems: [{ price: dto.priceId, quantity: qty }],
+        successUrl: dto.successUrl,
+        cancelUrl: dto.cancelUrl,
+        customerId: dto.customerId,
+        metadata: userId ? { userId } : undefined,
+        stripeAccountId: dto.stripeAccountId,
+      });
+      return { url: session.url, sessionId: session.id };
+    },
+    {{/if}}
+
+    {{#if (hasFeature kitFeatures "connect")}}
+    async createConnectedAccount(userId: string, body: unknown) {
+      const dto = await validateDto(CreateConnectAccountDto, body);
+      const acct = await stripe.createExpressConnectedAccount({
+        email: dto.email,
+        metadata: { ...dto.metadata, userId },
+      });
+      {{#if (eq orm "typeorm")}}
+      await connectRepo.save(
+        connectRepo.create({
+          userId,
+          stripeAccountId: acct.id,
+          payoutsEnabled: acct.payouts_enabled ?? false,
+        })
+      );
+      {{/if}}
+      {{#if (eq orm "prisma")}}
+      await prisma.stripeConnectedAccount.upsert({
+        where: { userId },
+        create: {
+          userId,
+          stripeAccountId: acct.id,
+          payoutsEnabled: acct.payouts_enabled ?? false,
+        },
+        update: { stripeAccountId: acct.id, payoutsEnabled: acct.payouts_enabled ?? false },
+      });
+      {{/if}}
+      {{#if (eq orm "mongoose")}}
+      await StripeConnectedAccountModel.findOneAndUpdate(
+        { userId },
+        {
+          userId,
+          stripeAccountId: acct.id,
+          payoutsEnabled: acct.payouts_enabled ?? false,
+        },
+        { upsert: true, new: true }
+      );
+      {{/if}}
+      return { accountId: acct.id };
+    },
+
+    async createAccountLink(_userId: string, body: unknown) {
+      const dto = await validateDto(CreateAccountLinkDto, body);
+      const link = await stripe.createAccountLink({
+        accountId: dto.accountId,
+        refreshUrl: dto.refreshUrl,
+        returnUrl: dto.returnUrl,
+        type: dto.type,
+      });
+      return { url: link.url };
+    },
+    {{/if}}
+
+    {{#if (hasFeature kitFeatures "billing")}}
+    async createSubscription(_userId: string, body: unknown) {
+      const dto = await validateDto(CreateSubscriptionDto, body);
+      const sub = await stripe.createSubscription({
+        customerId: dto.customerId,
+        priceId: dto.priceId,
+        metadata: dto.metadata,
+      });
+      return { subscriptionId: sub.id, status: sub.status };
+    },
+
+    async createPortalSession(_userId: string, body: unknown) {
+      const dto = await validateDto(CreatePortalSessionDto, body);
+      const session = await stripe.createBillingPortalSession({
+        customerId: dto.customerId,
+        returnUrl: dto.returnUrl,
+      });
+      return { url: session.url };
+    },
+    {{/if}}
+
+    {{#if (hasFeature kitFeatures "webhooks")}}
+    async handleStripeWebhook(req: Request, res: Response): Promise<void> {
+      const sig = req.headers['stripe-signature'];
+      try {
+        const raw = req.body as Buffer;
+        const event = stripe.constructWebhookEvent(raw, sig);
+        {{#if (eq orm "typeorm")}}
+        const existing = await webhookRepo.findOne({ where: { stripeEventId: event.id } });
+        if (existing?.status === 'processed') {
+          res.json({ received: true, duplicate: true });
+          return;
+        }
+        if (!existing) {
+          await webhookRepo.save(
+            webhookRepo.create({
+              stripeEventId: event.id,
+              type: event.type,
+              status: 'received',
+            })
+          );
+        }
+        {{#if (hasFeature kitFeatures "payments")}}
+        if (event.type === 'payment_intent.succeeded') {
+          const pi = event.data.object as { id: string };
+          await paymentTxRepo.update(
+            { stripePaymentIntentId: pi.id },
+            { status: 'succeeded' }
+          );
+        }
+        {{/if}}
+        {{#if (hasFeature kitFeatures "connect")}}
+        if (event.type === 'account.updated') {
+          const acct = event.data.object as { id: string; payouts_enabled?: boolean };
+          await connectRepo.update(
+            { stripeAccountId: acct.id },
+            { payoutsEnabled: acct.payouts_enabled ?? false }
+          );
+        }
+        {{/if}}
+        await webhookRepo.update(
+          { stripeEventId: event.id },
+          { status: 'processed', processedAt: new Date(), lastError: null }
+        );
+        {{/if}}
+        {{#if (eq orm "prisma")}}
+        const existing = await prisma.stripeWebhookEvent.findUnique({
+          where: { stripeEventId: event.id },
+        });
+        if (existing?.status === 'processed') {
+          res.json({ received: true, duplicate: true });
+          return;
+        }
+        await prisma.stripeWebhookEvent.upsert({
+          where: { stripeEventId: event.id },
+          create: { stripeEventId: event.id, type: event.type, status: 'received' },
+          update: {},
+        });
+        {{#if (hasFeature kitFeatures "payments")}}
+        if (event.type === 'payment_intent.succeeded') {
+          const pi = event.data.object as { id: string };
+          await prisma.stripePaymentTransaction.updateMany({
+            where: { stripePaymentIntentId: pi.id },
+            data: { status: 'succeeded' },
+          });
+        }
+        {{/if}}
+        {{#if (hasFeature kitFeatures "connect")}}
+        if (event.type === 'account.updated') {
+          const acct = event.data.object as { id: string; payouts_enabled?: boolean };
+          await prisma.stripeConnectedAccount.updateMany({
+            where: { stripeAccountId: acct.id },
+            data: { payoutsEnabled: acct.payouts_enabled ?? false },
+          });
+        }
+        {{/if}}
+        await prisma.stripeWebhookEvent.update({
+          where: { stripeEventId: event.id },
+          data: { status: 'processed', processedAt: new Date() },
+        });
+        {{/if}}
+        {{#if (eq orm "mongoose")}}
+        const existing = await StripeWebhookEventModel.findOne({ stripeEventId: event.id });
+        if (existing?.status === 'processed') {
+          res.json({ received: true, duplicate: true });
+          return;
+        }
+        await StripeWebhookEventModel.findOneAndUpdate(
+          { stripeEventId: event.id },
+          { stripeEventId: event.id, type: event.type, status: 'received' },
+          { upsert: true, new: true }
+        );
+        {{#if (hasFeature kitFeatures "payments")}}
+        if (event.type === 'payment_intent.succeeded') {
+          const pi = event.data.object as { id: string };
+          await StripePaymentTransactionModel.updateMany(
+            { stripePaymentIntentId: pi.id },
+            { status: 'succeeded' }
+          );
+        }
+        {{/if}}
+        {{#if (hasFeature kitFeatures "connect")}}
+        if (event.type === 'account.updated') {
+          const acct = event.data.object as { id: string; payouts_enabled?: boolean };
+          await StripeConnectedAccountModel.updateMany(
+            { stripeAccountId: acct.id },
+            { payoutsEnabled: acct.payouts_enabled ?? false }
+          );
+        }
+        {{/if}}
+        await StripeWebhookEventModel.updateOne(
+          { stripeEventId: event.id },
+          { status: 'processed', processedAt: new Date() }
+        );
+        {{/if}}
+        {{#if (eq orm "cosmos-sdk")}}
+        void _cosmos;
+        {{/if}}
+        {{#if (eq orm "dynamodb-sdk")}}
+        void _ddb;
+        {{/if}}
+        res.json({ received: true });
+      } catch (err) {
+        res.status(400).json({ error: String(err) });
+      }
+    },
+    {{/if}}
+  };
+}
+
+export type {{moduleName}}Service = ReturnType<typeof create{{moduleName}}Service>;

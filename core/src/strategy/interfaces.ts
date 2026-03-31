@@ -17,6 +17,8 @@ export interface GeneratorContext {
   realtimeProvider?: string;
   /** PascalCase version of provider name, e.g. "SocketIo", "FirebaseFirestore" */
   providerNamePascal?: string;
+  /** Enabled kit feature tokens when manifest defines `featurePrompt` (e.g. Stripe). */
+  kitFeatures?: string[];
   vfs: VirtualFileSystem;
   templateEngine: TemplateEngine;
   manifest: KitManifest;

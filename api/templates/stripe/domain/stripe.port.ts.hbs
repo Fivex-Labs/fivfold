@@ -1,0 +1,60 @@
+import type Stripe from 'stripe';
+
+/**
+ * Framework-agnostic Stripe port (hexagonal boundary).
+ * Implementations live in `adapters/`; HTTP stays in routes/controllers.
+ */
+export interface IStripePaymentsPort {
+  getStripe(): Stripe;
+
+  {{#if (hasFeature kitFeatures "payments")}}
+  createCustomer(params: { email: string; name?: string; metadata?: Record<string, string> }): Promise<Stripe.Customer>;
+  /**
+   * Create a PaymentIntent using an amount resolved on the server (e.g. from DB by cartId).
+   * Never trust client-supplied totals for authorization.
+   */
+  createPaymentIntent(params: {
+    amountCents: number;
+    currency: string;
+    customerId?: string;
+    metadata?: Record<string, string>;
+    stripeAccountId?: string;
+    applicationFeeAmountCents?: number;
+  }): Promise<Stripe.PaymentIntent>;
+  {{/if}}
+
+  {{#if (hasFeature kitFeatures "checkout")}}
+  createCheckoutSession(params: {
+    mode: 'payment' | 'subscription';
+    lineItems: Array<{ price?: string; quantity?: number; priceData?: Stripe.Checkout.SessionCreateParams.LineItem.PriceData }>;
+    successUrl: string;
+    cancelUrl: string;
+    customerId?: string;
+    metadata?: Record<string, string>;
+    stripeAccountId?: string;
+  }): Promise<Stripe.Checkout.Session>;
+  {{/if}}
+
+  {{#if (hasFeature kitFeatures "connect")}}
+  createExpressConnectedAccount(params: { email: string; metadata?: Record<string, string> }): Promise<Stripe.Account>;
+  createAccountLink(params: {
+    accountId: string;
+    refreshUrl: string;
+    returnUrl: string;
+    type?: 'account_onboarding' | 'account_update';
+  }): Promise<Stripe.AccountLink>;
+  {{/if}}
+
+  {{#if (hasFeature kitFeatures "billing")}}
+  createSubscription(params: {
+    customerId: string;
+    priceId: string;
+    metadata?: Record<string, string>;
+  }): Promise<Stripe.Subscription>;
+  createBillingPortalSession(params: { customerId: string; returnUrl: string }): Promise<Stripe.BillingPortal.Session>;
+  {{/if}}
+
+  {{#if (hasFeature kitFeatures "webhooks")}}
+  constructWebhookEvent(payload: Buffer | string, signature: string | string[] | undefined): Stripe.Event;
+  {{/if}}
+}
