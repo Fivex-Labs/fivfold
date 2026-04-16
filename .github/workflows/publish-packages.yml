@@ -27,8 +27,6 @@ jobs:
 
       - run: pnpm --filter @fivfold/core build
 
-      - run: npm install -g npm@latest
-
       - run: pnpm publish --no-git-checks --provenance --access public
         working-directory: core
 
@@ -50,8 +48,6 @@ jobs:
 
       - run: pnpm --filter @fivfold/ui build
 
-      - run: npm install -g npm@latest
-
       - run: pnpm publish --no-git-checks --provenance --access public
         working-directory: ui
 
@@ -72,8 +68,6 @@ jobs:
       - run: pnpm install --frozen-lockfile
 
       - run: pnpm --filter @fivfold/api build
-
-      - run: npm install -g npm@latest
 
       - run: pnpm publish --no-git-checks --provenance --access public
         working-directory: api
