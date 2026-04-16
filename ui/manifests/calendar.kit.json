@@ -1,0 +1,70 @@
+{
+  "name": "calendar",
+  "version": "1.0.0",
+  "description": "Full-featured calendar with month, week, day, and agenda views. Event creation, editing, attendees, color categories, and all-day support.",
+  "dependencies": [
+    "lucide-react",
+    "date-fns"
+  ],
+  "shadcnDependencies": [
+    "button",
+    "dialog",
+    "sheet",
+    "popover",
+    "calendar",
+    "scroll-area",
+    "badge",
+    "avatar",
+    "tooltip",
+    "select",
+    "input",
+    "label",
+    "textarea",
+    "separator",
+    "dropdown-menu",
+    "tabs",
+    "switch"
+  ],
+  "files": [
+    {
+      "template": "templates/calendar/types.ts",
+      "output": "{{outputDir}}/{{kitName}}/types.ts"
+    },
+    {
+      "template": "templates/calendar/index.tsx",
+      "output": "{{outputDir}}/{{kitName}}/index.tsx"
+    },
+    {
+      "template": "templates/calendar/calendar-header.tsx",
+      "output": "{{outputDir}}/{{kitName}}/calendar-header.tsx"
+    },
+    {
+      "template": "templates/calendar/month-view.tsx",
+      "output": "{{outputDir}}/{{kitName}}/month-view.tsx"
+    },
+    {
+      "template": "templates/calendar/week-view.tsx",
+      "output": "{{outputDir}}/{{kitName}}/week-view.tsx"
+    },
+    {
+      "template": "templates/calendar/day-view.tsx",
+      "output": "{{outputDir}}/{{kitName}}/day-view.tsx"
+    },
+    {
+      "template": "templates/calendar/agenda-view.tsx",
+      "output": "{{outputDir}}/{{kitName}}/agenda-view.tsx"
+    },
+    {
+      "template": "templates/calendar/event-card.tsx",
+      "output": "{{outputDir}}/{{kitName}}/event-card.tsx"
+    },
+    {
+      "template": "templates/calendar/event-detail-dialog.tsx",
+      "output": "{{outputDir}}/{{kitName}}/event-detail-dialog.tsx"
+    },
+    {
+      "template": "templates/calendar/create-event-dialog.tsx",
+      "output": "{{outputDir}}/{{kitName}}/create-event-dialog.tsx"
+    }
+  ]
+}

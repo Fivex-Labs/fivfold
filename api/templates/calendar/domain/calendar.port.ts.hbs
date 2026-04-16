@@ -1,0 +1,18 @@
+export interface I{{moduleName}}Service {
+  getEvents(userId: string): Promise<unknown[]>;
+  getEvent(userId: string, eventId: string): Promise<unknown>;
+  getEventsByDateRange(userId: string, startDate: Date, endDate: Date): Promise<unknown[]>;
+  createEvent(userId: string, dto: import('../dto/create-event.dto').CreateEventDto): Promise<unknown>;
+  updateEvent(userId: string, eventId: string, dto: import('../dto/update-event.dto').UpdateEventDto): Promise<unknown>;
+  deleteEvent(userId: string, eventId: string): Promise<void>;
+  addAttendee(eventId: string, email: string, userId?: string): Promise<unknown>;
+  removeAttendee(eventId: string, attendeeId: string): Promise<void>;
+  updateAttendeeStatus(eventId: string, attendeeId: string, status: 'pending' | 'accepted' | 'declined'): Promise<unknown>;
+  /**
+   * Add a reminder for an event.
+   * Delivery must be implemented with your own notification service (FCM, OneSignal, AWS SNS, etc.).
+   */
+  addReminder(userId: string, eventId: string, minutes: number, method?: 'notification' | 'email' | 'sms'): Promise<unknown>;
+  /** Remove a previously created reminder. */
+  removeReminder(userId: string, eventId: string, reminderId: string): Promise<void>;
+}

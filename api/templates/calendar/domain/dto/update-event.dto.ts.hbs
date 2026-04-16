@@ -1,0 +1,43 @@
+import { IsBoolean, IsEnum, IsISO8601, IsOptional, IsString } from 'class-validator';
+
+export class UpdateEventDto {
+  @IsString()
+  @IsOptional()
+  title?: string;
+
+  @IsString()
+  @IsOptional()
+  description?: string;
+
+  @IsISO8601()
+  @IsOptional()
+  startDate?: string;
+
+  @IsISO8601()
+  @IsOptional()
+  endDate?: string;
+
+  @IsBoolean()
+  @IsOptional()
+  isAllDay?: boolean;
+
+  @IsEnum(['default', 'red', 'orange', 'yellow', 'green', 'teal', 'blue', 'purple', 'pink'])
+  @IsOptional()
+  color?: string;
+
+  @IsString()
+  @IsOptional()
+  location?: string;
+
+  @IsString()
+  @IsOptional()
+  recurrenceRule?: string;
+
+  @IsString()
+  @IsOptional()
+  timezone?: string;
+
+  @IsArray()
+  @IsOptional()
+  reminders?: { minutes: number; method?: 'notification' | 'email' | 'sms' }[];
+}

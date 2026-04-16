@@ -1,0 +1,57 @@
+import { CosmosClient, Container } from '@azure/cosmos';
+
+const endpoint = process.env.COSMOS_ENDPOINT!;
+const key = process.env.COSMOS_KEY!;
+const databaseId = process.env.COSMOS_DATABASE_ID ?? 'calendardb';
+
+const client = new CosmosClient({ endpoint, key });
+
+export interface {{moduleName}}EventItem {
+  id: string;
+  title: string;
+  description?: string | null;
+  startDate: string; // ISO string
+  endDate: string;   // ISO string
+  isAllDay: boolean;
+  color: string;
+  location?: string | null;
+  recurrenceRule?: string | null;
+  ownerId: string;
+  createdAt: string;
+  updatedAt: string;
+  _partitionKey: string; // ownerId
+}
+
+export interface {{moduleName}}AttendeeItem {
+  id: string;
+  eventId: string;
+  userId?: string | null;
+  email: string;
+  name?: string | null;
+  status: 'pending' | 'accepted' | 'declined';
+  createdAt: string;
+  _partitionKey: string; // eventId
+}
+
+export async function get{{moduleName}}Containers(): Promise<{
+  events: Container;
+  attendees: Container;
+}> {
+  const { database } = await client.databases.createIfNotExists({ id: databaseId });
+
+  const [eventsResult, attendeesResult] = await Promise.all([
+    database.containers.createIfNotExists({
+      id: 'calendar_events',
+      partitionKey: '/ownerId',
+    }),
+    database.containers.createIfNotExists({
+      id: 'calendar_attendees',
+      partitionKey: '/eventId',
+    }),
+  ]);
+
+  return {
+    events: eventsResult.container,
+    attendees: attendeesResult.container,
+  };
+}

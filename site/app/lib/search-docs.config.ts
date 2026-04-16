@@ -13,6 +13,7 @@ import {
   MessageSquareText,
   Upload,
   CreditCard,
+  CalendarDays,
 } from "lucide-react";
 
 export type SearchDocsSection = "Getting Started" | "Kits";
@@ -151,6 +152,18 @@ export const searchDocsEntries: SearchDocsEntry[] = [
     ],
     section: "Kits",
     icon: CreditCard,
+  },
+  {
+    title: "Calendar",
+    href: "/docs/kits/calendar",
+    description: "Full-featured calendar with month, week, day, and agenda views. Event creation, editing, attendees, color categories, all-day support, and full backend scaffolding.",
+    keywords: [
+      "calendar", "calendar kit", "scheduling", "events", "agenda", "month view", "week view",
+      "day view", "all-day", "recurring", "recurrence", "attendees", "rsvp", "meeting",
+      "appointment", "date picker", "time slots", "event creation", "date-fns",
+    ],
+    section: "Kits",
+    icon: CalendarDays,
   },
   {
     title: "Chat",

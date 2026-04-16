@@ -1,0 +1,34 @@
+import { Module } from '@nestjs/common';
+{{#if (eq orm "typeorm")}}
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { {{moduleName}}Event } from './entities/event.entity';
+import { {{moduleName}}Attendee } from './entities/attendee.entity';
+{{/if}}
+{{#if (eq orm "mongoose")}}
+import { MongooseModule } from '@nestjs/mongoose';
+import { {{moduleName}}EventSchema } from './schemas/event.schema';
+import { {{moduleName}}AttendeeSchema } from './schemas/attendee.schema';
+{{/if}}
+import { {{moduleName}}Controller } from './{{kitName}}.controller';
+import { {{moduleName}}Service } from './{{kitName}}.service';
+
+@Module({
+  imports: [
+    {{#if (eq orm "typeorm")}}
+    TypeOrmModule.forFeature([
+      {{moduleName}}Event,
+      {{moduleName}}Attendee,
+    ]),
+    {{/if}}
+    {{#if (eq orm "mongoose")}}
+    MongooseModule.forFeature([
+      { name: '{{moduleName}}Event', schema: {{moduleName}}EventSchema },
+      { name: '{{moduleName}}Attendee', schema: {{moduleName}}AttendeeSchema },
+    ]),
+    {{/if}}
+  ],
+  controllers: [{{moduleName}}Controller],
+  providers: [{{moduleName}}Service],
+  exports: [{{moduleName}}Service],
+})
+export class {{moduleName}}Module {}
