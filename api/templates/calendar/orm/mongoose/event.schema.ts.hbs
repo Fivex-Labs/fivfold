@@ -1,0 +1,41 @@
+import { Schema, model, Document } from 'mongoose';
+
+export interface I{{moduleName}}Event extends Document {
+  title: string;
+  description?: string | null;
+  startDate: Date;
+  endDate: Date;
+  isAllDay: boolean;
+  color: string;
+  location?: string | null;
+  recurrenceRule?: string | null;
+  /** IANA timezone identifier, e.g. "America/New_York". Defaults to UTC. */
+  timezone?: string | null;
+  /** Reminders — deliver via your own notification service (FCM, SNS, OneSignal, etc.). */
+  reminders?: { minutes: number; method?: string }[];
+  ownerId: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+const {{moduleName}}EventSchema = new Schema<I{{moduleName}}Event>(
+  {
+    title: { type: String, required: true },
+    description: { type: String },
+    startDate: { type: Date, required: true, index: true },
+    endDate: { type: Date, required: true },
+    isAllDay: { type: Boolean, default: false },
+    color: { type: String, default: 'default' },
+    location: { type: String },
+    recurrenceRule: { type: String },
+    timezone: { type: String },
+    reminders: [{ minutes: { type: Number, required: true }, method: { type: String } }],
+    ownerId: { type: String, required: true, index: true },
+  },
+  { timestamps: true, collection: 'calendar_events' }
+);
+
+{{moduleName}}EventSchema.index({ ownerId: 1, startDate: 1, endDate: 1 });
+
+export const {{moduleName}}Event = model<I{{moduleName}}Event>('{{moduleName}}Event', {{moduleName}}EventSchema);
+export { {{moduleName}}EventSchema };

@@ -1,0 +1,108 @@
+{{#if (eq orm "typeorm")}}
+import { Between, DataSource, Repository } from 'typeorm';
+import { CalendarEvent } from './entities/event.entity';
+import { CalendarAttendee } from './entities/attendee.entity';
+{{/if}}
+import type { CreateEventDto } from './dto/create-event.dto';
+import type { UpdateEventDto } from './dto/update-event.dto';
+
+export class {{moduleName}}Service {
+  {{#if (eq orm "typeorm")}}
+  private eventRepo: Repository<CalendarEvent>;
+  private attendeeRepo: Repository<CalendarAttendee>;
+
+  constructor(dataSource: DataSource) {
+    this.eventRepo = dataSource.getRepository(CalendarEvent);
+    this.attendeeRepo = dataSource.getRepository(CalendarAttendee);
+  }
+
+  async getEvents(userId: string) {
+    return this.eventRepo.find({
+      where: { ownerId: userId },
+      relations: ['attendees'],
+      order: { startDate: 'ASC' },
+    });
+  }
+
+  async getEvent(userId: string, eventId: string) {
+    return this.eventRepo.findOne({
+      where: { id: eventId, ownerId: userId },
+      relations: ['attendees'],
+    });
+  }
+
+  async getEventsByDateRange(userId: string, startDate: Date, endDate: Date) {
+    return this.eventRepo.find({
+      where: { ownerId: userId, startDate: Between(startDate, endDate) },
+      relations: ['attendees'],
+      order: { startDate: 'ASC' },
+    });
+  }
+
+  async createEvent(userId: string, dto: CreateEventDto) {
+    const event = this.eventRepo.create({
+      ...dto,
+      ownerId: userId,
+      isAllDay: dto.isAllDay ?? false,
+      color: dto.color ?? 'default',
+      startDate: new Date(dto.startDate),
+      endDate: new Date(dto.endDate),
+    });
+    const saved = await this.eventRepo.save(event);
+    if (dto.attendeeEmails?.length) {
+      const attendees = dto.attendeeEmails.map((email) =>
+        this.attendeeRepo.create({ eventId: saved.id, email, status: 'pending' })
+      );
+      await this.attendeeRepo.save(attendees);
+    }
+    return this.getEvent(userId, saved.id);
+  }
+
+  async updateEvent(userId: string, eventId: string, dto: UpdateEventDto) {
+    const event = await this.eventRepo.findOneBy({ id: eventId, ownerId: userId });
+    if (!event) throw new Error('Event not found');
+    Object.assign(event, {
+      ...dto,
+      startDate: dto.startDate ? new Date(dto.startDate) : event.startDate,
+      endDate: dto.endDate ? new Date(dto.endDate) : event.endDate,
+    });
+    return this.eventRepo.save(event);
+  }
+
+  async deleteEvent(userId: string, eventId: string): Promise<void> {
+    const event = await this.eventRepo.findOneBy({ id: eventId, ownerId: userId });
+    if (!event) throw new Error('Event not found');
+    await this.eventRepo.remove(event);
+  }
+
+  async addAttendee(eventId: string, email: string, userId?: string) {
+    const attendee = this.attendeeRepo.create({ eventId, email, userId, status: 'pending' });
+    return this.attendeeRepo.save(attendee);
+  }
+
+  async removeAttendee(eventId: string, attendeeId: string): Promise<void> {
+    const attendee = await this.attendeeRepo.findOneBy({ id: attendeeId, eventId });
+    if (!attendee) throw new Error('Attendee not found');
+    await this.attendeeRepo.remove(attendee);
+  }
+
+  async updateAttendeeStatus(eventId: string, attendeeId: string, status: 'pending' | 'accepted' | 'declined') {
+    const attendee = await this.attendeeRepo.findOneBy({ id: attendeeId, eventId });
+    if (!attendee) throw new Error('Attendee not found');
+    attendee.status = status;
+    return this.attendeeRepo.save(attendee);
+  }
+  {{else}}
+  constructor() {}
+
+  async getEvents(_userId: string): Promise<unknown[]> { throw new Error(`{{moduleName}}Service not implemented for ORM: {{orm}}. Implement for your chosen database.`); }
+  async getEvent(_userId: string, _eventId: string): Promise<unknown> { throw new Error(`{{moduleName}}Service not implemented for ORM: {{orm}}. Implement for your chosen database.`); }
+  async getEventsByDateRange(_userId: string, _startDate: Date, _endDate: Date): Promise<unknown[]> { throw new Error(`{{moduleName}}Service not implemented for ORM: {{orm}}. Implement for your chosen database.`); }
+  async createEvent(_userId: string, _dto: CreateEventDto): Promise<unknown> { throw new Error(`{{moduleName}}Service not implemented for ORM: {{orm}}. Implement for your chosen database.`); }
+  async updateEvent(_userId: string, _eventId: string, _dto: UpdateEventDto): Promise<unknown> { throw new Error(`{{moduleName}}Service not implemented for ORM: {{orm}}. Implement for your chosen database.`); }
+  async deleteEvent(_userId: string, _eventId: string): Promise<void> { throw new Error(`{{moduleName}}Service not implemented for ORM: {{orm}}. Implement for your chosen database.`); }
+  async addAttendee(_eventId: string, _email: string, _userId?: string): Promise<unknown> { throw new Error(`{{moduleName}}Service not implemented for ORM: {{orm}}. Implement for your chosen database.`); }
+  async removeAttendee(_eventId: string, _attendeeId: string): Promise<void> { throw new Error(`{{moduleName}}Service not implemented for ORM: {{orm}}. Implement for your chosen database.`); }
+  async updateAttendeeStatus(_eventId: string, _attendeeId: string, _status: 'pending' | 'accepted' | 'declined'): Promise<unknown> { throw new Error(`{{moduleName}}Service not implemented for ORM: {{orm}}. Implement for your chosen database.`); }
+  {{/if}}
+}

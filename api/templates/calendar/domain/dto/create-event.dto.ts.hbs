@@ -1,0 +1,48 @@
+import { IsArray, IsBoolean, IsEnum, IsISO8601, IsOptional, IsString, MinLength } from 'class-validator';
+
+export type CalendarEventColor = 'default' | 'red' | 'orange' | 'yellow' | 'green' | 'teal' | 'blue' | 'purple' | 'pink';
+
+export class CreateEventDto {
+  @IsString()
+  @MinLength(1)
+  title: string;
+
+  @IsString()
+  @IsOptional()
+  description?: string;
+
+  @IsISO8601()
+  startDate: string;
+
+  @IsISO8601()
+  endDate: string;
+
+  @IsBoolean()
+  @IsOptional()
+  isAllDay?: boolean;
+
+  @IsEnum(['default', 'red', 'orange', 'yellow', 'green', 'teal', 'blue', 'purple', 'pink'])
+  @IsOptional()
+  color?: CalendarEventColor;
+
+  @IsString()
+  @IsOptional()
+  location?: string;
+
+  @IsString()
+  @IsOptional()
+  recurrenceRule?: string;
+
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  attendeeEmails?: string[];
+
+  @IsString()
+  @IsOptional()
+  timezone?: string;
+
+  @IsArray()
+  @IsOptional()
+  reminders?: { minutes: number; method?: 'notification' | 'email' | 'sms' }[];
+}

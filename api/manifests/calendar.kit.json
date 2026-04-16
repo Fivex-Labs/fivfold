@@ -1,0 +1,90 @@
+{
+  "name": "calendar",
+  "version": "1.0.0",
+  "description": "Complete calendar backend with events, attendees, date-range queries, and recurrence support.",
+  "domain": {
+    "files": [
+      { "template": "calendar/domain/calendar.port.ts.hbs", "output": "{{outputDir}}/{{kitName}}/domain/calendar.port.ts" },
+      { "template": "calendar/domain/dto/create-event.dto.ts.hbs", "output": "{{outputDir}}/{{kitName}}/dto/create-event.dto.ts" },
+      { "template": "calendar/domain/dto/update-event.dto.ts.hbs", "output": "{{outputDir}}/{{kitName}}/dto/update-event.dto.ts" },
+      { "template": "calendar/domain/dto/query-events.dto.ts.hbs", "output": "{{outputDir}}/{{kitName}}/dto/query-events.dto.ts" }
+    ]
+  },
+  "framework": {
+    "express": {
+      "files": [
+        { "template": "calendar/framework/express/calendar.routes.ts.hbs", "output": "{{outputDir}}/{{kitName}}/calendar.routes.ts" },
+        { "template": "calendar/framework/express/calendar.service.ts.hbs", "output": "{{outputDir}}/{{kitName}}/calendar.service.ts" }
+      ],
+      "dependencies": ["class-validator", "class-transformer", "express", "uuid"],
+      "devDependencies": ["@types/express", "@types/uuid"],
+      "astMutations": [
+        {
+          "target": "src/app.ts",
+          "action": "registerMiddleware",
+          "routePath": "/api/calendar",
+          "importPath": "./modules/calendar/calendar.routes",
+          "importName": "createCalendarRouter"
+        }
+      ]
+    },
+    "nestjs": {
+      "files": [
+        { "template": "calendar/framework/nestjs/calendar.module.ts.hbs", "output": "{{outputDir}}/{{kitName}}/calendar.module.ts" },
+        { "template": "calendar/framework/nestjs/calendar.controller.ts.hbs", "output": "{{outputDir}}/{{kitName}}/calendar.controller.ts" },
+        { "template": "calendar/framework/nestjs/calendar.service.ts.hbs", "output": "{{outputDir}}/{{kitName}}/calendar.service.ts" }
+      ],
+      "dependencies": ["class-validator", "class-transformer", "@nestjs/common", "@nestjs/core", "uuid"],
+      "devDependencies": ["@types/uuid"],
+      "astMutations": [
+        {
+          "target": "src/app.module.ts",
+          "action": "registerModule",
+          "module": "CalendarModule",
+          "importPath": "./modules/calendar/calendar.module"
+        }
+      ]
+    }
+  },
+  "orm": {
+    "typeorm": {
+      "files": [
+        { "template": "calendar/orm/typeorm/event.entity.ts.hbs", "output": "{{outputDir}}/{{kitName}}/entities/event.entity.ts" },
+        { "template": "calendar/orm/typeorm/attendee.entity.ts.hbs", "output": "{{outputDir}}/{{kitName}}/entities/attendee.entity.ts" }
+      ],
+      "dependencies": ["typeorm", "pg", "reflect-metadata"],
+      "devDependencies": ["@types/pg"]
+    },
+    "prisma": {
+      "files": [
+        { "template": "calendar/orm/prisma/calendar-models.prisma.hbs", "output": "prisma/schema.prisma", "mode": "append" }
+      ],
+      "dependencies": ["@prisma/client"],
+      "devDependencies": ["prisma"]
+    },
+    "mongoose": {
+      "files": [
+        { "template": "calendar/orm/mongoose/event.schema.ts.hbs", "output": "{{outputDir}}/{{kitName}}/schemas/event.schema.ts" },
+        { "template": "calendar/orm/mongoose/attendee.schema.ts.hbs", "output": "{{outputDir}}/{{kitName}}/schemas/attendee.schema.ts" }
+      ],
+      "dependencies": ["mongoose"],
+      "devDependencies": []
+    },
+    "cosmos-sdk": {
+      "files": [
+        { "template": "calendar/orm/cosmos-sdk/calendar-containers.ts.hbs", "output": "{{outputDir}}/{{kitName}}/containers/calendar.containers.ts" }
+      ],
+      "dependencies": ["@azure/cosmos"],
+      "devDependencies": [],
+      "envVars": ["COSMOS_ENDPOINT", "COSMOS_KEY", "COSMOS_DATABASE_ID"]
+    },
+    "dynamodb-sdk": {
+      "files": [
+        { "template": "calendar/orm/dynamodb-sdk/calendar-tables.ts.hbs", "output": "{{outputDir}}/{{kitName}}/tables/calendar.tables.ts" }
+      ],
+      "dependencies": ["@aws-sdk/client-dynamodb", "@aws-sdk/lib-dynamodb"],
+      "devDependencies": [],
+      "envVars": ["AWS_REGION", "AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY"]
+    }
+  }
+}

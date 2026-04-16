@@ -1,0 +1,24 @@
+import { Schema, model, Document } from 'mongoose';
+
+export interface I{{moduleName}}Attendee extends Document {
+  eventId: string;
+  userId?: string | null;
+  email: string;
+  name?: string | null;
+  status: 'pending' | 'accepted' | 'declined';
+  createdAt: Date;
+}
+
+const {{moduleName}}AttendeeSchema = new Schema<I{{moduleName}}Attendee>(
+  {
+    eventId: { type: String, required: true, index: true },
+    userId: { type: String },
+    email: { type: String, required: true },
+    name: { type: String },
+    status: { type: String, enum: ['pending', 'accepted', 'declined'], default: 'pending' },
+  },
+  { timestamps: { createdAt: true, updatedAt: false }, collection: 'calendar_attendees' }
+);
+
+export const {{moduleName}}Attendee = model<I{{moduleName}}Attendee>('{{moduleName}}Attendee', {{moduleName}}AttendeeSchema);
+export { {{moduleName}}AttendeeSchema };

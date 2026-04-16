@@ -89,6 +89,19 @@ fivfold/
 └── package.json
 ```
 
+## Kits
+
+| Kit | UI | API | Notes |
+|-----|----|-----|-------|
+| Auth | ✓ | — | Login, Register, OAuth (Firebase, Cognito, Auth0, JWT) |
+| Calendar | ✓ | ✓ | Month/week/day/agenda views, events, attendees, color categories |
+| Chat | ✓ | ✓ | Real-time messaging, Socket.IO, groups, attachments |
+| Email | ✓ | ✓ | Compose, inbox, threads, recipient autocomplete |
+| Kanban | ✓ | ✓ | Drag-and-drop boards, columns, tasks |
+| Media Uploader | ✓ | ✓ | S3, Azure Blob, GCS, Cloudinary, Dropbox |
+| Push Notifications | — | ✓ | FCM, OneSignal, AWS SNS, Pushy, Pusher Beams |
+| Stripe | — | ✓ | Payments, webhooks, Connect, Checkout, Billing |
+
 ## Manifests
 
 Kits are defined by declarative manifests (`*.kit.json`) under `ui/manifests/` and `api/manifests/`. They declare templates, dependencies, and AST targets; the CLIs orchestrate generation without hardcoding every stack combination.

@@ -1,0 +1,137 @@
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  Patch,
+  Post,
+  Query,
+  Request,
+} from '@nestjs/common';
+import { {{moduleName}}Service } from './{{kitName}}.service';
+import { CreateEventDto } from './dto/create-event.dto';
+import { UpdateEventDto } from './dto/update-event.dto';
+import { QueryEventsDto } from './dto/query-events.dto';
+
+// TODO: Add @UseGuards(AuthGuard) from your auth module
+
+@Controller('{{kitName}}')
+export class {{moduleName}}Controller {
+  constructor(private readonly {{kitName}}Service: {{moduleName}}Service) {}
+
+  private getUser(req: any): { id: string } {
+    return req.user ?? { id: 'REPLACE_WITH_USER_ID' };
+  }
+
+  // GET /calendar/events
+  @Get('events')
+  getEvents(@Request() req: any, @Query() query: QueryEventsDto) {
+    if (query.startDate && query.endDate) {
+      return this.{{kitName}}Service.getEventsByDateRange(
+        this.getUser(req).id,
+        new Date(query.startDate),
+        new Date(query.endDate),
+      );
+    }
+    return this.{{kitName}}Service.getEvents(this.getUser(req).id);
+  }
+
+  // GET /calendar/events/:eventId
+  @Get('events/:eventId')
+  getEvent(@Request() req: any, @Param('eventId') eventId: string) {
+    return this.{{kitName}}Service.getEvent(this.getUser(req).id, eventId);
+  }
+
+  // POST /calendar/events
+  @Post('events')
+  @HttpCode(HttpStatus.CREATED)
+  createEvent(@Request() req: any, @Body() dto: CreateEventDto) {
+    return this.{{kitName}}Service.createEvent(this.getUser(req).id, dto);
+  }
+
+  // PATCH /calendar/events/:eventId
+  @Patch('events/:eventId')
+  updateEvent(
+    @Request() req: any,
+    @Param('eventId') eventId: string,
+    @Body() dto: UpdateEventDto,
+  ) {
+    return this.{{kitName}}Service.updateEvent(this.getUser(req).id, eventId, dto);
+  }
+
+  // DELETE /calendar/events/:eventId
+  @Delete('events/:eventId')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  deleteEvent(@Request() req: any, @Param('eventId') eventId: string) {
+    return this.{{kitName}}Service.deleteEvent(this.getUser(req).id, eventId);
+  }
+
+  // POST /calendar/events/:eventId/attendees
+  @Post('events/:eventId/attendees')
+  @HttpCode(HttpStatus.CREATED)
+  addAttendee(
+    @Param('eventId') eventId: string,
+    @Body() body: { email: string; userId?: string },
+  ) {
+    return this.{{kitName}}Service.addAttendee(eventId, body.email, body.userId);
+  }
+
+  // DELETE /calendar/events/:eventId/attendees/:attendeeId
+  @Delete('events/:eventId/attendees/:attendeeId')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  removeAttendee(
+    @Param('eventId') eventId: string,
+    @Param('attendeeId') attendeeId: string,
+  ) {
+    return this.{{kitName}}Service.removeAttendee(eventId, attendeeId);
+  }
+
+  // PATCH /calendar/events/:eventId/attendees/:attendeeId/status
+  @Patch('events/:eventId/attendees/:attendeeId/status')
+  updateAttendeeStatus(
+    @Param('eventId') eventId: string,
+    @Param('attendeeId') attendeeId: string,
+    @Body() body: { status: 'pending' | 'accepted' | 'declined' },
+  ) {
+    return this.{{kitName}}Service.updateAttendeeStatus(eventId, attendeeId, body.status);
+  }
+
+  /**
+   * POST /calendar/events/:eventId/reminders
+   *
+   * Stub endpoint — implement with your own notification service.
+   * Supported services: Firebase Cloud Messaging (FCM), AWS SNS, OneSignal, Twilio, etc.
+   * The `method` field indicates the desired delivery channel: "notification" | "email" | "sms".
+   *
+   * @example
+   * POST /calendar/events/abc123/reminders
+   * { "minutes": 15, "method": "notification" }
+   */
+  @Post('events/:eventId/reminders')
+  @HttpCode(HttpStatus.CREATED)
+  addReminder(
+    @Request() req: any,
+    @Param('eventId') eventId: string,
+    @Body() body: { minutes: number; method?: 'notification' | 'email' | 'sms' },
+  ) {
+    return this.{{kitName}}Service.addReminder(this.getUser(req).id, eventId, body.minutes, body.method);
+  }
+
+  /**
+   * DELETE /calendar/events/:eventId/reminders/:reminderId
+   *
+   * Stub endpoint — implement cancellation logic in your notification service.
+   */
+  @Delete('events/:eventId/reminders/:reminderId')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  removeReminder(
+    @Request() req: any,
+    @Param('eventId') eventId: string,
+    @Param('reminderId') reminderId: string,
+  ) {
+    return this.{{kitName}}Service.removeReminder(this.getUser(req).id, eventId, reminderId);
+  }
+}

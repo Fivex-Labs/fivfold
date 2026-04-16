@@ -13,7 +13,7 @@ Conventions for using FivFold UI Kits in React and Next.js projects.
 
 ## When to Apply
 
-- Importing or customizing FivFold Kits (Email, Kanban, Chat, Auth)
+- Importing or customizing FivFold Kits (Email, Kanban, Chat, Auth, Calendar)
 - Setting up theming, Tailwind CSS v4, or shadcn/ui
 - Working with kit component exports and props
 
@@ -52,7 +52,9 @@ npx @fivfold/ui add <name> --theme zinc  # add with specific theme
 
 | Kit | Description |
 |-----|-------------|
+| Auth | Login, Register, ForgotPassword (Firebase, Cognito, Auth0, JWT) |
+| Calendar | Month/week/day/agenda views, event creation, attendees, color categories |
+| Chat | Real-time chat with threads and messages |
 | Email | Full-featured email client with folders, threads, compose |
 | Kanban | Drag-and-drop board with columns, tasks, priorities |
-| Chat | Real-time chat with threads and messages |
-| Auth | Login, Register, ForgotPassword (Firebase, Cognito, Auth0, JWT) |
+| Media Uploader | Direct-to-cloud uploads (S3, Azure Blob, GCS, Cloudinary, Dropbox) |

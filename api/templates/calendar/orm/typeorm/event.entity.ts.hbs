@@ -1,0 +1,57 @@
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+  OneToMany,
+} from 'typeorm';
+import { CalendarAttendee } from './attendee.entity';
+
+@Entity('calendar_events')
+export class CalendarEvent {
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
+
+  @Column({ type: 'varchar', length: 500 })
+  title: string;
+
+  @Column({ type: 'text', nullable: true })
+  description: string | null;
+
+  @Column({ type: 'timestamptz', name: 'start_date' })
+  startDate: Date;
+
+  @Column({ type: 'timestamptz', name: 'end_date' })
+  endDate: Date;
+
+  @Column({ type: 'boolean', name: 'is_all_day', default: false })
+  isAllDay: boolean;
+
+  @Column({ type: 'varchar', length: 20, default: 'default' })
+  color: string;
+
+  @Column({ type: 'varchar', length: 500, nullable: true })
+  location: string | null;
+
+  @Column({ type: 'text', name: 'recurrence_rule', nullable: true })
+  recurrenceRule: string | null;
+
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  timezone: string | null;
+
+  @Column({ type: 'jsonb', nullable: true })
+  reminders: { minutes: number; method?: string }[] | null;
+
+  @Column({ type: 'varchar', name: 'owner_id' })
+  ownerId: string; // Replace with FK to your User entity
+
+  @OneToMany(() => CalendarAttendee, (attendee) => attendee.event, { cascade: true })
+  attendees: CalendarAttendee[];
+
+  @CreateDateColumn({ name: 'created_at' })
+  createdAt: Date;
+
+  @UpdateDateColumn({ name: 'updated_at' })
+  updatedAt: Date;
+}
